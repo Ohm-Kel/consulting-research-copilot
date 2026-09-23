@@ -1,0 +1,12 @@
+# Environments and secrets
+.venv/
+.env
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Data and generated indexes (rebuild with scripts/download_data.py and ingest)
+data/
+chroma_db/

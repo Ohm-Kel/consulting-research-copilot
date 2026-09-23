@@ -1,0 +1,8 @@
+# Stage 0: foundations
+anthropic==1.8.0
+sentence-transformers==6.1.0
+pypdf==6.19.0
+fonttools==4.66.0  # lets pypdf decode the embedded fonts in some annual reports
+numpy==2.5.3
+python-dotenv==1.2.3
+pytest==9.1.1
