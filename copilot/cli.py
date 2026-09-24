@@ -3,6 +3,7 @@
     python -m copilot.cli ingest
     python -m copilot.cli search "Nike gross margin fiscal 2025"
     python -m copilot.cli ask "How did Nike's gross margin change in fiscal 2025?"
+    python -m copilot.cli agent "By what percentage did Nike's net income fall in fiscal 2025?"
 """
 
 import argparse
@@ -36,6 +37,18 @@ def cmd_ask(args: argparse.Namespace) -> None:
     print("Sources: " + "  ".join(f"[{i}] {s}" for i, s in enumerate(answer.sources, start=1)))
 
 
+def cmd_agent(args: argparse.Namespace) -> None:
+    from copilot.agent import ResearchAgent
+
+    result = ResearchAgent().run(args.question)
+    print(f"Answer: {result.answer}")
+    if result.sources:
+        print("Sources: " + "  ".join(f"[{i}] {s}" for i, s in enumerate(result.sources, start=1)))
+    print("Tool calls: " + (", ".join(f"{name} ({n})" for name, n in result.tool_calls.items()) or "none"))
+    print(f"Fallback triggered: {str(result.fallback_triggered).lower()}"
+          + (f" ({result.fallback_reason})" if result.fallback_reason else ""))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="copilot", description="Q&A over athletic apparel annual reports")
     sub = parser.add_subparsers(required=True)
@@ -50,6 +63,9 @@ def main() -> None:
         p.add_argument("--retriever", default=config.RETRIEVER_MODE,
                        choices=["vector", "bm25", "hybrid", "hybrid_rerank"])
         p.set_defaults(func=func)
+    p = sub.add_parser("agent", help="tool-calling agent with calculator and fallback guardrail")
+    p.add_argument("question")
+    p.set_defaults(func=cmd_agent)
     args = parser.parse_args()
     args.func(args)
 

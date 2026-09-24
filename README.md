@@ -14,8 +14,8 @@ Under Armour (FY2025), Columbia Sportswear (FY2024), Deckers Brands (FY2025).
 | 0 | Foundations: API call, embeddings, cosine similarity, PDF chunking | done |
 | 1 | Basic RAG with citations | v0.1 |
 | 2 | Evaluation, hybrid search, reranking | v0.2 |
-| 3 | Tool-calling agent and guardrails | in progress |
-| 4 | FastAPI, Docker, CI | planned |
+| 3 | Tool-calling agent and guardrails | v0.3 |
+| 4 | FastAPI, Docker, CI | in progress |
 
 ## Setup (Windows PowerShell)
 
@@ -138,3 +138,39 @@ python evals/run_ragas_eval.py --modes vector hybrid_rerank --final   # final ta
 python evals/run_retrieval_eval.py        # reproduce the retrieval table above
 python -m copilot.cli search "How fast did HOKA grow?" --retriever hybrid_rerank
 ```
+
+## Stage 3: Agent and Guardrails
+
+`copilot/agent.py` is a manual tool-use loop over the Claude Messages API (no framework):
+Claude decides when to call a tool, the code runs it and returns a `tool_result`, repeating until
+Claude answers or the 6-step limit is hit.
+
+| Tool | Purpose |
+|---|---|
+| `retrieve_documents(query)` | Hybrid + rerank search. Returns passages tagged `[S1]`, `[S2]`... with a relevance score; flags weak results so Claude re-queries with different wording |
+| `calculate(expression)` | AST-based evaluator: arithmetic plus `pct_change`, `share`, `cagr`, `round`. No `eval`, no names, no attribute access |
+
+**Fallback guardrail.** The agent returns *"The available reports do not contain this
+information."* with `fallback_triggered: true` when any of these holds:
+
+1. **Relevance floor:** no retrieved passage scored above 2.0 (cross-encoder logit). Set from
+   data: every answerable eval question scores at least 3.47, and unrelated questions at most 0.56.
+2. **Model judgement:** Claude replies `INSUFFICIENT_CONTEXT`. This catches on-topic questions the
+   floor cannot, such as another company's figures or a future year.
+3. **No citations:** a draft answer that cites no retrieved passage is never returned.
+
+Citations `[S7]` are renumbered `[1]`, `[2]`... and mapped to `file, p. N`.
+
+```powershell
+python evals/run_guardrail_eval.py   # relevance floor on real retrieval, no API key
+python evals/run_agent_eval.py       # end-to-end agent: answer rate, citations, calc accuracy, declines
+python -m copilot.cli agent "By what percentage did Nike's net income fall in fiscal 2025?"
+```
+
+Relevance floor results (no LLM):
+
+| Set | Result |
+|---|---|
+| Answerable questions clearing the floor | 25/25 (lowest score 3.47) |
+| Out-of-scope questions declined by the floor alone | 6/8 (World Cup, iPhone, Puma, Skechers...) |
+| Left for the model to decline | "Adidas revenue 2024", "Nike revenue fiscal 2030" |

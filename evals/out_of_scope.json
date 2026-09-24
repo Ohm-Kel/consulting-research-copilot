@@ -1,0 +1,10 @@
+[
+  {"question": "Who won the 2022 FIFA World Cup?", "kind": "unrelated"},
+  {"question": "What is Apple's iPhone revenue?", "kind": "unrelated"},
+  {"question": "What is the capital of Australia?", "kind": "unrelated"},
+  {"question": "How many stores does Puma operate in Germany?", "kind": "other company"},
+  {"question": "What was Skechers' gross margin in 2024?", "kind": "other company"},
+  {"question": "What is Under Armour's CEO's favorite food?", "kind": "not disclosed"},
+  {"question": "What was Adidas's revenue in 2024?", "kind": "other company, on-topic"},
+  {"question": "What was Nike's revenue in fiscal 2030?", "kind": "future period, on-topic"}
+]

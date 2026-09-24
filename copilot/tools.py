@@ -1,0 +1,123 @@
+"""Tools the agent can call: document retrieval and a safe calculator."""
+
+import ast
+import math
+import operator
+import re
+from typing import Any, Callable
+
+from copilot.retrieval import Hit, Retriever
+
+
+class ToolError(ValueError):
+    """Raised for bad tool input; the message is returned to the model."""
+
+
+# ---------------------------------------------------------------- calculator
+
+def pct_change(old: float, new: float) -> float:
+    """Percentage change from old to new, e.g. pct_change(5700, 3219) = -43.53."""
+    if old == 0:
+        raise ToolError("pct_change: old value is zero")
+    return (new - old) / abs(old) * 100
+
+
+def share(part: float, whole: float) -> float:
+    """part as a percentage of whole, e.g. margin = share(operating_income, revenue)."""
+    if whole == 0:
+        raise ToolError("share: whole is zero")
+    return part / whole * 100
+
+
+def cagr(start: float, end: float, years: float) -> float:
+    """Compound annual growth rate in percent."""
+    if start <= 0 or years <= 0:
+        raise ToolError("cagr: start and years must be positive")
+    return ((end / start) ** (1 / years) - 1) * 100
+
+
+_BINARY: dict[type, Callable[[Any, Any], Any]] = {
+    ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
+    ast.Div: operator.truediv, ast.Pow: operator.pow,
+}
+_UNARY: dict[type, Callable[[Any], Any]] = {ast.USub: operator.neg, ast.UAdd: operator.pos}
+_FUNCTIONS: dict[str, Callable[..., float]] = {
+    "pct_change": pct_change, "share": share, "cagr": cagr,
+    "round": round, "abs": abs, "min": min, "max": max, "sqrt": math.sqrt,
+}
+
+
+def calculate(expression: str) -> float:
+    """Evaluate an arithmetic expression without `eval`: only numbers, + - * / **,
+    parentheses and the whitelisted functions above are allowed."""
+    try:
+        # Drop "$" and thousands separators ("4,689" -> "4689") but keep argument commas.
+        cleaned = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", expression.replace("$", ""))
+        tree = ast.parse(cleaned, mode="eval")
+    except SyntaxError as exc:
+        raise ToolError(f"cannot parse expression: {expression!r}") from exc
+
+    def walk(node: ast.AST) -> float:
+        if isinstance(node, ast.Expression):
+            return walk(node.body)
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return node.value
+        if isinstance(node, ast.BinOp) and type(node.op) in _BINARY:
+            left, right = walk(node.left), walk(node.right)
+            if isinstance(node.op, ast.Pow) and abs(right) > 100:
+                raise ToolError("exponent too large")
+            try:
+                return _BINARY[type(node.op)](left, right)
+            except ZeroDivisionError as exc:
+                raise ToolError("division by zero") from exc
+        if isinstance(node, ast.UnaryOp) and type(node.op) in _UNARY:
+            return _UNARY[type(node.op)](walk(node.operand))
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in _FUNCTIONS and not node.keywords:
+            return _FUNCTIONS[node.func.id](*[walk(arg) for arg in node.args])
+        raise ToolError(f"unsupported element in expression: {ast.dump(node)[:60]}")
+
+    return float(walk(tree))
+
+
+# ----------------------------------------------------------------- retrieval
+
+def retrieve_documents(retriever: Retriever, query: str, k: int = 5) -> list[Hit]:
+    if not query.strip():
+        raise ToolError("query must not be empty")
+    return retriever.search(query, k=k)
+
+
+# -------------------------------------------------------- schemas for Claude
+
+TOOL_SCHEMAS: list[dict[str, Any]] = [
+    {
+        "name": "retrieve_documents",
+        "description": (
+            "Search the annual reports of Nike (FY2025), Lululemon (FY2024), Under Armour (FY2025), "
+            "Columbia Sportswear (FY2024) and Deckers Brands (FY2025). Returns numbered passages with "
+            "source IDs like S3 and a relevance score. Include the company name and specific terms "
+            "in the query. If results look weak or off-topic, search again with different wording."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {"query": {"type": "string", "description": "Search query, e.g. 'Nike gross margin fiscal 2025 drivers'"}},
+            "required": ["query"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "calculate",
+        "description": (
+            "Evaluate an arithmetic expression exactly. Use it for every computed figure instead of "
+            "mental math. Supports + - * / ** and parentheses, plus pct_change(old, new), "
+            "share(part, whole), cagr(start, end, years), round(x, n), abs, min, max. "
+            "Write numbers without thousands separators. Example: pct_change(5700, 3219)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {"expression": {"type": "string"}},
+            "required": ["expression"],
+            "additionalProperties": False,
+        },
+    },
+]

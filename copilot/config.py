@@ -28,6 +28,13 @@ RETRIEVER_MODE = os.getenv("COPILOT_RETRIEVER", "hybrid_rerank")  # vector | bm2
 RERANKER_MODEL = os.getenv("COPILOT_RERANKER", "cross-encoder/ms-marco-MiniLM-L-6-v2")
 RERANK_CANDIDATES = int(os.getenv("COPILOT_RERANK_CANDIDATES", "30"))  # fused candidates the cross-encoder re-scores
 
+# Agent and guardrails (Stage 3)
+MAX_AGENT_TURNS = 6
+# Minimum cross-encoder score (ms-marco logit) for a passage to count as relevant.
+# Measured: all 25 eval questions score 3.5 or more; unrelated questions score 0.6 or less.
+# Recalibrate if you change RERANKER_MODEL (bge-reranker outputs 0-1 probabilities).
+RELEVANCE_THRESHOLD = float(os.getenv("COPILOT_RELEVANCE_THRESHOLD", "2.0"))
+
 # Company name and report label for each file in data/.
 DOCUMENTS: dict[str, dict[str, str]] = {
     "Nike_FY2025_10K.pdf": {"company": "Nike", "report": "Nike FY2025 Form 10-K (fiscal year ended May 31, 2025)"},
