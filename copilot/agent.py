@@ -99,6 +99,8 @@ class ResearchAgent:
             response = self.client.messages.create(
                 model=self.model, max_tokens=2048, system=SYSTEM_PROMPT, tools=TOOL_SCHEMAS, messages=messages
             )
+            if response.stop_reason in ("max_tokens", "refusal"):
+                return self._decline(f"the model stopped early ({response.stop_reason})", tool_calls, sources)
             if response.stop_reason != "tool_use":
                 final_text = "".join(b.text for b in response.content if b.type == "text").strip()
                 break

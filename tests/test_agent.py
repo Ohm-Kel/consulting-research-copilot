@@ -89,6 +89,14 @@ def test_fallback_when_step_limit_reached() -> None:
     assert result.fallback_triggered and "step limit" in result.fallback_reason
 
 
+def test_fallback_when_answer_is_truncated() -> None:
+    truncated = SimpleNamespace(content=[SimpleNamespace(type="text", text="Gross margin fell [S1] because")],
+                                stop_reason="max_tokens")
+    agent, _, _ = make_agent([tool_use("retrieve_documents", {"query": "q"}), truncated], [Hit(NIKE, 8.0)])
+    result = agent.run("Nike margin?")
+    assert result.fallback_triggered and "max_tokens" in result.fallback_reason
+
+
 def test_tool_errors_are_reported_to_the_model() -> None:
     agent, fake, _ = make_agent(
         [tool_use("calculate", {"expression": "import os"}), text_response("INSUFFICIENT_CONTEXT")], [Hit(NIKE, 8.0)]
