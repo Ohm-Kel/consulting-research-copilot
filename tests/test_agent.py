@@ -112,3 +112,12 @@ def test_renumber_citations_merges_same_page_and_drops_unknown_ids() -> None:
     text, cited = renumber_citations("A [S2]. B [S3][S2]. C [S1, S2]. D [S9].", sources)
     assert text == "A [1]. B [1]. C [2][1]. D ."
     assert cited == ["Nike_FY2025_10K.pdf, p. 38", "Lululemon_FY2024_10K.pdf, p. 31"]
+
+
+def test_relevance_floor_only_applies_to_reranker_scores() -> None:
+    # A plain retriever returns cosine-like scores (0-1); the 2.0 floor must not decline everything.
+    fake = FakeClaude([tool_use("retrieve_documents", {"query": "Nike margin"}), text_response("Fell to 42.7% [S1].")])
+    agent = ResearchAgent(retriever=FakeRetriever([Hit(NIKE, 0.8)]), client=fake, model="test")
+    assert agent.relevance_threshold is None
+    result = agent.run("Nike margin?")
+    assert not result.fallback_triggered and result.sources == ["Nike_FY2025_10K.pdf, p. 38"]

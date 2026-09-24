@@ -24,7 +24,12 @@ def test_calculate(expression: str, expected: float) -> None:
 
 @pytest.mark.parametrize(
     "expression",
-    ["__import__('os').system('echo hi')", "open('x')", "a + 1", "1 / 0", "2 ** 1000", "pct_change(0, 5)", "1 +", "[1, 2]"],
+    [
+        "__import__('os').system('echo hi')", "open('x')", "a + 1", "(1).real", "1 / 0", "2 ** 1000",
+        "((10 ** 100) ** 100) ** 100",  # would build a gigantic integer without float arithmetic
+        "1e308 * 10", "sqrt(-1)", "abs((-8) ** 0.5)", "round(1, 2, 3)", "min()", "True + 1",
+        "pct_change(0, 5)", "1 +", "[1, 2]", "1" + "+1" * 200, "(" * 500 + "1" + ")" * 500,
+    ],
 )
 def test_calculate_rejects_unsafe_or_invalid_input(expression: str) -> None:
     with pytest.raises(ToolError):

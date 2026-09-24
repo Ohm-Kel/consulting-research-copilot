@@ -33,11 +33,26 @@ def format_context(hits: list[Hit]) -> str:
     )
 
 
-def cited_sources(text: str, hits: list[Hit]) -> list[str]:
-    """Map the [n] markers the model used back to document/page citations."""
-    numbers = sorted({int(n) for n in re.findall(r"\[(\d+)\]", text)})
-    sources = [hits[n - 1].chunk.citation for n in numbers if 1 <= n <= len(hits)]
-    return list(dict.fromkeys(sources))  # de-duplicate, keep order
+def cited_sources(text: str, hits: list[Hit]) -> tuple[str, list[str]]:
+    """Map the excerpt numbers the model cited to document/page citations.
+
+    Returns the text renumbered so that [1] is the first source listed, [2] the
+    second, and so on (excerpts from the same page share a number), plus that
+    source list. Markers that point at no excerpt are removed."""
+    citations: list[str] = []
+
+    def renumber(match: re.Match[str]) -> str:
+        out = []
+        for n in (int(x) for x in re.findall(r"\d+", match.group(0))):
+            if 1 <= n <= len(hits):
+                citation = hits[n - 1].chunk.citation
+                if citation not in citations:
+                    citations.append(citation)
+                out.append(f"[{citations.index(citation) + 1}]")
+        return "".join(dict.fromkeys(out))
+
+    renumbered = re.sub(r"\[\d+(?:\s*,\s*\d+)*\]", renumber, text)
+    return re.sub(r"(\[\d+\])(\1)+", r"\1", renumbered), citations
 
 
 def make_client() -> anthropic.Anthropic:
@@ -56,5 +71,6 @@ def answer_question(
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": f"Excerpts:\n\n{format_context(hits)}\n\nQuestion: {question}"}],
     )
-    text = "".join(block.text for block in response.content if block.type == "text")
-    return Answer(text=text, sources=cited_sources(text, hits), contexts=[h.chunk.text for h in hits])
+    raw = "".join(block.text for block in response.content if block.type == "text")
+    text, sources = cited_sources(raw, hits)
+    return Answer(text=text, sources=sources, contexts=[h.chunk.text for h in hits])

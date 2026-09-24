@@ -23,3 +23,8 @@ def test_vector_search_returns_k_scored_hits_with_metadata(sample_index: Path) -
     assert len(hits) == 3
     assert hits[0].score >= hits[1].score >= hits[2].score
     assert all(h.chunk.page > 0 and h.chunk.source.endswith(".pdf") for h in hits)
+
+
+def test_missing_index_gives_actionable_error(tmp_path: Path) -> None:
+    with pytest.raises(RuntimeError, match="copilot.cli ingest"):
+        VectorRetriever(tmp_path / "empty")

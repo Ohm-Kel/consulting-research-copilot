@@ -11,9 +11,11 @@ def test_format_context_numbers_excerpts_with_citations() -> None:
     assert "[3] Columbia_FY2024_10K.pdf, p. 5" in context
 
 
-def test_cited_sources_maps_markers_and_ignores_invalid_numbers() -> None:
-    text = "Margin fell [1]. Stores grew [2][1]. Unknown [7]."
-    assert cited_sources(text, HITS) == ["Nike_FY2025_10K.pdf, p. 38", "Lululemon_FY2024_10K.pdf, p. 31"]
+def test_cited_sources_renumbers_to_match_source_list() -> None:
+    # The model cites excerpts 3 and 2 only; the answer must say [1], [2] to match the list.
+    text, sources = cited_sources("Staff [3]. Stores grew [2][3]. Both [2, 3]. Unknown [7].", HITS)
+    assert sources == ["Columbia_FY2024_10K.pdf, p. 5", "Lululemon_FY2024_10K.pdf, p. 31"]
+    assert text == "Staff [1]. Stores grew [2][1]. Both [2][1]. Unknown ."
 
 
 def test_answer_question_sends_excerpts_and_returns_citations() -> None:

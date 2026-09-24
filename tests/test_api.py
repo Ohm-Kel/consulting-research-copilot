@@ -71,3 +71,17 @@ def test_search_returns_passages(client: TestClient) -> None:
     body = client.post("/search", json={"question": "margin", "k": 2}).json()
     assert [p["citation"] for p in body] == ["Nike_FY2025_10K.pdf, p. 38", "Lululemon_FY2024_10K.pdf, p. 31"]
     assert body[0]["score"] == 5.0
+
+
+def test_claude_api_errors_become_502(client: TestClient) -> None:
+    import anthropic
+    import httpx2
+
+    class FailingAgent:
+        def run(self, question: str) -> AgentResult:
+            request = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
+            raise anthropic.APIConnectionError(request=request)
+
+    app.dependency_overrides[get_agent] = FailingAgent
+    response = client.post("/query", json={"question": "Nike revenue?"})
+    assert response.status_code == 502 and "APIConnectionError" in response.json()["detail"]

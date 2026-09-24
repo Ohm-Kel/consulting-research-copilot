@@ -20,7 +20,7 @@ import anthropic
 
 from copilot import config
 from copilot.generate import make_client
-from copilot.retrieval import Hit, Retriever, build_retriever
+from copilot.retrieval import Hit, RerankedRetriever, Retriever, build_retriever
 from copilot.tools import TOOL_SCHEMAS, ToolError, calculate, retrieve_documents
 
 DECLINE_MESSAGE = "The available reports do not contain this information."
@@ -79,10 +79,15 @@ class ResearchAgent:
         retriever: Retriever | None = None,
         client: anthropic.Anthropic | None = None,
         model: str = config.LLM_MODEL,
-        relevance_threshold: float = config.RELEVANCE_THRESHOLD,
+        relevance_threshold: float | None = None,
         max_turns: int = config.MAX_AGENT_TURNS,
     ) -> None:
+        """`relevance_threshold` defaults to config.RELEVANCE_THRESHOLD when the
+        retriever returns cross-encoder scores (the scale it was calibrated on) and
+        is disabled for other retrievers, whose scores use different scales."""
         self.retriever = retriever or build_retriever()
+        if relevance_threshold is None and isinstance(self.retriever, RerankedRetriever):
+            relevance_threshold = config.RELEVANCE_THRESHOLD
         self.client = client or make_client()
         self.model = model
         self.relevance_threshold = relevance_threshold
@@ -120,7 +125,7 @@ class ResearchAgent:
             return self._decline("the agent reached its step limit without answering", tool_calls, sources)
 
         # Guardrails, cheapest and most certain first.
-        if best_score < self.relevance_threshold:
+        if self.relevance_threshold is not None and best_score < self.relevance_threshold:
             return self._decline("no retrieved passage was relevant to the question", tool_calls, sources)
         if INSUFFICIENT_MARKER in final_text:
             reason = final_text.replace(INSUFFICIENT_MARKER, "").strip(" :.-\n") or "the model judged the context insufficient"
@@ -142,7 +147,7 @@ class ResearchAgent:
                         sid = f"S{len(sources) + 1}"
                         sources[sid] = hit
                     lines.append(f"[{sid}] {hit.chunk.citation} ({hit.chunk.company}) relevance={hit.score:.2f}\n{hit.chunk.text}")
-                if not hits or max(h.score for h in hits) < self.relevance_threshold:
+                if not hits or (self.relevance_threshold is not None and max(h.score for h in hits) < self.relevance_threshold):
                     lines.append("NOTE: these results look weakly related to the query. Try different wording.")
                 return "\n\n".join(lines) or "No passages found.", False, hits
             if name == "calculate":

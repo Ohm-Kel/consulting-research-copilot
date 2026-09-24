@@ -47,36 +47,55 @@ _FUNCTIONS: dict[str, Callable[..., float]] = {
 }
 
 
+MAX_EXPRESSION_LENGTH = 300
+
+
 def calculate(expression: str) -> float:
     """Evaluate an arithmetic expression without `eval`: only numbers, + - * / **,
-    parentheses and the whitelisted functions above are allowed."""
+    parentheses and the whitelisted functions above are allowed. All numbers are
+    floats, so huge powers overflow immediately instead of building giant integers."""
+    if len(expression) > MAX_EXPRESSION_LENGTH:
+        raise ToolError(f"expression longer than {MAX_EXPRESSION_LENGTH} characters")
     try:
         # Drop "$" and thousands separators ("4,689" -> "4689") but keep argument commas.
         cleaned = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", expression.replace("$", ""))
         tree = ast.parse(cleaned, mode="eval")
-    except SyntaxError as exc:
+    except (SyntaxError, ValueError, RecursionError) as exc:
         raise ToolError(f"cannot parse expression: {expression!r}") from exc
 
     def walk(node: ast.AST) -> float:
         if isinstance(node, ast.Expression):
             return walk(node.body)
-        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
-            return node.value
+        if isinstance(node, ast.Constant) and type(node.value) in (int, float):
+            return float(node.value)
         if isinstance(node, ast.BinOp) and type(node.op) in _BINARY:
             left, right = walk(node.left), walk(node.right)
             if isinstance(node.op, ast.Pow) and abs(right) > 100:
                 raise ToolError("exponent too large")
-            try:
-                return _BINARY[type(node.op)](left, right)
-            except ZeroDivisionError as exc:
-                raise ToolError("division by zero") from exc
+            if isinstance(node.op, ast.Div) and right == 0:
+                raise ToolError("division by zero")
+            result = _BINARY[type(node.op)](left, right)
+            if isinstance(result, complex):  # e.g. (-8) ** 0.5
+                raise ToolError("result is not a real number")
+            return result
         if isinstance(node, ast.UnaryOp) and type(node.op) in _UNARY:
             return _UNARY[type(node.op)](walk(node.operand))
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in _FUNCTIONS and not node.keywords:
-            return _FUNCTIONS[node.func.id](*[walk(arg) for arg in node.args])
+            args = [walk(arg) for arg in node.args]
+            if node.func.id == "round" and len(args) == 2:
+                args[1] = int(args[1])  # round(x, 2.0) -> round(x, 2)
+            return _FUNCTIONS[node.func.id](*args)
         raise ToolError(f"unsupported element in expression: {ast.dump(node)[:60]}")
 
-    return float(walk(tree))
+    try:
+        value = float(walk(tree))
+    except ToolError:
+        raise
+    except (ArithmeticError, ValueError, TypeError, RecursionError) as exc:  # overflow, sqrt(-1), bad arg count...
+        raise ToolError(f"cannot evaluate {expression!r}: {exc}") from exc
+    if not math.isfinite(value):
+        raise ToolError(f"result is not a finite number: {expression!r}")
+    return value
 
 
 # ----------------------------------------------------------------- retrieval

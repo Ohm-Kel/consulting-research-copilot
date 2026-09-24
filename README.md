@@ -83,7 +83,7 @@ Q: Why did Nike's gross margin decline in fiscal 2025?
 3. 4.876  Nike_FY2025_10K.pdf, p. 37
 ```
 
-Agent response shape (`POST /query`):
+Agent response shape (`POST /query`, illustrative values):
 
 ```json
 {
@@ -139,6 +139,8 @@ results land in `evals/results/ragas_final.json`.
 | Answerable questions clearing the relevance floor | 25/25 (lowest score 3.47 vs floor 2.0) |
 | Out-of-scope questions declined by the floor alone | 6/8 |
 | On-topic out-of-scope (Adidas revenue, Nike FY2030) | left to the model's `INSUFFICIENT_CONTEXT` judgement; measured by `evals/run_agent_eval.py` |
+
+The floor is calibrated on the cross-encoder's score scale, so it applies only with the `hybrid_rerank` retriever (the default); with other retrievers the model-judgement and citation checks still apply.
 
 ## CI/CD
 

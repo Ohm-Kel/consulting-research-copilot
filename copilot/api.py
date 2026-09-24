@@ -11,8 +11,10 @@ from contextlib import asynccontextmanager
 from functools import lru_cache
 from typing import AsyncIterator
 
+import anthropic
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from copilot import config
@@ -63,6 +65,12 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Consulting Research Copilot", version="1.0.0", lifespan=lifespan)
+
+
+@app.exception_handler(anthropic.APIError)
+async def claude_error(_: Request, exc: anthropic.APIError) -> JSONResponse:
+    """Upstream Claude failures (rate limits, auth, outages) become a clear 502."""
+    return JSONResponse(status_code=502, content={"detail": f"Claude API error: {type(exc).__name__}"})
 
 
 @app.get("/health")

@@ -57,18 +57,29 @@ async def score_one(metrics: dict, q: EvalQuestion, answer: str, contexts: list[
     return {name: float(r.value) for name, r in zip(METRIC_NAMES, results)}
 
 
-def run_mode(mode: str, questions: list[EvalQuestion], answer_model: str, metrics: dict) -> dict:
+async def run_mode(mode: str, questions: list[EvalQuestion], answer_model: str, metrics: dict) -> dict:
     retriever = build_retriever(mode)
     client = make_client()
     rows = []
     for q in questions:
         hits = retriever.search(q.question)
         answer = answer_question(q.question, hits, client=client, model=answer_model)
-        scores = asyncio.run(score_one(metrics, q, answer.text, answer.contexts))
+        scores = await score_one(metrics, q, answer.text, answer.contexts)
         rows.append({"id": q.id, "answer": answer.text, "sources": answer.sources, **scores})
         print(f"  {q.id}: " + "  ".join(f"{m}={scores[m]:.2f}" for m in METRIC_NAMES))
     means = {m: round(sum(r[m] for r in rows) / len(rows), 3) for m in METRIC_NAMES}
     return {"mode": mode, "answer_model": answer_model, **means, "rows": rows}
+
+
+async def run_all(modes: list[str], questions: list[EvalQuestion], model: str) -> list[dict]:
+    """One event loop for the whole run: the async Claude client used by the
+    judge metrics is bound to the loop it was first used on."""
+    metrics = build_metrics(model)
+    summaries = []
+    for mode in modes:
+        print(f"\n== {mode} ({len(questions)} questions, model {model})")
+        summaries.append(await run_mode(mode, questions, model, metrics))
+    return summaries
 
 
 def main() -> None:
@@ -81,12 +92,7 @@ def main() -> None:
     load_dotenv()
     model = config.EVAL_MODEL if args.final else config.DEV_MODEL
     questions = load_questions()[: args.limit]
-    metrics = build_metrics(model)
-
-    summaries = []
-    for mode in args.modes:
-        print(f"\n== {mode} ({len(questions)} questions, model {model})")
-        summaries.append(run_mode(mode, questions, model, metrics))
+    summaries = asyncio.run(run_all(args.modes, questions, model))
 
     print("\n| Metric | " + " | ".join(s["mode"] for s in summaries) + " |")
     print("|---|" + "---|" * len(summaries))

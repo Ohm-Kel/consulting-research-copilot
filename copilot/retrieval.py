@@ -33,7 +33,10 @@ class Retriever(Protocol):
 
 
 def _open_collection(chroma_dir: Path) -> chromadb.Collection:
-    return chromadb.PersistentClient(path=str(chroma_dir)).get_collection(config.COLLECTION_NAME)
+    client = chromadb.PersistentClient(path=str(chroma_dir))
+    if config.COLLECTION_NAME not in [c.name for c in client.list_collections()]:
+        raise RuntimeError(f"No index found in {chroma_dir}. Run: python -m copilot.cli ingest")
+    return client.get_collection(config.COLLECTION_NAME)
 
 
 class VectorRetriever:
