@@ -20,17 +20,17 @@ def cmd_ingest(_: argparse.Namespace) -> None:
 
 
 def cmd_search(args: argparse.Namespace) -> None:
-    from copilot.retrieval import VectorRetriever
+    from copilot.retrieval import build_retriever
 
-    for rank, hit in enumerate(VectorRetriever().search(args.question, k=args.k), start=1):
+    for rank, hit in enumerate(build_retriever(args.retriever).search(args.question, k=args.k), start=1):
         print(f"{rank}. {hit.score:.3f}  {hit.chunk.citation}\n   {hit.chunk.text[:200]}...\n")
 
 
 def cmd_ask(args: argparse.Namespace) -> None:
     from copilot.generate import answer_question
-    from copilot.retrieval import VectorRetriever
+    from copilot.retrieval import build_retriever
 
-    hits = VectorRetriever().search(args.question, k=args.k)
+    hits = build_retriever(args.retriever).search(args.question, k=args.k)
     answer = answer_question(args.question, hits)
     print(f"Answer: {answer.text}\n")
     print("Sources: " + "  ".join(f"[{i}] {s}" for i, s in enumerate(answer.sources, start=1)))
@@ -47,6 +47,8 @@ def main() -> None:
         p = sub.add_parser(name, help=help_text)
         p.add_argument("question")
         p.add_argument("-k", type=int, default=config.TOP_K, help="number of passages to retrieve")
+        p.add_argument("--retriever", default=config.RETRIEVER_MODE,
+                       choices=["vector", "bm25", "hybrid", "hybrid_rerank"])
         p.set_defaults(func=func)
     args = parser.parse_args()
     args.func(args)

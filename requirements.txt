@@ -9,3 +9,8 @@ pytest==9.1.1
 
 # Stage 1: basic RAG
 chromadb==1.5.9
+
+# Stage 2: evaluation, hybrid search, reranking
+rank-bm25==0.2.2
+ragas==0.4.3
+langchain-community==0.3.31  # ragas 0.4.3 imports a module removed in 0.4.x

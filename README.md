@@ -13,8 +13,8 @@ Under Armour (FY2025), Columbia Sportswear (FY2024), Deckers Brands (FY2025).
 |---|---|---|
 | 0 | Foundations: API call, embeddings, cosine similarity, PDF chunking | done |
 | 1 | Basic RAG with citations | v0.1 |
-| 2 | Evaluation, hybrid search, reranking | in progress |
-| 3 | Tool-calling agent and guardrails | planned |
+| 2 | Evaluation, hybrid search, reranking | v0.2 |
+| 3 | Tool-calling agent and guardrails | in progress |
 | 4 | FastAPI, Docker, CI | planned |
 
 ## Setup (Windows PowerShell)
@@ -74,3 +74,67 @@ Example retrieval (`search`, top 3):
 **Why bge-small instead of Stage 0's MiniLM:** `all-MiniLM-L6-v2` truncates input at 256 tokens,
 so most of a 300-word financial passage would never be embedded. `bge-small-en-v1.5` has the
 same vector size (384) with a 512-token window and stronger retrieval benchmarks.
+
+## Stage 2: Evaluation, then Improvement
+
+### Evaluation set
+
+`evals/questions.json` holds 25 questions, five per company: 14 lookups, 7 "why" questions and
+4 calculations. Each has a reference answer, the source report, every page that supports the
+answer, and a verbatim evidence snippet. `tests/test_eval_set.py` checks that each snippet really
+appears on its page, so the answer key cannot drift from the documents.
+
+### Two kinds of scoring
+
+| Script | Needs API key | What it measures |
+|---|---|---|
+| `evals/run_retrieval_eval.py` | no | Page-level retrieval: is a supporting page among the top-k chunks? Runs in CI on every push. |
+| `evals/run_ragas_eval.py` | yes | RAGAS answer quality judged by Claude: faithfulness, answer relevancy, context precision, context recall |
+
+### Improvements
+
+1. **BM25 keyword search** (`rank_bm25`) catches exact names and figures that embeddings blur
+   ("HOKA", "demand creation", "$4,689").
+2. **Hybrid fusion**: vector and BM25 top-30 lists merged with reciprocal rank fusion (rank-based,
+   so the two incompatible score scales never need calibrating).
+3. **Cross-encoder reranking**: reads the question and each of the 30 fused candidates together
+   and re-orders them.
+
+### Results: retrieval (25 questions, top 5)
+
+| Retriever | Hit@1 | Hit@5 | MRR | Precision@5 | sec/query (CPU) |
+|---|---|---|---|---|---|
+| Vector only (Stage 1 baseline) | 0.32 | 0.56 | 0.43 | 0.17 | 0.3 |
+| BM25 only | 0.24 | 0.60 | 0.39 | 0.18 | 0.01 |
+| Hybrid (RRF) | 0.32 | 0.60 | 0.44 | 0.18 | 0.04 |
+| **Hybrid + rerank** | **0.40** | **0.76** | **0.54** | **0.24** | 4.4 |
+
+Hybrid + reranking finds a supporting page for 19 of 25 questions versus 14 for the baseline.
+Remaining misses are mostly questions whose answer sits in a bullet list of highlights while
+many other pages repeat the same terms (e.g. Lululemon revenue growth).
+
+**Reranker choice, measured rather than assumed.** The brief named `bge-reranker-base`. On
+this eval set the smaller `ms-marco-MiniLM-L-6-v2` cross-encoder was both better and faster:
+
+| Reranker (candidates) | Hit@5 | MRR | sec/query |
+|---|---|---|---|
+| bge-reranker-base (20) | 0.72 | 0.49 | ~16 |
+| bge-reranker-base (10) | 0.68 | 0.50 | 10.6 |
+| ms-marco-MiniLM-L-6-v2 (20) | 0.72 | 0.53 | 3.3 |
+| **ms-marco-MiniLM-L-6-v2 (30)** (default) | **0.76** | **0.54** | 4.4 |
+
+Switch back with `COPILOT_RERANKER=BAAI/bge-reranker-base`.
+
+### Results: RAGAS answer quality
+
+Pending the API key. Run:
+
+```powershell
+python evals/run_ragas_eval.py --limit 3                              # smoke test, Haiku 4.5
+python evals/run_ragas_eval.py --modes vector hybrid_rerank --final   # final table, Sonnet 4.6
+```
+
+```powershell
+python evals/run_retrieval_eval.py        # reproduce the retrieval table above
+python -m copilot.cli search "How fast did HOKA grow?" --retriever hybrid_rerank
+```

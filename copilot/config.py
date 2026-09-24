@@ -22,6 +22,11 @@ OVERLAP_WORDS = 50
 
 # Retrieval
 TOP_K = 5
+RETRIEVER_MODE = os.getenv("COPILOT_RETRIEVER", "hybrid_rerank")  # vector | bm25 | hybrid | hybrid_rerank
+# Measured on the eval set (see README): the MiniLM cross-encoder over 30 candidates
+# beat BAAI/bge-reranker-base over 20 on every metric and ran ~6x faster on CPU.
+RERANKER_MODEL = os.getenv("COPILOT_RERANKER", "cross-encoder/ms-marco-MiniLM-L-6-v2")
+RERANK_CANDIDATES = int(os.getenv("COPILOT_RERANK_CANDIDATES", "30"))  # fused candidates the cross-encoder re-scores
 
 # Company name and report label for each file in data/.
 DOCUMENTS: dict[str, dict[str, str]] = {
