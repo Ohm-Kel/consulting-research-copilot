@@ -6,3 +6,6 @@ fonttools==4.66.0  # lets pypdf decode the embedded fonts in some annual reports
 numpy==2.5.3
 python-dotenv==1.2.3
 pytest==9.1.1
+
+# Stage 1: basic RAG
+chromadb==1.5.9

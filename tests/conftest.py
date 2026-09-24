@@ -1,0 +1,55 @@
+"""Shared fixtures. No test calls the real Claude API."""
+
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
+
+import pytest
+
+from copilot import config
+from copilot.ingest import Chunk, build_index
+
+SAMPLE_CHUNKS = [
+    Chunk("nike-p38-0", "Nike_FY2025_10K.pdf", "Nike", 38,
+          "For fiscal 2025, gross margin decreased 190 basis points to 42.7% due to higher discounts."),
+    Chunk("lulu-p31-0", "Lululemon_FY2024_10K.pdf", "Lululemon", 31,
+          "Company-operated store net revenue increased 14% and e-commerce net revenue increased 6%."),
+    Chunk("colm-p5-0", "Columbia_FY2024_10K.pdf", "Columbia Sportswear", 5,
+          "We employed approximately 9,450 full-time employees as of December 31, 2024."),
+    Chunk("deck-p40-0", "Deckers_FY2025_AR.pdf", "Deckers Brands", 40,
+          "HOKA brand net sales increased 23.6% to $2,233 million, driven by strong wholesale demand."),
+    Chunk("ua-p30-0", "UnderArmour_FY2025_10K.pdf", "Under Armour", 30,
+          "Under Armour recorded restructuring charges related to its 2025 restructuring plan."),
+]
+
+
+@pytest.fixture(scope="session")
+def sample_index(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """A tiny Chroma index built from SAMPLE_CHUNKS with the real embedding model."""
+    chroma_dir = tmp_path_factory.mktemp("chroma")
+    build_index(SAMPLE_CHUNKS, chroma_dir)
+    return chroma_dir
+
+
+@pytest.fixture(scope="session")
+def data_available() -> bool:
+    return all((config.DATA_DIR / name).exists() for name in config.DOCUMENTS)
+
+
+class FakeClaude:
+    """Stands in for anthropic.Anthropic. Returns queued responses in order and
+    records every request so tests can inspect what was sent."""
+
+    def __init__(self, responses: list[Any]) -> None:
+        self.responses = list(responses)
+        self.requests: list[dict[str, Any]] = []
+        self.messages = SimpleNamespace(create=self._create)
+
+    def _create(self, **kwargs: Any) -> Any:
+        self.requests.append(kwargs)
+        return self.responses.pop(0)
+
+
+def text_response(text: str) -> SimpleNamespace:
+    """A Messages API response containing a single text block."""
+    return SimpleNamespace(content=[SimpleNamespace(type="text", text=text)], stop_reason="end_turn")

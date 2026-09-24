@@ -1,0 +1,56 @@
+"""Command-line interface.
+
+    python -m copilot.cli ingest
+    python -m copilot.cli search "Nike gross margin fiscal 2025"
+    python -m copilot.cli ask "How did Nike's gross margin change in fiscal 2025?"
+"""
+
+import argparse
+
+from copilot import config
+
+
+def cmd_ingest(_: argparse.Namespace) -> None:
+    from copilot.ingest import build_index, load_corpus
+
+    chunks = load_corpus()
+    print(f"Chunked {len(config.DOCUMENTS)} reports into {len(chunks)} chunks. Embedding...")
+    build_index(chunks)
+    print(f"Index written to {config.CHROMA_DIR}")
+
+
+def cmd_search(args: argparse.Namespace) -> None:
+    from copilot.retrieval import VectorRetriever
+
+    for rank, hit in enumerate(VectorRetriever().search(args.question, k=args.k), start=1):
+        print(f"{rank}. {hit.score:.3f}  {hit.chunk.citation}\n   {hit.chunk.text[:200]}...\n")
+
+
+def cmd_ask(args: argparse.Namespace) -> None:
+    from copilot.generate import answer_question
+    from copilot.retrieval import VectorRetriever
+
+    hits = VectorRetriever().search(args.question, k=args.k)
+    answer = answer_question(args.question, hits)
+    print(f"Answer: {answer.text}\n")
+    print("Sources: " + "  ".join(f"[{i}] {s}" for i, s in enumerate(answer.sources, start=1)))
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(prog="copilot", description="Q&A over athletic apparel annual reports")
+    sub = parser.add_subparsers(required=True)
+    sub.add_parser("ingest", help="chunk and embed the reports in data/").set_defaults(func=cmd_ingest)
+    for name, func, help_text in [
+        ("search", cmd_search, "show the retrieved passages (no API key needed)"),
+        ("ask", cmd_ask, "answer a question with citations"),
+    ]:
+        p = sub.add_parser(name, help=help_text)
+        p.add_argument("question")
+        p.add_argument("-k", type=int, default=config.TOP_K, help="number of passages to retrieve")
+        p.set_defaults(func=func)
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
