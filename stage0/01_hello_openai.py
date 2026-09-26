@@ -15,11 +15,9 @@ from dotenv import load_dotenv
 load_dotenv()  # reads OPENAI_API_KEY and OPENAI_MODEL from .env
 
 api_key = os.getenv("OPENAI_API_KEY", "")
-model = os.getenv("OPENAI_MODEL", "")
+model = os.getenv("OPENAI_MODEL") or "gpt-5.6-luna"  # default when .env leaves it empty
 if not api_key or api_key == "paste-your-key-here":
     sys.exit("OPENAI_API_KEY is missing. Paste your key into .env as OPENAI_API_KEY=sk-...")
-if not model:
-    sys.exit("OPENAI_MODEL is missing. Add it to .env, e.g. OPENAI_MODEL=gpt-5.6-luna")
 
 client = openai.OpenAI(api_key=api_key)
 try:

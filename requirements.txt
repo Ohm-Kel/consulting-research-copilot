@@ -1,22 +1,23 @@
-# Runtime dependencies (the API and CLI). Dev and eval tools: requirements-dev.txt
+# Runtime dependencies (the API and CLI). Development and evaluation tools: requirements-dev.txt
 # On Linux, install CPU-only torch first to avoid multi-GB CUDA wheels:
 #   pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/cpu
 
-# Stage 0: foundations
-openai==1.109.1  # same version the ragas install resolves to
+# LLM client (pinned to the version the ragas install resolves to)
+openai==1.109.1
+
+# Embeddings, reranking and PDF parsing
 sentence-transformers==6.1.0
 torch==2.14.0
 pypdf==6.19.0
-fonttools==4.66.0  # lets pypdf decode the embedded fonts in some annual reports
+# fonttools lets pypdf decode the embedded fonts in some annual reports
+fonttools==4.66.0
 numpy==2.5.3
 python-dotenv==1.2.3
 
-# Stage 1: basic RAG
+# Retrieval
 chromadb==1.5.9
-
-# Stage 2: hybrid search
 rank-bm25==0.2.2
 
-# Stage 4: API
+# API
 fastapi==0.141.1
 uvicorn==0.53.0

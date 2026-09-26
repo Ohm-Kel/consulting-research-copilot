@@ -10,3 +10,8 @@ __pycache__/
 # Data and generated indexes (rebuild with scripts/download_data.py and ingest)
 data/
 chroma_db/
+
+# Build outputs
+build/
+dist/
+*.egg-info/

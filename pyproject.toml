@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "consulting-research-copilot"
+version = "1.1.0"
+description = "Question answering over company annual reports with page-level citations, hybrid retrieval, a tool-calling agent and evidence-level evaluation."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Semanu Kwaku Sebuava" }]
+keywords = ["rag", "retrieval", "llm", "agents", "evaluation", "fastapi"]
+dynamic = ["dependencies"]
+
+[project.urls]
+Repository = "https://github.com/Ohm-Kel/consulting-research-copilot"
+
+[project.scripts]
+copilot = "copilot.cli:main"
+
+[tool.setuptools]
+packages = ["copilot"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["data", "chroma_db"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # import sorting
+    "B",   # bugbear
+    "UP",  # pyupgrade
+    "SIM", # simplifications
+    "D1",  # missing docstrings
+]
+ignore = [
+    "D105", # magic methods
+    "D107", # __init__ (documented on the class)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D1"]
