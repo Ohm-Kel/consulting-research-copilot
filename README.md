@@ -3,6 +3,7 @@
 [![CI](https://github.com/Ohm-Kel/consulting-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Ohm-Kel/consulting-copilot/actions/workflows/ci.yml)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 ![Tests](https://img.shields.io/badge/tests-77%20passing-brightgreen)
+![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)
 
 An AI research assistant for the desk research a consulting case team does in the first days of
 a project. Ask a business question about five companies' annual reports; it finds the relevant
@@ -256,3 +257,7 @@ tests/            pytest suite
 | v1.0 | Stage 4: FastAPI, Docker, CI with evaluation regression gates |
 | v1.0.1 | Hardening fixes from a full code review |
 | v1.1 | OpenAI provider, evidence-level metric, full LLM-judged results |
+
+## License
+
+Released under the [MIT License](LICENSE). Copyright (c) 2026 Semanu Kwaku Sebuava.
