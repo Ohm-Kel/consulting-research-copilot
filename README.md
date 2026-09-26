@@ -1,24 +1,46 @@
 # Consulting Research Copilot
 
-A question-answering assistant over public company annual reports, for the kind of desk research
-a consulting case team does. Ask a business question; it retrieves the relevant passages and
-tables, computes figures with a calculator tool, and answers with page-level citations. When the
-reports do not support an answer, it declines instead of guessing.
+[![CI](https://github.com/Ohm-Kel/consulting-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Ohm-Kel/consulting-copilot/actions/workflows/ci.yml)
+![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
+![Tests](https://img.shields.io/badge/tests-77%20passing-brightgreen)
 
-**Corpus:** athletic apparel & footwear: Nike (FY2025 10-K), Lululemon (FY2024 10-K),
-Under Armour (FY2025 10-K), Columbia Sportswear (FY2024 10-K), Deckers Brands (FY2025 Annual
-Report). About 500 pages, 1,228 chunks.
+An AI research assistant for the desk research a consulting case team does in the first days of
+a project. Ask a business question about five companies' annual reports; it finds the relevant
+passages and tables, computes figures with a calculator tool, and answers with **page-level
+citations**. When the reports do not support an answer, it **declines instead of guessing**.
 
-**Headline results** (25-question eval set, final model `gpt-5.6-terra`):
+```
+Q: How did Nike's gross margin change in fiscal 2025, and what did management say caused it?
 
-- Retrieval: hybrid BM25 + vector search with cross-encoder reranking puts a passage that
-  actually contains the answer in the top 5 for **68%** of questions, up from **60%** for the
-  vector-only baseline (MRR 0.49 → 0.57, top-1 hit rate 0.40 → 0.48).
-- Agent: answered 24/25 questions, cited a supporting page in 23 of 24 answers, got 4/4
-  calculations right, and **declined 8/8 out-of-scope questions** instead of guessing.
-- RAGAS: faithfulness 0.97 (answers stick to the retrieved text).
+Answer: Nike's consolidated gross margin declined 190 basis points, from 44.6% in fiscal 2024 to
+42.7% in fiscal 2025. Gross profit fell 14% to $19,790 million. [1][2]
+Management attributed the decline primarily to lower NIKE Brand average selling prices (about
+180 bps), driven by higher discounts and channel-mix changes... partly offset by lower product
+costs (~80 bps) and lower warehousing and logistics costs (~20 bps). [1]
 
-## Architecture
+Sources: [1] Nike_FY2025_10K.pdf, p. 38  [2] Nike_FY2025_10K.pdf, p. 35
+```
+
+*Real output from `gpt-5.6-terra`, checked against the 10-K. More in [docs/examples.md](docs/examples.md).*
+
+## Results at a glance
+
+Measured on a 25-question evaluation set with verified answers (details in [Evaluation](#evaluation)).
+
+| What was measured | Result |
+|---|---|
+| Answer passage in the top 5 search results | **68%**, up from 60% for the vector-search baseline |
+| Answer passage ranked first | **48%**, up from 40% |
+| Out-of-scope questions declined instead of guessed | **8 / 8** |
+| Answerable questions answered, with a correct page cited | 24 / 25 answered, 23 / 24 cited correctly |
+| Financial calculations correct | **4 / 4** |
+| Faithfulness: answers grounded in the retrieved text (RAGAS) | **0.97** |
+
+**Corpus:** athletic apparel & footwear: Nike (FY2025 10-K), Lululemon (FY2024 10-K), Under
+Armour (FY2025 10-K), Columbia Sportswear (FY2024 10-K) and Deckers Brands (FY2025 Annual
+Report). About 500 pages, split into 1,228 page-level chunks.
+
+## How it works
 
 ```mermaid
 flowchart LR
@@ -37,110 +59,50 @@ flowchart LR
     G -- fail --> D[Decline with reason]
 ```
 
-Ingestion, offline: `PDF → pypdf page text → 300-word chunks (50 overlap), one page each →
-bge-small-en-v1.5 embeddings → Chroma`.
-
-## Setup
-
-Requires Python 3.12. Windows PowerShell shown; on macOS/Linux use `source .venv/bin/activate` and `cp`.
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
-copy .env.example .env               # paste your OPENAI_API_KEY into .env
-python scripts/download_data.py      # the five reports into data/
-python -m copilot.cli ingest         # build the index (a few minutes on CPU)
-python -m pytest                     # the LLM is mocked, no key needed
-```
-
-**Docker (one command after building):**
-
-```bash
-docker build -t consulting-copilot .          # bakes in reports, models and index
-docker run -p 8000:8000 --env-file .env consulting-copilot
-```
-
-## Usage
-
-```powershell
-python -m copilot.cli search "How fast did HOKA grow?"          # retrieval only, no key
-python -m copilot.cli agent  "By what percentage did Nike's net income fall in fiscal 2025?"
-uvicorn copilot.api:app --port 8000                              # then open http://localhost:8000/docs
-```
-
-| Endpoint | Body | Returns |
-|---|---|---|
-| `POST /query` | `{"question": "..."}` | `answer`, `sources`, `tool_calls`, `fallback_triggered`, `fallback_reason` |
-| `POST /search` | `{"question": "...", "k": 5}` | ranked passages with citation and score (no API key needed) |
-| `GET /health` | | status, retriever mode, model, whether the LLM is configured |
-
-### Example outputs
-
-Retrieval (`search`, real output):
-
-```
-Q: Why did Nike's gross margin decline in fiscal 2025?
-1. 6.880  Nike_FY2025_10K.pdf, p. 38
-   GROSS MARGIN FISCAL 2025 COMPARED TO FISCAL 2024 For fiscal 2025, our consolidated gross profit
-   decreased 14% to $19,790 million compared to $22,887 million for fiscal 2024. Gross margin decreased 190...
-2. 5.023  Nike_FY2025_10K.pdf, p. 46
-3. 4.876  Nike_FY2025_10K.pdf, p. 37
-```
-
-Agent (`python -m copilot.cli agent ...`, real output from `gpt-5.6-terra`):
-
-```
-Q: By what percentage did Lululemon's net income grow in 2024?
-Answer: Lululemon's net income grew 17.1% in fiscal 2024, rising from $1.550 billion in 2023
-to $1.815 billion in 2024. [1][2]
-Sources: [1] Lululemon_FY2024_10K.pdf, p. 32  [2] Lululemon_FY2024_10K.pdf, p. 49
-Tool calls: retrieve_documents (1), calculate (1)
-Fallback triggered: false
-
-Q: What was Adidas's revenue in 2024?
-Answer: The available reports do not contain this information.
-Tool calls: retrieve_documents (1)
-Fallback triggered: true
-```
-
-Out-of-scope (`"Who won the 2022 FIFA World Cup?"`): the best passage scores -8.5, far below
-the relevance floor of 2.0, so the agent returns *"The available reports do not contain this
-information."* with `fallback_triggered: true`.
-
-More real answers, including a Nike gross-margin bridge and an Under Armour vs Deckers
-comparison, are in [docs/examples.md](docs/examples.md) (`python scripts/make_examples.py --final`).
+1. **Ingestion.** Each PDF page is split into 300-word chunks that never cross a page boundary,
+   so every citation points to an exact page. Chunks are embedded locally with
+   `bge-small-en-v1.5` and stored in Chroma.
+2. **Hybrid retrieval.** Vector search captures meaning; BM25 keyword search catches exact names
+   and figures ("HOKA", "$4,689 million"). Their rankings are merged with reciprocal rank
+   fusion, and a cross-encoder reranker re-reads the top 30 candidates to pick the best 5.
+3. **Agent.** An LLM (OpenAI `gpt-5.6`) decides when to search, re-searches with different
+   wording when results are weak, and calls a calculator for growth rates and margins instead
+   of doing mental math. The loop is ~100 lines of plain Python, with no agent framework.
+4. **Guardrails.** The agent declines when (a) no retrieved passage clears a relevance floor
+   calibrated on measured scores, (b) the model judges the passages insufficient, or (c) a draft
+   answer cites no source.
+5. **Service.** FastAPI endpoint, Docker image, and a CI pipeline that re-runs the evaluation on
+   every push and fails the build if retrieval quality regresses.
 
 ## Evaluation
 
-`evals/questions.json`: 25 questions, five per company (14 lookups, 7 "why" questions, 4
-calculations). Each has a reference answer, the source report, and one or more **fact sets**:
-short strings copied from the report that together answer the question (for example
-`46.3 billion` + `51.4 billion`, or the table figures `46,309` + `51,362`).
+Evaluation was the core of the project, done before and after each change.
 
-- A retrieved chunk counts as relevant only if **its own text contains every fact of one set**,
-  so the metric measures whether the model was actually shown the evidence.
-- Each question's supporting pages are derived from the facts by `evals/label_pages.py`, not
-  hand-picked; a test fails if they drift or if any question has no evidence chunk.
+**Test set.** `evals/questions.json` has 25 questions, five per company: 14 lookups, 7 "why"
+questions and 4 calculations. Each has a reference answer and one or more **fact sets**: short
+strings copied from the report that together answer the question (for example `46.3 billion`
++ `51.4 billion`, or the table figures `46,309` + `51,362`).
 
-### Retrieval (no LLM, runs in CI)
+**Evidence-level scoring.** A retrieved chunk counts only if its own text contains a complete
+fact set, so the metric measures whether the model was actually shown the answer. Supporting
+pages are derived from the facts automatically (`evals/label_pages.py`), and a test fails if
+they ever drift from the documents.
+
+### Retrieval: before and after (no LLM, runs in CI)
 
 | Retriever | Hit@1 | Hit@5 | MRR | Precision@5 | sec/query (CPU) |
 |---|---|---|---|---|---|
-| Vector only (Stage 1 baseline) | 0.40 | 0.60 | 0.49 | 0.16 | 0.3 |
+| Vector only (baseline) | 0.40 | 0.60 | 0.49 | 0.16 | 0.3 |
 | BM25 only | 0.24 | 0.56 | 0.40 | 0.16 | <0.01 |
 | Hybrid (RRF) | 0.36 | 0.64 | 0.47 | 0.18 | 0.04 |
 | **Hybrid + rerank (default)** | **0.48** | **0.68** | **0.57** | **0.20** | 3.4 |
 | Hybrid + rerank, company-scoped | 0.48 | 0.68 | 0.56 | 0.20 | 3.6 |
 
-Hit@k: an evidence chunk is in the top k. MRR: mean reciprocal rank of the first evidence
-chunk. Precision@5: share of the top 5 chunks that contain the evidence.
+Hit@k: an answer chunk is in the top k. MRR: mean reciprocal rank of the first answer chunk.
+Precision@5: share of the top 5 chunks that contain the answer. With 25 questions each
+question is 4 points, so read small differences with care.
 
-With 25 questions, one question is 4 points, so the gain is two questions at top 5 and two at top 1.
-Restricting search to the company named in the question changed nothing: the 8 remaining
-misses are all *within* the right report (see Limitations).
-
-### Answer quality: RAGAS (LLM-judged, `gpt-5.6-terra` as generator and judge)
+### Answer quality: RAGAS (`gpt-5.6-terra` as generator and judge)
 
 | Metric | Vector baseline | Hybrid + rerank |
 |---|---|---|
@@ -149,61 +111,97 @@ misses are all *within* the right report (see Limitations).
 | Context precision | 0.68 | 0.73 |
 | Context recall | 0.80 | 0.75 |
 
-Reranking puts relevant passages higher (context precision +0.05), but end-to-end answer
-quality is statistically indistinguishable on 25 questions: each pipeline wins some questions
-the other loses. Faithfulness is high for both, meaning answers stay grounded in whatever was
-retrieved. Reproduce with `python evals/run_ragas_eval.py --final`.
+Reranking ranks relevant passages higher (context precision +0.05), but end-to-end answer
+quality is statistically indistinguishable on 25 questions; each pipeline wins some questions
+the other loses. Both pipelines keep answers grounded in the retrieved text.
 
-### Agent (`python evals/run_agent_eval.py --final`)
-
-| Check | Result |
-|---|---|
-| Answerable questions answered (not declined) | 24/25 |
-| Answers citing a supporting page | 23/24 |
-| Calculation questions with the correct percentage (±0.2 pts) | 4/4 |
-| Out-of-scope questions declined | 8/8 |
-| Tool calls over 33 questions | 40 searches, 6 calculations |
-
-The one decline (Deckers headcount) is a retrieval miss the agent correctly refused to guess past.
-
-### Guardrails
+### Agent and guardrails (`gpt-5.6-terra`)
 
 | Check | Result |
 |---|---|
-| Answerable questions clearing the relevance floor | 25/25 (lowest score 3.47 vs floor 2.0) |
-| Out-of-scope questions declined by the floor alone | 6/8 (World Cup, iPhone, Puma, Skechers...) |
-| On-topic out-of-scope (Adidas revenue, Nike FY2030) | declined by the model's `INSUFFICIENT_CONTEXT` judgement (2/2) |
+| Answerable questions answered (not declined) | 24 / 25 |
+| Answers citing a supporting page | 23 / 24 |
+| Calculation questions correct (±0.2 percentage points) | 4 / 4 |
+| Out-of-scope questions declined | 8 / 8 |
+| Out-of-scope declined by the relevance floor alone | 6 / 8 (World Cup, iPhone, Puma, Skechers…) |
+| On-topic out-of-scope (Adidas revenue, Nike FY2030) | 2 / 2 declined by the model's judgement |
+| Answerable questions clearing the relevance floor | 25 / 25 (lowest score 3.47 vs floor 2.0) |
 
-The floor is calibrated on the cross-encoder's score scale, so it applies only to reranked
-retrievers (the default); with other retrievers the model-judgement and citation checks still apply.
+The single decline (Deckers headcount) is a retrieval miss that the agent correctly refused to
+guess past.
 
-## CI/CD
+### What the evaluation taught me
 
-`.github/workflows/ci.yml` on every push:
+- **My first metric was wrong, and I replaced it.** The original page-level metric counted a
+  hit whenever any chunk from a "correct" page was retrieved (over-counting) and relied on a
+  hand-made page list that missed valid pages (under-counting). It reported 56% → 76%. When
+  the LLM-judged scores did not agree, I traced the gap, rebuilt the metric at the evidence
+  level, and the honest result is 60% → 68%.
+- **A plausible fix that did not help.** Restricting search to the company named in the
+  question changed nothing: the remaining misses are the right report, wrong passage.
+- **The reranker was chosen by measurement**, not reputation (see Design decisions).
 
-1. Unit tests, with the LLM mocked
-2. Download reports, build the index
-3. **Retrieval regression gate:** fail if hybrid + rerank Hit@5 drops below 0.64 (current 0.68; one question = 0.04)
-4. **Guardrail gate:** fail if any answerable question falls below the relevance floor
-5. Agent eval with gpt-5.6-luna, if the `OPENAI_API_KEY` repository secret is set
-6. RAGAS eval, on manual runs only (to control API cost)
-7. On `main`: build the Docker image and smoke-test `/health` and `/search`
+## Engineering
+
+| Area | What is in place |
+|---|---|
+| API | FastAPI: `POST /query` (agent), `POST /search` (retrieval only, no API key), `GET /health`; LLM errors mapped to 502, missing key to 503 |
+| Tests | 77 pytest tests; the LLM is replaced by a scripted fake, so the suite runs without a key |
+| Safety | AST-based calculator (no `eval`), capped expression size, rejects overflow and complex results |
+| Docker | One image with reports, models and a pre-built index |
+| CI | GitHub Actions: tests → build index → **retrieval regression gate** (Hit@5 ≥ 0.64) → **guardrail gate** → Docker build and smoke test; agent and RAGAS evals when an API key secret is configured |
+
+## Quick start
+
+Requires Python 3.12. Windows PowerShell shown; on macOS/Linux use `source .venv/bin/activate` and `cp`.
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt
+copy .env.example .env               # add your OPENAI_API_KEY
+python scripts/download_data.py      # the five reports into data/
+python -m copilot.cli ingest         # build the index (a few minutes on CPU)
+python -m pytest                     # no API key needed
+```
+
+```powershell
+python -m copilot.cli search "How fast did HOKA grow?"     # retrieval only, no key
+python -m copilot.cli agent  "By what percentage did Nike's net income fall in fiscal 2025?"
+uvicorn copilot.api:app --port 8000                         # API docs at http://localhost:8000/docs
+```
+
+Docker:
+
+```bash
+docker build -t consulting-copilot .
+docker run -p 8000:8000 --env-file .env consulting-copilot
+```
+
+Reproduce the evaluation:
+
+```powershell
+python evals/run_retrieval_eval.py        # retrieval table (free, ~5 min on CPU)
+python evals/run_guardrail_eval.py        # relevance-floor check (free)
+python evals/run_agent_eval.py --final    # agent table (uses the OpenAI API)
+python evals/run_ragas_eval.py --final    # RAGAS table (uses the OpenAI API)
+```
 
 ## Project structure
 
 ```
 copilot/
-  config.py       all settings (models, chunk sizes, thresholds)
+  config.py       all settings: models, chunk sizes, thresholds
   ingest.py       PDF → page-level chunks → Chroma
   embeddings.py   local sentence-transformers embeddings
   retrieval.py    vector, BM25, hybrid (RRF), reranked and company-scoped retrievers
   generate.py     single-shot RAG answer with citations (Stage 1)
-  tools.py        retrieve_documents and a safe AST calculator
-  agent.py        tool-use loop and fallback guardrails (Stage 3)
-  evaluation.py   eval set, fact matching and evidence-level retrieval metrics
+  tools.py        retrieve_documents and the safe calculator
+  agent.py        tool-calling loop and fallback guardrails
+  evaluation.py   eval set, fact matching and evidence-level metrics
   api.py          FastAPI service
   cli.py          command-line interface
-evals/            question set, out-of-scope set, page labeller, retrieval / guardrail / agent / RAGAS runners
+evals/            question sets, page labeller, retrieval / guardrail / agent / RAGAS runners, results/
 scripts/          report download, example generation
 stage0/           foundation scripts: API call, embeddings, cosine similarity, chunking
 tests/            pytest suite
@@ -211,14 +209,12 @@ tests/            pytest suite
 
 ## Design decisions
 
-- **Page-level chunking.** Chunks never cross a page boundary, so every citation is an exact page.
-  Each chunk is embedded with a short header ("Nike annual report, page 38.") so a bare
-  financial table still carries its company.
-- **bge-small over MiniLM for embeddings.** `all-MiniLM-L6-v2` truncates at 256 tokens and would
-  ignore most of each 300-word passage; `bge-small-en-v1.5` reads 512.
-- **Reranker chosen by measurement.** The brief suggested `bge-reranker-base`; on this eval set
-  `ms-marco-MiniLM-L-6-v2` matched it on Hit@5, beat it on Hit@1 and MRR, and ran about 3.5×
-  faster on CPU:
+- **Page-level chunks with a company header.** Each chunk is embedded with a short header
+  ("Nike annual report, page 38.") so a bare financial table still carries its company.
+- **`bge-small-en-v1.5` over `all-MiniLM-L6-v2` for embeddings.** MiniLM truncates at 256
+  tokens and would ignore most of each 300-word passage; bge-small reads 512.
+- **Reranker chosen by measurement.** `ms-marco-MiniLM-L-6-v2` matched `bge-reranker-base` on
+  Hit@5, beat it on Hit@1 and MRR, and ran about 3.5× faster on CPU:
 
   | Reranker (candidates) | Hit@1 | Hit@5 | MRR | sec/query |
   |---|---|---|---|---|
@@ -227,37 +223,36 @@ tests/            pytest suite
   | ms-marco-MiniLM-L-6-v2 (20) | 0.48 | 0.64 | 0.57 | 3.1 |
   | **ms-marco-MiniLM-L-6-v2 (30)** | **0.48** | **0.68** | **0.57** | 4.7 |
 
-- **Guardrail threshold from data**, not intuition (see Guardrails above).
-- **Manual tool loop, no agent framework.** About 100 lines, easy to test with a scripted fake client.
-  It uses the OpenAI **Responses API**: GPT-5.6 models reject function tools combined with
+- **Relevance floor set from data.** Every answerable question scores at least 3.47 and
+  unrelated questions at most 0.56, so the floor is 2.0. It applies only to reranker scores,
+  the scale it was calibrated on.
+- **OpenAI Responses API for the agent.** GPT-5.6 models reject function tools combined with
   reasoning on Chat Completions.
-- **Evidence-level metric, not page-level.** An earlier page-level version over-counted (a chunk
-  from the right page without the answer counted as a hit) and under-counted (valid pages missing
-  from a hand-made key). Switching changed the headline from 56% → 76% to the honest 60% → 68%.
 - **10-K print editions for Lululemon and Under Armour.** Their designed annual reports embed
   fonts without a text mapping, so text extraction produced gibberish.
-- **Models:** OpenAI `gpt-5.6-luna` for development, `gpt-5.6-terra` for final evaluation runs
-  (`--final`). Embeddings and reranking run locally. `evals/run_ragas_eval.py` patches a ragas
-  0.4.3 bug that sends `max_tokens` to `gpt-5.6-*` models (its GPT-5 detection cannot parse "5.6").
+- **Models:** `gpt-5.6-luna` for development and `gpt-5.6-terra` for final evaluation runs;
+  embeddings and reranking run locally for free. The whole evaluation cost under $5 in API usage.
 
 ## Limitations and next steps
 
-- 8 of 25 questions still miss the top 5 (e.g. Under Armour and Deckers headcount, Nike demand
-  creation). All are within-report misses: the right company, the wrong passage among pages that
-  repeat the same terms, so a company filter does not help. Smaller or section-aware chunks and
-  query rewriting are the next experiments, validated on new questions to avoid overfitting these 25.
-- 25 questions is a small sample; differences of a few points are within noise.
-- Tables are extracted as flattened text; pdfplumber table extraction would help numeric questions.
-- Cross-company comparison and GraphRAG are the optional Stage 5 in the brief.
+- **8 of 25 questions still miss the top 5**, all within the right report (e.g. Under Armour
+  and Deckers headcount). Next experiments: smaller or section-aware chunks and query
+  rewriting, validated on *new* questions to avoid overfitting these 25.
+- **Small evaluation set.** 25 questions means a few points of difference are within noise;
+  expanding it is the most valuable next step.
+- **Tables are flattened to text.** Structured table extraction (e.g. pdfplumber) would help
+  numeric questions.
+- **Cross-company comparison** works through the agent (see [docs/examples.md](docs/examples.md))
+  but is not yet part of the evaluation set.
 
-## Stage history
+## Release history
 
-| Tag | Stage | Content |
-|---|---|---|
-| (none) | 0 | Foundations: `stage0/` scripts |
-| v0.1 | 1 | Basic RAG with citations, CLI |
-| v0.2 | 2 | Eval set, baseline, hybrid search, reranking |
-| v0.3 | 3 | Tool-calling agent, calculator, fallback guardrails |
-| v1.0 | 4 | FastAPI, Docker, CI with eval regression gates |
-| v1.0.1 | 4 | Hardening fixes from a full code review |
-| v1.1 | 4 | OpenAI provider, evidence-level retrieval metric, first full LLM-judged results |
+| Tag | Content |
+|---|---|
+| (none) | Stage 0: foundation scripts in `stage0/` |
+| v0.1 | Stage 1: basic RAG with page citations and CLI |
+| v0.2 | Stage 2: evaluation set, hybrid search, reranking |
+| v0.3 | Stage 3: tool-calling agent, calculator, fallback guardrails |
+| v1.0 | Stage 4: FastAPI, Docker, CI with evaluation regression gates |
+| v1.0.1 | Hardening fixes from a full code review |
+| v1.1 | OpenAI provider, evidence-level metric, full LLM-judged results |
