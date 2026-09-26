@@ -1,4 +1,4 @@
-"""The eval runner scripts, with Claude and RAGAS replaced by stubs."""
+"""The eval runner scripts, with the LLM and RAGAS replaced by stubs."""
 
 import asyncio
 import importlib.util

@@ -56,7 +56,7 @@ def test_query_reports_fallback(client: TestClient) -> None:
 
 
 def test_query_without_api_key_returns_503(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     response = client.post("/query", json={"question": "Nike revenue?"})
     assert response.status_code == 503
 
@@ -73,14 +73,14 @@ def test_search_returns_passages(client: TestClient) -> None:
     assert body[0]["score"] == 5.0
 
 
-def test_claude_api_errors_become_502(client: TestClient) -> None:
-    import anthropic
-    import httpx2
+def test_llm_api_errors_become_502(client: TestClient) -> None:
+    import httpx
+    import openai
 
     class FailingAgent:
         def run(self, question: str) -> AgentResult:
-            request = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
-            raise anthropic.APIConnectionError(request=request)
+            request = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
+            raise openai.APIConnectionError(request=request)
 
     app.dependency_overrides[get_agent] = FailingAgent
     response = client.post("/query", json={"question": "Nike revenue?"})

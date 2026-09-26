@@ -1,12 +1,12 @@
 """Stage 3: a tool-calling research agent with a fallback guardrail.
 
-Loop: Claude decides which tools to call (retrieve_documents, calculate), we run
-them and return the results, until Claude produces a final answer. Three
+Loop: the model decides which tools to call (retrieve_documents, calculate), we run
+them and return the results, until the model produces a final answer. Three
 guardrails decide whether that answer is returned or replaced by a decline:
 
 1. Relevance floor: if no retrieved passage ever scored above
    RELEVANCE_THRESHOLD, the reports do not cover the question.
-2. Model judgement: Claude replies INSUFFICIENT_CONTEXT when the passages are
+2. Model judgement: the model replies INSUFFICIENT_CONTEXT when the passages are
    on-topic but do not contain the answer (e.g. a future fiscal year).
 3. Citations: an answer that cites no retrieved source is not returned.
 """
@@ -16,7 +16,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-import anthropic
+from openai import OpenAI
 
 from copilot import config
 from copilot.generate import make_client
@@ -77,7 +77,7 @@ class ResearchAgent:
     def __init__(
         self,
         retriever: Retriever | None = None,
-        client: anthropic.Anthropic | None = None,
+        client: OpenAI | None = None,
         model: str = config.LLM_MODEL,
         relevance_threshold: float | None = None,
         max_turns: int = config.MAX_AGENT_TURNS,
@@ -97,30 +97,44 @@ class ResearchAgent:
         sources: dict[str, Hit] = {}  # source ID (S1, S2...) -> passage, across all searches
         tool_calls: dict[str, int] = {}
         best_score = float("-inf")
-        messages: list[dict[str, Any]] = [{"role": "user", "content": question}]
+        messages: list[dict[str, Any]] = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": question},
+        ]
         final_text = ""
 
         for _ in range(self.max_turns):
-            response = self.client.messages.create(
-                model=self.model, max_tokens=2048, system=SYSTEM_PROMPT, tools=TOOL_SCHEMAS, messages=messages
+            response = self.client.chat.completions.create(
+                model=self.model, max_completion_tokens=4096, tools=TOOL_SCHEMAS, messages=messages
             )
-            if response.stop_reason in ("max_tokens", "refusal"):
-                return self._decline(f"the model stopped early ({response.stop_reason})", tool_calls, sources)
-            if response.stop_reason != "tool_use":
-                final_text = "".join(b.text for b in response.content if b.type == "text").strip()
+            choice = response.choices[0]
+            if choice.finish_reason in ("length", "content_filter"):
+                return self._decline(f"the model stopped early ({choice.finish_reason})", tool_calls, sources)
+            message = choice.message
+            if not message.tool_calls:
+                final_text = (message.content or "").strip()
                 break
 
-            messages.append({"role": "assistant", "content": response.content})
-            results = []
-            for block in response.content:
-                if block.type != "tool_use":
-                    continue
-                tool_calls[block.name] = tool_calls.get(block.name, 0) + 1
-                content, is_error, hits = self._execute(block.name, block.input, sources)
+            messages.append({
+                "role": "assistant",
+                "content": message.content,
+                "tool_calls": [
+                    {"id": c.id, "type": "function", "function": {"name": c.function.name, "arguments": c.function.arguments}}
+                    for c in message.tool_calls
+                ],
+            })
+            for call in message.tool_calls:  # every call gets a reply, in order
+                name = call.function.name
+                tool_calls[name] = tool_calls.get(name, 0) + 1
+                try:
+                    arguments = json.loads(call.function.arguments or "{}")
+                except json.JSONDecodeError:
+                    content, hits = "Error: arguments were not valid JSON", []
+                else:
+                    content, _, hits = self._execute(name, arguments, sources)
                 for hit in hits:
                     best_score = max(best_score, hit.score)
-                results.append({"type": "tool_result", "tool_use_id": block.id, "content": content, "is_error": is_error})
-            messages.append({"role": "user", "content": results})
+                messages.append({"role": "tool", "tool_call_id": call.id, "content": content})
         else:
             return self._decline("the agent reached its step limit without answering", tool_calls, sources)
 

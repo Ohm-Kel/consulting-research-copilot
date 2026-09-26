@@ -1,4 +1,4 @@
-"""Shared fixtures. No test calls the real Claude API."""
+"""Shared fixtures. No test calls the real OpenAI API."""
 
 from pathlib import Path
 from types import SimpleNamespace
@@ -36,20 +36,27 @@ def data_available() -> bool:
     return all((config.DATA_DIR / name).exists() for name in config.DOCUMENTS)
 
 
-class FakeClaude:
-    """Stands in for anthropic.Anthropic. Returns queued responses in order and
+class FakeLLM:
+    """Stands in for openai.OpenAI. Returns queued responses in order and
     records every request so tests can inspect what was sent."""
 
     def __init__(self, responses: list[Any]) -> None:
         self.responses = list(responses)
         self.requests: list[dict[str, Any]] = []
-        self.messages = SimpleNamespace(create=self._create)
+        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._create))
 
     def _create(self, **kwargs: Any) -> Any:
-        self.requests.append(kwargs)
+        self.requests.append({**kwargs, "messages": list(kwargs.get("messages", []))})
         return self.responses.pop(0)
 
 
+def completion(content: str | None = None, tool_calls: list[Any] | None = None, finish_reason: str | None = None) -> SimpleNamespace:
+    """A Chat Completions response with one choice."""
+    message = SimpleNamespace(content=content, tool_calls=tool_calls or None)
+    reason = finish_reason or ("tool_calls" if tool_calls else "stop")
+    return SimpleNamespace(choices=[SimpleNamespace(message=message, finish_reason=reason)])
+
+
 def text_response(text: str) -> SimpleNamespace:
-    """A Messages API response containing a single text block."""
-    return SimpleNamespace(content=[SimpleNamespace(type="text", text=text)], stop_reason="end_turn")
+    """A response containing only a text answer."""
+    return completion(content=text)

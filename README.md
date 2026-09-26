@@ -18,7 +18,7 @@ vector-only baseline (MRR 0.43 → 0.54). CI enforces this on every push.
 ```mermaid
 flowchart LR
     Q[User question] --> API[FastAPI /query]
-    API --> A[Agent<br/>Claude tool-use loop]
+    API --> A[Agent<br/>LLM tool-calling loop]
     A -- retrieve_documents --> R
     A -- calculate --> C[Safe calculator<br/>pct_change, share, cagr]
     subgraph R [Retrieval tool]
@@ -43,10 +43,10 @@ Requires Python 3.12. Windows PowerShell shown; on macOS/Linux use `source .venv
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
-copy .env.example .env               # paste your ANTHROPIC_API_KEY into .env
+copy .env.example .env               # paste your OPENAI_API_KEY into .env
 python scripts/download_data.py      # the five reports into data/
 python -m copilot.cli ingest         # build the index (a few minutes on CPU)
-python -m pytest                     # Claude is mocked, no key needed
+python -m pytest                     # the LLM is mocked, no key needed
 ```
 
 **Docker (one command after building):**
@@ -129,7 +129,7 @@ Precision@5: share of the top 5 chunks that come from a supporting page.
 | Context precision | *pending* | *pending* |
 | Context recall | *pending* | *pending* |
 
-Produced by `python evals/run_ragas_eval.py --final` (Claude Sonnet 4.6 as generator and judge);
+Produced by `python evals/run_ragas_eval.py --final` (gpt-5.6-terra as generator and judge);
 results land in `evals/results/ragas_final.json`.
 
 ### Guardrails
@@ -146,11 +146,11 @@ The floor is calibrated on the cross-encoder's score scale, so it applies only w
 
 `.github/workflows/ci.yml` on every push:
 
-1. Unit tests, with Claude mocked
+1. Unit tests, with the LLM mocked
 2. Download reports, build the index
 3. **Retrieval regression gate:** fail if hybrid + rerank Hit@5 drops below 0.72
 4. **Guardrail gate:** fail if any answerable question falls below the relevance floor
-5. Agent eval with Claude Haiku 4.5, if the `ANTHROPIC_API_KEY` repository secret is set
+5. Agent eval with gpt-5.6-luna, if the `OPENAI_API_KEY` repository secret is set
 6. RAGAS eval, on manual runs only (to control API cost)
 7. On `main`: build the Docker image and smoke-test `/health` and `/search`
 
@@ -195,7 +195,7 @@ tests/            pytest suite
 - **Manual tool loop, no agent framework.** About 100 lines, easy to test with a scripted fake client.
 - **10-K print editions for Lululemon and Under Armour.** Their designed annual reports embed
   fonts without a text mapping, so text extraction produced gibberish.
-- **Models:** Claude Haiku 4.5 for development, Claude Sonnet 4.6 for final evaluation runs
+- **Models:** OpenAI `gpt-5.6-luna` for development, `gpt-5.6-terra` for final evaluation runs
   (`--final`). Embeddings and reranking run locally.
 
 ## Limitations and next steps

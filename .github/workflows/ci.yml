@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       ragas:
-        description: "Also run the RAGAS answer-quality eval (uses the Anthropic API)"
+        description: "Also run the RAGAS answer-quality eval (uses the OpenAI API)"
         type: boolean
         default: false
 
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -45,7 +45,7 @@ jobs:
       - name: Download reports
         run: python scripts/download_data.py
 
-      - name: Unit tests (Claude is mocked)
+      - name: Unit tests (LLM is mocked)
         run: python -m pytest -q
 
       - name: Build index
@@ -58,12 +58,12 @@ jobs:
       - name: Guardrail regression gate (no API key needed)
         run: python evals/run_guardrail_eval.py --strict
 
-      - name: Agent eval with Claude Haiku 4.5 (runs when ANTHROPIC_API_KEY secret is set)
-        if: env.ANTHROPIC_API_KEY != ''
+      - name: Agent eval with gpt-5.6-luna (runs when OPENAI_API_KEY secret is set)
+        if: env.OPENAI_API_KEY != ''
         run: python evals/run_agent_eval.py
 
       - name: RAGAS eval (manual runs only, when requested)
-        if: env.ANTHROPIC_API_KEY != '' && github.event_name == 'workflow_dispatch' && inputs.ragas
+        if: env.OPENAI_API_KEY != '' && github.event_name == 'workflow_dispatch' && inputs.ragas
         run: python evals/run_ragas_eval.py --modes vector hybrid_rerank
 
       - name: Upload eval results

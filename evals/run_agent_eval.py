@@ -1,4 +1,4 @@
-"""End-to-end agent check. Needs ANTHROPIC_API_KEY.
+"""End-to-end agent check. Needs OPENAI_API_KEY.
 
 Reports, for the agent (Stage 3):
     answer rate        answerable questions that got a cited answer (not a decline)
@@ -6,8 +6,8 @@ Reports, for the agent (Stage 3):
     calc accuracy      calculation questions whose answer contains the right percentage (+/-0.2 pts)
     decline rate       out-of-scope questions correctly declined
 
-    python evals/run_agent_eval.py            # Haiku 4.5
-    python evals/run_agent_eval.py --final    # Sonnet 4.6
+    python evals/run_agent_eval.py            # gpt-5.6-luna
+    python evals/run_agent_eval.py --final    # gpt-5.6-terra (final)
 """
 
 import argparse

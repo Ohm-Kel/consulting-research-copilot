@@ -1,7 +1,7 @@
 """FastAPI service.
 
     uvicorn copilot.api:app --port 8000
-    POST /query   {"question": "..."}  -> agent answer with citations (needs ANTHROPIC_API_KEY)
+    POST /query   {"question": "..."}  -> agent answer with citations (needs OPENAI_API_KEY)
     POST /search  {"question": "..."}  -> retrieved passages only (no key needed)
     GET  /health
 """
@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from functools import lru_cache
 from typing import AsyncIterator
 
-import anthropic
+import openai
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -51,8 +51,8 @@ def get_retriever() -> Retriever:
 
 
 def get_agent(retriever: Retriever = Depends(get_retriever)) -> ResearchAgent:
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        raise HTTPException(503, "ANTHROPIC_API_KEY is not set; /query is unavailable. /search still works.")
+    if not os.getenv("OPENAI_API_KEY"):
+        raise HTTPException(503, "OPENAI_API_KEY is not set; /query is unavailable. /search still works.")
     return ResearchAgent(retriever=retriever)
 
 
@@ -67,16 +67,16 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title="Consulting Research Copilot", version="1.0.0", lifespan=lifespan)
 
 
-@app.exception_handler(anthropic.APIError)
-async def claude_error(_: Request, exc: anthropic.APIError) -> JSONResponse:
-    """Upstream Claude failures (rate limits, auth, outages) become a clear 502."""
-    return JSONResponse(status_code=502, content={"detail": f"Claude API error: {type(exc).__name__}"})
+@app.exception_handler(openai.APIError)
+async def llm_error(_: Request, exc: openai.APIError) -> JSONResponse:
+    """Upstream OpenAI failures (rate limits, auth, outages) become a clear 502."""
+    return JSONResponse(status_code=502, content={"detail": f"OpenAI API error: {type(exc).__name__}"})
 
 
 @app.get("/health")
 def health() -> dict[str, str | bool]:
     return {"status": "ok", "retriever": config.RETRIEVER_MODE, "model": config.LLM_MODEL,
-            "llm_available": bool(os.getenv("ANTHROPIC_API_KEY"))}
+            "llm_available": bool(os.getenv("OPENAI_API_KEY"))}
 
 
 @app.post("/query", response_model=QueryResponse)

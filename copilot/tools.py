@@ -106,37 +106,41 @@ def retrieve_documents(retriever: Retriever, query: str, k: int = 5) -> list[Hit
     return retriever.search(query, k=k)
 
 
-# -------------------------------------------------------- schemas for Claude
+# -------------------------------------------------------- schemas for the LLM
+
+def _function(name: str, description: str, properties: dict[str, Any]) -> dict[str, Any]:
+    """An OpenAI function-calling tool definition with strict argument checking."""
+    return {
+        "type": "function",
+        "function": {
+            "name": name,
+            "description": description,
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": properties,
+                "required": list(properties),
+                "additionalProperties": False,
+            },
+        },
+    }
+
 
 TOOL_SCHEMAS: list[dict[str, Any]] = [
-    {
-        "name": "retrieve_documents",
-        "description": (
-            "Search the annual reports of Nike (FY2025), Lululemon (FY2024), Under Armour (FY2025), "
-            "Columbia Sportswear (FY2024) and Deckers Brands (FY2025). Returns numbered passages with "
-            "source IDs like S3 and a relevance score. Include the company name and specific terms "
-            "in the query. If results look weak or off-topic, search again with different wording."
-        ),
-        "input_schema": {
-            "type": "object",
-            "properties": {"query": {"type": "string", "description": "Search query, e.g. 'Nike gross margin fiscal 2025 drivers'"}},
-            "required": ["query"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "calculate",
-        "description": (
-            "Evaluate an arithmetic expression exactly. Use it for every computed figure instead of "
-            "mental math. Supports + - * / ** and parentheses, plus pct_change(old, new), "
-            "share(part, whole), cagr(start, end, years), round(x, n), abs, min, max. "
-            "Write numbers without thousands separators. Example: pct_change(5700, 3219)."
-        ),
-        "input_schema": {
-            "type": "object",
-            "properties": {"expression": {"type": "string"}},
-            "required": ["expression"],
-            "additionalProperties": False,
-        },
-    },
+    _function(
+        "retrieve_documents",
+        "Search the annual reports of Nike (FY2025), Lululemon (FY2024), Under Armour (FY2025), "
+        "Columbia Sportswear (FY2024) and Deckers Brands (FY2025). Returns numbered passages with "
+        "source IDs like S3 and a relevance score. Include the company name and specific terms "
+        "in the query. If results look weak or off-topic, search again with different wording.",
+        {"query": {"type": "string", "description": "Search query, e.g. 'Nike gross margin fiscal 2025 drivers'"}},
+    ),
+    _function(
+        "calculate",
+        "Evaluate an arithmetic expression exactly. Use it for every computed figure instead of "
+        "mental math. Supports + - * / ** and parentheses, plus pct_change(old, new), "
+        "share(part, whole), cagr(start, end, years), round(x, n), abs, min, max. "
+        "Write numbers without thousands separators. Example: pct_change(5700, 3219).",
+        {"expression": {"type": "string"}},
+    ),
 ]

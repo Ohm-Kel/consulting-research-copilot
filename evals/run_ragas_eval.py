@@ -1,7 +1,7 @@
-"""Score end-to-end answers with RAGAS (LLM-judged). Needs ANTHROPIC_API_KEY.
+"""Score end-to-end answers with RAGAS (LLM-judged). Needs OPENAI_API_KEY.
 
-    python evals/run_ragas_eval.py --modes vector hybrid_rerank          # development run, Haiku 4.5
-    python evals/run_ragas_eval.py --modes vector hybrid_rerank --final  # final run, Sonnet 4.6
+    python evals/run_ragas_eval.py --modes vector hybrid_rerank          # development run, gpt-5.6-luna
+    python evals/run_ragas_eval.py --modes vector hybrid_rerank --final  # final run, gpt-5.6-terra
     python evals/run_ragas_eval.py --limit 3                             # quick smoke test
 
 Metrics (0-1, higher is better):
@@ -19,8 +19,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from anthropic import AsyncAnthropic  # noqa: E402
 from dotenv import load_dotenv  # noqa: E402
+from openai import AsyncOpenAI  # noqa: E402
 
 from copilot import config  # noqa: E402
 from copilot.evaluation import EvalQuestion, load_questions  # noqa: E402
@@ -32,12 +32,12 @@ METRIC_NAMES = ("faithfulness", "answer_relevancy", "context_precision", "contex
 
 
 def build_metrics(judge_model: str) -> dict:
-    """RAGAS metrics judged by Claude, with local embeddings for answer relevancy."""
+    """RAGAS metrics judged by an OpenAI model, with local embeddings for answer relevancy."""
     from ragas.embeddings.base import embedding_factory
     from ragas.llms.base import llm_factory
     from ragas.metrics.collections import AnswerRelevancy, ContextPrecisionWithReference, ContextRecall, Faithfulness
 
-    llm = llm_factory(judge_model, provider="anthropic", client=AsyncAnthropic(), max_tokens=4096)
+    llm = llm_factory(judge_model, provider="openai", client=AsyncOpenAI())
     embeddings = embedding_factory("huggingface", model=config.EMBEDDING_MODEL)
     return {
         "faithfulness": Faithfulness(llm=llm),
@@ -72,7 +72,7 @@ async def run_mode(mode: str, questions: list[EvalQuestion], answer_model: str, 
 
 
 async def run_all(modes: list[str], questions: list[EvalQuestion], model: str) -> list[dict]:
-    """One event loop for the whole run: the async Claude client used by the
+    """One event loop for the whole run: the async OpenAI client used by the
     judge metrics is bound to the loop it was first used on."""
     metrics = build_metrics(model)
     summaries = []

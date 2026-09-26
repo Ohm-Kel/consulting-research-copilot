@@ -3,8 +3,7 @@
 import re
 from dataclasses import dataclass, field
 
-import anthropic
-from dotenv import load_dotenv
+from openai import OpenAI
 
 from copilot import config
 from copilot.retrieval import Hit
@@ -55,22 +54,21 @@ def cited_sources(text: str, hits: list[Hit]) -> tuple[str, list[str]]:
     return re.sub(r"(\[\d+\])(\1)+", r"\1", renumbered), citations
 
 
-def make_client() -> anthropic.Anthropic:
-    load_dotenv()
-    return anthropic.Anthropic()
+def make_client() -> OpenAI:
+    """OpenAI client; reads OPENAI_API_KEY (loaded from .env by copilot.config)."""
+    return OpenAI()
 
 
-def answer_question(
-    question: str, hits: list[Hit], client: anthropic.Anthropic | None = None, model: str = config.LLM_MODEL
-) -> Answer:
-    """Ask Claude to answer `question` from `hits` and extract its citations."""
+def answer_question(question: str, hits: list[Hit], client: OpenAI | None = None, model: str = config.LLM_MODEL) -> Answer:
+    """Ask the model to answer `question` from `hits` and extract its citations."""
     client = client or make_client()
-    response = client.messages.create(
+    response = client.chat.completions.create(
         model=model,
-        max_tokens=1024,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": f"Excerpts:\n\n{format_context(hits)}\n\nQuestion: {question}"}],
+        max_completion_tokens=4096,  # reasoning models spend part of this budget thinking
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": f"Excerpts:\n\n{format_context(hits)}\n\nQuestion: {question}"},
+        ],
     )
-    raw = "".join(block.text for block in response.content if block.type == "text")
-    text, sources = cited_sources(raw, hits)
+    text, sources = cited_sources(response.choices[0].message.content or "", hits)
     return Answer(text=text, sources=sources, contexts=[h.chunk.text for h in hits])

@@ -3,15 +3,18 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(ROOT / ".env")  # OPENAI_API_KEY and model overrides; real env vars take precedence
 DATA_DIR = Path(os.getenv("COPILOT_DATA_DIR", ROOT / "data"))
 CHROMA_DIR = Path(os.getenv("COPILOT_CHROMA_DIR", ROOT / "chroma_db"))
 COLLECTION_NAME = "annual_reports"
 
-# Models
-DEV_MODEL = "claude-haiku-4-5"     # all development calls
-EVAL_MODEL = "claude-sonnet-4-6"   # final evaluation runs only
-LLM_MODEL = os.getenv("COPILOT_LLM_MODEL", DEV_MODEL)
+# Models (OpenAI). Override in .env with OPENAI_MODEL / OPENAI_EVAL_MODEL.
+DEV_MODEL = os.getenv("OPENAI_MODEL") or "gpt-5.6-luna"        # all development calls
+EVAL_MODEL = os.getenv("OPENAI_EVAL_MODEL") or "gpt-5.6-terra"  # final evaluation runs only
+LLM_MODEL = DEV_MODEL
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 # bge models are trained to see this prefix on queries (not on passages).
 QUERY_PREFIX = "Represent this sentence for searching relevant passages: "

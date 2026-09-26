@@ -1,8 +1,8 @@
 """Run the agent on showcase queries and save real outputs to docs/examples.md.
-Needs ANTHROPIC_API_KEY.
+Needs OPENAI_API_KEY.
 
-    python scripts/make_examples.py            # Haiku 4.5
-    python scripts/make_examples.py --final    # Sonnet 4.6 (for the published README examples)
+    python scripts/make_examples.py            # gpt-5.6-luna
+    python scripts/make_examples.py --final    # gpt-5.6-terra (final)
 """
 
 import argparse

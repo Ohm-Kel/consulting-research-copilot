@@ -1,11 +1,13 @@
-"""Agent loop and fallback guardrails, with a scripted fake Claude and retriever."""
+"""Agent loop and fallback guardrails, with a scripted fake LLM and retriever."""
 
 from types import SimpleNamespace
 from typing import Any
 
 from copilot.agent import DECLINE_MESSAGE, ResearchAgent, renumber_citations
 from copilot.retrieval import Hit
-from tests.conftest import SAMPLE_CHUNKS, FakeClaude, text_response
+import json
+
+from tests.conftest import SAMPLE_CHUNKS, FakeLLM, completion, text_response
 
 NIKE = SAMPLE_CHUNKS[0]
 
@@ -20,13 +22,17 @@ class FakeRetriever:
         return self.hits[:k]
 
 
-def tool_use(name: str, tool_input: dict[str, Any], block_id: str = "tu_1") -> SimpleNamespace:
-    block = SimpleNamespace(type="tool_use", id=block_id, name=name, input=tool_input)
-    return SimpleNamespace(content=[block], stop_reason="tool_use")
+def tool_use(name: str, tool_input: dict[str, Any], call_id: str = "tu_1") -> SimpleNamespace:
+    call = SimpleNamespace(id=call_id, type="function", function=SimpleNamespace(name=name, arguments=json.dumps(tool_input)))
+    return completion(tool_calls=[call])
 
 
-def make_agent(responses: list[Any], hits: list[Hit]) -> tuple[ResearchAgent, FakeClaude, FakeRetriever]:
-    fake, retriever = FakeClaude(responses), FakeRetriever(hits)
+def last_tool_message(request: dict[str, Any]) -> dict[str, Any]:
+    return [m for m in request["messages"] if m["role"] == "tool"][-1]
+
+
+def make_agent(responses: list[Any], hits: list[Hit]) -> tuple[ResearchAgent, FakeLLM, FakeRetriever]:
+    fake, retriever = FakeLLM(responses), FakeRetriever(hits)
     return ResearchAgent(retriever=retriever, client=fake, model="test", relevance_threshold=2.0), fake, retriever
 
 
@@ -47,8 +53,8 @@ def test_agent_retrieves_calculates_and_cites() -> None:
     assert result.tool_calls == {"retrieve_documents": 1, "calculate": 1}
     assert retriever.queries == ["Nike gross margin fiscal 2025"]
     # the calculator result went back to the model as a tool_result
-    calc_result = fake.requests[2]["messages"][-1]["content"][0]
-    assert calc_result["tool_use_id"] == "tu_2" and '"result": -4.2601' in calc_result["content"]
+    calc_result = last_tool_message(fake.requests[2])
+    assert calc_result["tool_call_id"] == "tu_2" and '"result": -4.2601' in calc_result["content"]
 
 
 def test_fallback_when_no_passage_is_relevant() -> None:
@@ -61,7 +67,7 @@ def test_fallback_when_no_passage_is_relevant() -> None:
     assert result.answer == DECLINE_MESSAGE
     assert result.sources == []
     assert "not relevant" in result.fallback_reason or "no retrieved passage" in result.fallback_reason
-    assert "weakly related" in fake.requests[1]["messages"][-1]["content"][0]["content"]
+    assert "weakly related" in last_tool_message(fake.requests[1])["content"]
 
 
 def test_fallback_when_model_reports_insufficient_context() -> None:
@@ -90,11 +96,10 @@ def test_fallback_when_step_limit_reached() -> None:
 
 
 def test_fallback_when_answer_is_truncated() -> None:
-    truncated = SimpleNamespace(content=[SimpleNamespace(type="text", text="Gross margin fell [S1] because")],
-                                stop_reason="max_tokens")
+    truncated = completion(content="Gross margin fell [S1] because", finish_reason="length")
     agent, _, _ = make_agent([tool_use("retrieve_documents", {"query": "q"}), truncated], [Hit(NIKE, 8.0)])
     result = agent.run("Nike margin?")
-    assert result.fallback_triggered and "max_tokens" in result.fallback_reason
+    assert result.fallback_triggered and "length" in result.fallback_reason
 
 
 def test_tool_errors_are_reported_to_the_model() -> None:
@@ -102,8 +107,7 @@ def test_tool_errors_are_reported_to_the_model() -> None:
         [tool_use("calculate", {"expression": "import os"}), text_response("INSUFFICIENT_CONTEXT")], [Hit(NIKE, 8.0)]
     )
     agent.run("?")
-    result_block = fake.requests[1]["messages"][-1]["content"][0]
-    assert result_block["is_error"] is True and result_block["content"].startswith("Error:")
+    assert last_tool_message(fake.requests[1])["content"].startswith("Error:")
 
 
 def test_renumber_citations_merges_same_page_and_drops_unknown_ids() -> None:
@@ -116,8 +120,15 @@ def test_renumber_citations_merges_same_page_and_drops_unknown_ids() -> None:
 
 def test_relevance_floor_only_applies_to_reranker_scores() -> None:
     # A plain retriever returns cosine-like scores (0-1); the 2.0 floor must not decline everything.
-    fake = FakeClaude([tool_use("retrieve_documents", {"query": "Nike margin"}), text_response("Fell to 42.7% [S1].")])
+    fake = FakeLLM([tool_use("retrieve_documents", {"query": "Nike margin"}), text_response("Fell to 42.7% [S1].")])
     agent = ResearchAgent(retriever=FakeRetriever([Hit(NIKE, 0.8)]), client=fake, model="test")
     assert agent.relevance_threshold is None
     result = agent.run("Nike margin?")
     assert not result.fallback_triggered and result.sources == ["Nike_FY2025_10K.pdf, p. 38"]
+
+
+def test_malformed_tool_arguments_are_reported_to_the_model() -> None:
+    bad_call = SimpleNamespace(id="tu_1", type="function", function=SimpleNamespace(name="calculate", arguments="{not json"))
+    agent, fake, _ = make_agent([completion(tool_calls=[bad_call]), text_response("INSUFFICIENT_CONTEXT")], [Hit(NIKE, 8.0)])
+    agent.run("?")
+    assert "not valid JSON" in last_tool_message(fake.requests[1])["content"]
