@@ -9,7 +9,7 @@ from urllib.request import Request, urlopen
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 # SEC asks automated clients to identify themselves in the User-Agent.
-USER_AGENT = "consulting-copilot research project admin@example.com"
+USER_AGENT = "consulting-research-copilot admin@example.com"
 
 REPORTS: dict[str, str] = {
     "Nike_FY2025_10K.pdf": "https://s1.q4cdn.com/806093406/files/doc_financials/2025/ar/Nike-Inc-2025_10K.pdf",

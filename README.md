@@ -1,6 +1,6 @@
 # Consulting Research Copilot
 
-[![CI](https://github.com/Ohm-Kel/consulting-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Ohm-Kel/consulting-copilot/actions/workflows/ci.yml)
+[![CI](https://github.com/Ohm-Kel/consulting-research-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Ohm-Kel/consulting-research-copilot/actions/workflows/ci.yml)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 ![Tests](https://img.shields.io/badge/tests-77%20passing-brightgreen)
 ![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)
@@ -157,6 +157,8 @@ guess past.
 Requires Python 3.12. Windows PowerShell shown; on macOS/Linux use `source .venv/bin/activate` and `cp`.
 
 ```powershell
+git clone https://github.com/Ohm-Kel/consulting-research-copilot.git
+cd consulting-research-copilot
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
@@ -175,8 +177,8 @@ uvicorn copilot.api:app --port 8000                         # API docs at http:/
 Docker:
 
 ```bash
-docker build -t consulting-copilot .
-docker run -p 8000:8000 --env-file .env consulting-copilot
+docker build -t consulting-research-copilot .
+docker run -p 8000:8000 --env-file .env consulting-research-copilot
 ```
 
 Reproduce the evaluation:

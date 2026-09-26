@@ -1,6 +1,6 @@
 # One-command setup: the image contains the reports, the models and a built index.
-#   docker build -t consulting-copilot .
-#   docker run -p 8000:8000 --env-file .env consulting-copilot
+#   docker build -t consulting-research-copilot .
+#   docker run -p 8000:8000 --env-file .env consulting-research-copilot
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
