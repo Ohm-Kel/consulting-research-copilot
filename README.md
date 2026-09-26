@@ -44,20 +44,20 @@ Report). About 500 pages, split into 1,228 page-level chunks.
 ## How it works
 
 ```mermaid
-flowchart LR
+flowchart TB
     Q[User question] --> API[FastAPI /query]
-    API --> A[Agent<br/>LLM tool-calling loop]
-    A -- retrieve_documents --> R
-    A -- calculate --> C[Safe calculator<br/>pct_change, share, cagr]
+    API --> A[Agent: LLM tool-calling loop]
+    A <-->|retrieve_documents| R
+    A <-->|calculate| C[Safe calculator<br/>pct_change, share, cagr]
     subgraph R [Retrieval tool]
         direction TB
         V[Vector search<br/>bge-small + Chroma] --> F[Reciprocal rank fusion]
         B[BM25 keyword search] --> F
         F --> X[Cross-encoder reranker<br/>top 30 → top 5]
     end
-    A --> G{Guardrails<br/>relevance floor ·<br/>model judgement ·<br/>citations present}
-    G -- pass --> OK[Answer + page citations]
-    G -- fail --> D[Decline with reason]
+    A -->|draft answer| G{{Guardrails<br/>relevance floor · model check · citations}}
+    G -->|pass| OK[Answer + page citations]
+    G -->|fail| D[Decline with reason]
 ```
 
 1. **Ingestion.** Each PDF page is split into 300-word chunks that never cross a page boundary,
@@ -81,8 +81,8 @@ Evaluation was the core of the project, done before and after each change.
 
 **Test set.** `evals/questions.json` has 25 questions, five per company: 14 lookups, 7 "why"
 questions and 4 calculations. Each has a reference answer and one or more **fact sets**: short
-strings copied from the report that together answer the question (for example `46.3 billion`
-+ `51.4 billion`, or the table figures `46,309` + `51,362`).
+strings copied from the report that together answer the question, for example `46.3 billion`
+and `51.4 billion`, or the table figures `46,309` and `51,362`.
 
 **Evidence-level scoring.** A retrieved chunk counts only if its own text contains a complete
 fact set, so the metric measures whether the model was actually shown the answer. Supporting
@@ -169,9 +169,9 @@ python -m pytest                     # no API key needed
 ```
 
 ```powershell
-python -m copilot.cli search "How fast did HOKA grow?"     # retrieval only, no key
-python -m copilot.cli agent  "By what percentage did Nike's net income fall in fiscal 2025?"
-uvicorn copilot.api:app --port 8000                         # API docs at http://localhost:8000/docs
+python -m copilot.cli search "How fast did HOKA grow?"   # retrieval only, no key
+python -m copilot.cli agent "How much did Nike's net income fall in fiscal 2025?"
+uvicorn copilot.api:app --port 8000                       # docs at localhost:8000/docs
 ```
 
 Docker:
@@ -208,7 +208,7 @@ copilot/
   evaluation.py   eval set, fact matching and evidence-level metrics
   api.py          FastAPI service
   cli.py          command-line interface
-evals/            question sets, page labeller, retrieval / guardrail / agent / RAGAS runners, results/
+evals/            question sets, page labeller, evaluation runners, results/
 scripts/          report download, example generation
 stage0/           foundation scripts: API call, embeddings, cosine similarity, chunking
 tests/            pytest suite
