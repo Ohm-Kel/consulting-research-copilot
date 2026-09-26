@@ -67,6 +67,7 @@ def build_metrics(judge_model: str) -> dict:
 
 
 async def score_one(metrics: dict, q: EvalQuestion, answer: str, contexts: list[str]) -> dict[str, float]:
+    """Score one answer on the four RAGAS metrics concurrently."""
     results = await asyncio.gather(
         metrics["faithfulness"].ascore(user_input=q.question, response=answer, retrieved_contexts=contexts),
         metrics["answer_relevancy"].ascore(user_input=q.question, response=answer),
@@ -81,6 +82,7 @@ async def score_one(metrics: dict, q: EvalQuestion, answer: str, contexts: list[
 
 
 async def run_mode(mode: str, questions: list[EvalQuestion], answer_model: str, metrics: dict) -> dict:
+    """Answer and score every question with one retrieval pipeline."""
     retriever = build_retriever(mode)
     client = make_client()
     rows = []
@@ -106,6 +108,7 @@ async def run_all(modes: list[str], questions: list[EvalQuestion], model: str) -
 
 
 def main() -> None:
+    """Run the RAGAS evaluation and save the results."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--modes", nargs="+", default=["vector", "hybrid_rerank"], choices=RETRIEVER_MODES)
     parser.add_argument("--final", action="store_true", help=f"use {config.EVAL_MODEL} to answer and judge")

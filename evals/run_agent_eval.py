@@ -30,10 +30,12 @@ CALC_EXPECTED = {"nike-05": -43.5, "lulu-05": 17.1, "colm-02": -3.4, "deck-05": 
 
 
 def percentages(text: str) -> list[float]:
+    """Extract every percentage figure from `text`."""
     return [float(x) for x in re.findall(r"(-?\d+(?:\.\d+)?)\s?%", text.replace(",", ""))]
 
 
 def main() -> None:
+    """Run the agent on the evaluation and out-of-scope sets and save a summary."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--final", action="store_true", help=f"use {config.EVAL_MODEL}")
     args = parser.parse_args()

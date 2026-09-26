@@ -22,6 +22,8 @@ QUESTIONS_PATH = config.ROOT / "evals" / "questions.json"
 
 @dataclass(frozen=True)
 class EvalQuestion:
+    """One evaluation question with its reference answer and evidence."""
+
     id: str
     company: str
     type: str  # lookup | explanation | calculation
@@ -33,6 +35,7 @@ class EvalQuestion:
 
 
 def load_questions(path: Path = QUESTIONS_PATH) -> list[EvalQuestion]:
+    """Load the evaluation set from JSON."""
     raw = json.loads(path.read_text(encoding="utf-8"))
     return [
         EvalQuestion(**{**item, "facts": tuple(tuple(s) for s in item["facts"]), "pages": tuple(item["pages"])})
@@ -55,6 +58,7 @@ def supports(text: str, question: EvalQuestion) -> bool:
 
 
 def is_relevant(hit: Hit, question: EvalQuestion) -> bool:
+    """True if `hit` comes from the question's report and contains one of its fact sets."""
     return hit.chunk.source == question.source and supports(hit.chunk.text, question)
 
 

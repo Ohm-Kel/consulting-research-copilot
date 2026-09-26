@@ -65,6 +65,8 @@ def renumber_citations(text: str, sources: dict[str, Hit]) -> tuple[str, list[st
 
 @dataclass
 class AgentResult:
+    """Outcome of one agent run: answer, citations, tool usage and fallback status."""
+
     answer: str
     sources: list[str] = field(default_factory=list)
     tool_calls: dict[str, int] = field(default_factory=dict)
@@ -74,6 +76,8 @@ class AgentResult:
 
 
 class ResearchAgent:
+    """Answers questions by letting the LLM call retrieval and calculator tools, then applies the guardrails."""
+
     def __init__(
         self,
         retriever: Retriever | None = None,
@@ -94,6 +98,7 @@ class ResearchAgent:
         self.max_turns = max_turns
 
     def run(self, question: str) -> AgentResult:
+        """Answer `question`, or return a decline if any guardrail fails."""
         sources: dict[str, Hit] = {}  # source ID (S1, S2...) -> passage, across all searches
         tool_calls: dict[str, int] = {}
         best_score = float("-inf")

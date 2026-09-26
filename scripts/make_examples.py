@@ -25,6 +25,7 @@ QUERIES = [
 
 
 def main() -> None:
+    """Run the showcase queries and write docs/examples.md."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--final", action="store_true")
     args = parser.parse_args()

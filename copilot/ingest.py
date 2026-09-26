@@ -27,6 +27,7 @@ class Chunk:
 
     @property
     def citation(self) -> str:
+        """Source reference used in answers, e.g. 'Nike_FY2025_10K.pdf, p. 38'."""
         return f"{self.source}, p. {self.page}"
 
 

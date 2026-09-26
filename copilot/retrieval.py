@@ -13,7 +13,7 @@ import re
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 import chromadb
 from rank_bm25 import BM25Okapi
@@ -21,6 +21,9 @@ from rank_bm25 import BM25Okapi
 from copilot import config
 from copilot.embeddings import embed_query
 from copilot.ingest import Chunk
+
+if TYPE_CHECKING:
+    from sentence_transformers import CrossEncoder
 
 
 @dataclass(frozen=True)
@@ -33,7 +36,10 @@ class Hit:
 
 
 class Retriever(Protocol):
-    def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]: ...
+    """Interface shared by all retrievers."""
+
+    def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
+        """Return the `k` best hits for `query`, optionally limited to `companies`."""
 
 
 def _open_collection(chroma_dir: Path) -> chromadb.Collection:
@@ -50,6 +56,7 @@ class VectorRetriever:
         self.collection = _open_collection(chroma_dir)
 
     def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
+        """Return the `k` chunks closest to the query embedding."""
         where = {"company": {"$in": sorted(companies)}} if companies else None
         result = self.collection.query(query_embeddings=[embed_query(query).tolist()], n_results=k, where=where)
         hits = []
@@ -79,6 +86,7 @@ class BM25Retriever:
         self.bm25 = BM25Okapi([tokenize(f"{c.header} {c.text}") for c in self.chunks])
 
     def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
+        """Return the `k` chunks with the highest BM25 score for the query terms."""
         scores = self.bm25.get_scores(tokenize(query))
         allowed = [i for i in range(len(scores)) if not companies or self.chunks[i].company in companies]
         best = sorted(allowed, key=lambda i: scores[i], reverse=True)[:k]
@@ -106,6 +114,7 @@ class HybridRetriever:
         self.candidates = candidates
 
     def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
+        """Fuse the vector and BM25 candidate lists and return the top `k`."""
         fused = reciprocal_rank_fusion(
             [self.vector.search(query, self.candidates, companies), self.bm25.search(query, self.candidates, companies)]
         )
@@ -113,7 +122,8 @@ class HybridRetriever:
 
 
 @lru_cache(maxsize=1)
-def get_reranker():  # -> sentence_transformers.CrossEncoder
+def get_reranker() -> "CrossEncoder":
+    """Load the cross-encoder once per process."""
     from sentence_transformers import CrossEncoder
 
     return CrossEncoder(config.RERANKER_MODEL, max_length=512)
@@ -131,6 +141,7 @@ class RerankedRetriever:
         self.candidates = candidates
 
     def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
+        """Re-score the first-stage candidates with the cross-encoder and return the top `k`."""
         candidates = self.first_stage.search(query, self.candidates, companies)
         if not candidates:
             return []
@@ -169,6 +180,7 @@ class CompanyScopedRetriever:
         self.cross_encoder_scores = getattr(inner, "cross_encoder_scores", False)
 
     def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
+        """Search only the companies named in the query, unless `companies` is given."""
         return self.inner.search(query, k, companies or detect_companies(query) or None)
 
 

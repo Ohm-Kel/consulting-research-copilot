@@ -12,6 +12,7 @@ from copilot import config
 
 
 def cmd_ingest(_: argparse.Namespace) -> None:
+    """Chunk and embed the reports and write the Chroma index."""
     from copilot.ingest import build_index, load_corpus
 
     chunks = load_corpus()
@@ -21,6 +22,7 @@ def cmd_ingest(_: argparse.Namespace) -> None:
 
 
 def cmd_search(args: argparse.Namespace) -> None:
+    """Print the retrieved passages for a question."""
     from copilot.retrieval import build_retriever
 
     for rank, hit in enumerate(build_retriever(args.retriever).search(args.question, k=args.k), start=1):
@@ -28,6 +30,7 @@ def cmd_search(args: argparse.Namespace) -> None:
 
 
 def cmd_ask(args: argparse.Namespace) -> None:
+    """Answer a question with single-shot RAG (no tools)."""
     from copilot.generate import answer_question
     from copilot.retrieval import build_retriever
 
@@ -38,6 +41,7 @@ def cmd_ask(args: argparse.Namespace) -> None:
 
 
 def cmd_agent(args: argparse.Namespace) -> None:
+    """Answer a question with the tool-calling agent and print its trace."""
     from copilot.agent import ResearchAgent
 
     result = ResearchAgent().run(args.question)
@@ -52,6 +56,7 @@ def cmd_agent(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
+    """Parse command-line arguments and run the chosen command."""
     parser = argparse.ArgumentParser(prog="copilot", description="Q&A over athletic apparel annual reports")
     sub = parser.add_subparsers(required=True)
     sub.add_parser("ingest", help="chunk and embed the reports in data/").set_defaults(func=cmd_ingest)

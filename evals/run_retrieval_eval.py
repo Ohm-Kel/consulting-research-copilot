@@ -20,6 +20,7 @@ RESULTS_PATH = config.ROOT / "evals" / "results" / "retrieval.json"
 
 
 def evaluate(mode: str, k: int) -> dict:
+    """Score one retrieval pipeline on the evaluation set."""
     retriever = build_retriever(mode)
     questions = load_questions()
     start = time.perf_counter()
@@ -36,6 +37,7 @@ def evaluate(mode: str, k: int) -> dict:
 
 
 def main() -> None:
+    """Compare retrieval pipelines and save the results, or act as a CI gate."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--modes", nargs="+", default=list(RETRIEVER_MODES), choices=RETRIEVER_MODES)
     parser.add_argument("-k", type=int, default=config.TOP_K)

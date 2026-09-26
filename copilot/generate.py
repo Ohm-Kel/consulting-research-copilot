@@ -20,6 +20,8 @@ Rules:
 
 @dataclass
 class Answer:
+    """A generated answer with its citations and the passages it was based on."""
+
     text: str
     sources: list[str] = field(default_factory=list)  # e.g. "Nike_FY2025_10K.pdf, p. 34"
     contexts: list[str] = field(default_factory=list)  # retrieved passages, kept for evaluation

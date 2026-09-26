@@ -10,6 +10,7 @@ from copilot import config
 
 @lru_cache(maxsize=1)
 def get_model() -> SentenceTransformer:
+    """Load the embedding model once per process."""
     return SentenceTransformer(config.EMBEDDING_MODEL)
 
 

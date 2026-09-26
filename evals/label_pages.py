@@ -33,6 +33,7 @@ def derive() -> tuple[dict[str, list[int]], dict[str, int]]:
 
 
 def main() -> None:
+    """Rewrite or check the `pages` field of every question."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()

@@ -24,6 +24,7 @@ OUT_OF_SCOPE_PATH = config.ROOT / "evals" / "out_of_scope.json"
 
 
 def main() -> None:
+    """Report how the relevance floor treats answerable and out-of-scope questions."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--strict", action="store_true")
     args = parser.parse_args()

@@ -118,6 +118,7 @@ def calculate(expression: str) -> float:
 
 
 def retrieve_documents(retriever: Retriever, query: str, k: int = 5) -> list[Hit]:
+    """Run a search on behalf of the agent; rejects empty queries."""
     if not query.strip():
         raise ToolError("query must not be empty")
     return retriever.search(query, k=k)
