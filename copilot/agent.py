@@ -134,7 +134,10 @@ class ResearchAgent:
         if self.relevance_threshold is not None and best_score < self.relevance_threshold:
             return self._decline("no retrieved passage was relevant to the question", tool_calls, sources)
         if INSUFFICIENT_MARKER in final_text:
-            reason = final_text.replace(INSUFFICIENT_MARKER, "").strip(" :.-\n") or "the model judged the context insufficient"
+            reason = (
+                final_text.replace(INSUFFICIENT_MARKER, "").strip(" :.-\n")
+                or "the model judged the context insufficient"
+            )
             return self._decline(reason, tool_calls, sources)
         answer, cited = renumber_citations(final_text, sources)
         if not cited:
@@ -152,8 +155,11 @@ class ResearchAgent:
                     if sid is None:
                         sid = f"S{len(sources) + 1}"
                         sources[sid] = hit
-                    lines.append(f"[{sid}] {hit.chunk.citation} ({hit.chunk.company}) relevance={hit.score:.2f}\n{hit.chunk.text}")
-                if not hits or (self.relevance_threshold is not None and max(h.score for h in hits) < self.relevance_threshold):
+                    label = f"[{sid}] {hit.chunk.citation} ({hit.chunk.company}) relevance={hit.score:.2f}"
+                    lines.append(f"{label}\n{hit.chunk.text}")
+                if not hits or (
+                    self.relevance_threshold is not None and max(h.score for h in hits) < self.relevance_threshold
+                ):
                     lines.append("NOTE: these results look weakly related to the query. Try different wording.")
                 return "\n\n".join(lines) or "No passages found.", False, hits
             if name == "calculate":

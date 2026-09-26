@@ -59,7 +59,9 @@ def make_client() -> OpenAI:
     return OpenAI()
 
 
-def answer_question(question: str, hits: list[Hit], client: OpenAI | None = None, model: str = config.LLM_MODEL) -> Answer:
+def answer_question(
+    question: str, hits: list[Hit], client: OpenAI | None = None, model: str = config.LLM_MODEL
+) -> Answer:
     """Ask the model to answer `question` from `hits` and extract its citations."""
     client = client or make_client()
     response = client.chat.completions.create(

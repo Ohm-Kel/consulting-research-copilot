@@ -37,8 +37,10 @@ def main() -> None:
         r = agent.run(q)
         sources = "  ".join(f"[{i}] {s}" for i, s in enumerate(r.sources, start=1)) or "none"
         tools = ", ".join(f"{name} ({n})" for name, n in r.tool_calls.items()) or "none"
-        parts.append(f"## {q}\n\n```\nAnswer: {r.answer}\nSources: {sources}\nTool calls: {tools}\n"
-                     f"Fallback triggered: {str(r.fallback_triggered).lower()}\n```\n")
+        parts.append(
+            f"## {q}\n\n```\nAnswer: {r.answer}\nSources: {sources}\nTool calls: {tools}\n"
+            f"Fallback triggered: {str(r.fallback_triggered).lower()}\n```\n"
+        )
         print(parts[-1])
     out = config.ROOT / "docs" / "examples.md"
     out.write_text("\n".join(parts), encoding="utf-8")

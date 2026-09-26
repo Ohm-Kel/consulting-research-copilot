@@ -44,8 +44,13 @@ def test_query_returns_answer_with_sources(client: TestClient) -> None:
     result = AgentResult("Gross margin fell to 42.7% [1].", ["Nike_FY2025_10K.pdf, p. 38"], {"retrieve_documents": 1})
     app.dependency_overrides[get_agent] = lambda: StubAgent(result)
     body = client.post("/query", json={"question": "Nike gross margin?"}).json()
-    assert body == {"answer": "Gross margin fell to 42.7% [1].", "sources": ["Nike_FY2025_10K.pdf, p. 38"],
-                    "tool_calls": {"retrieve_documents": 1}, "fallback_triggered": False, "fallback_reason": None}
+    assert body == {
+        "answer": "Gross margin fell to 42.7% [1].",
+        "sources": ["Nike_FY2025_10K.pdf, p. 38"],
+        "tool_calls": {"retrieve_documents": 1},
+        "fallback_triggered": False,
+        "fallback_reason": None,
+    }
 
 
 def test_query_reports_fallback(client: TestClient) -> None:

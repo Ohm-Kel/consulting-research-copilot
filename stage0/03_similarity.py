@@ -30,7 +30,7 @@ sentence_vectors = model.encode(SENTENCES)
 query_vector = model.encode(QUERY)
 
 scores = [cosine_similarity(query_vector, v) for v in sentence_vectors]
-ranking = sorted(zip(scores, SENTENCES), reverse=True)
+ranking = sorted(zip(scores, SENTENCES, strict=True), reverse=True)
 
 print(f"Query: {QUERY}\n")
 for rank, (score, sentence) in enumerate(ranking, start=1):

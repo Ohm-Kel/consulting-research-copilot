@@ -52,18 +52,39 @@ def main() -> None:
         if q.id in CALC_EXPECTED:
             # Accept the magnitude too: "decreased 43.5%" is correct for -43.5.
             calc_ok += any(abs(abs(p) - abs(CALC_EXPECTED[q.id])) <= 0.2 for p in percentages(r.answer))
-        rows.append({"id": q.id, "answer": r.answer, "sources": r.sources, "tool_calls": r.tool_calls,
-                     "fallback": r.fallback_triggered, "reason": r.fallback_reason, "cited_expected_page": hit})
-        print(f"{q.id:8} {'DECLINED' if r.fallback_triggered else 'answered':9} cited_ok={hit!s:5} tools={r.tool_calls}")
+        rows.append(
+            {
+                "id": q.id,
+                "answer": r.answer,
+                "sources": r.sources,
+                "tool_calls": r.tool_calls,
+                "fallback": r.fallback_triggered,
+                "reason": r.fallback_reason,
+                "cited_expected_page": hit,
+            }
+        )
+        print(
+            f"{q.id:8} {'DECLINED' if r.fallback_triggered else 'answered':9} cited_ok={hit!s:5} tools={r.tool_calls}"
+        )
 
     oos = json.loads(OUT_OF_SCOPE_PATH.read_text(encoding="utf-8"))
     declined = 0
     for item in oos:
         r = agent.run(item["question"])
         declined += r.fallback_triggered
-        rows.append({"id": "oos", "question": item["question"], "answer": r.answer, "fallback": r.fallback_triggered,
-                     "reason": r.fallback_reason, "tool_calls": r.tool_calls})
-        print(f"oos      {'DECLINED' if r.fallback_triggered else 'ANSWERED':9} {item['question']}  ({r.fallback_reason})")
+        rows.append(
+            {
+                "id": "oos",
+                "question": item["question"],
+                "answer": r.answer,
+                "fallback": r.fallback_triggered,
+                "reason": r.fallback_reason,
+                "tool_calls": r.tool_calls,
+            }
+        )
+        print(
+            f"oos      {'DECLINED' if r.fallback_triggered else 'ANSWERED':9} {item['question']}  ({r.fallback_reason})"
+        )
 
     n = len(questions)
     summary = {

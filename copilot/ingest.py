@@ -14,9 +14,9 @@ class Chunk:
     """A passage of one page of one report, the unit we embed and retrieve."""
 
     chunk_id: str
-    source: str   # PDF file name, used in citations
+    source: str  # PDF file name, used in citations
     company: str
-    page: int     # 1-based PDF page number
+    page: int  # 1-based PDF page number
     text: str
 
     @property
@@ -41,7 +41,9 @@ def read_pdf_pages(path: Path) -> list[str]:
     return [clean_text(page.extract_text() or "") for page in PdfReader(path).pages]
 
 
-def chunk_page(text: str, chunk_words: int = config.CHUNK_WORDS, overlap_words: int = config.OVERLAP_WORDS) -> list[str]:
+def chunk_page(
+    text: str, chunk_words: int = config.CHUNK_WORDS, overlap_words: int = config.OVERLAP_WORDS
+) -> list[str]:
     """Split one page into windows of `chunk_words` that overlap by `overlap_words`."""
     if overlap_words >= chunk_words:
         raise ValueError("overlap_words must be smaller than chunk_words")

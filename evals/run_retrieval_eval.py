@@ -1,7 +1,7 @@
 """Compare retrieval pipelines on the 25-question set. No API key needed.
 
-    python evals/run_retrieval_eval.py                         # all modes, writes evals/results/retrieval.json
-    python evals/run_retrieval_eval.py --modes hybrid_rerank --min-hit 0.8   # CI regression gate
+python evals/run_retrieval_eval.py                         # all modes, writes evals/results/retrieval.json
+python evals/run_retrieval_eval.py --modes hybrid_rerank --min-hit 0.8   # CI regression gate
 """
 
 import argparse
@@ -27,16 +27,21 @@ def evaluate(mode: str, k: int) -> dict:
     seconds = time.perf_counter() - start
     metrics = retrieval_metrics(results, k=k)
     misses = [q.id for q, hits in results if (r := first_relevant_rank(hits, q)) is None or r > k]
-    return {"mode": mode, **{m: round(v, 3) for m, v in metrics.items()},
-            "sec_per_query": round(seconds / len(questions), 3), "misses": misses}
+    return {
+        "mode": mode,
+        **{m: round(v, 3) for m, v in metrics.items()},
+        "sec_per_query": round(seconds / len(questions), 3),
+        "misses": misses,
+    }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--modes", nargs="+", default=list(RETRIEVER_MODES), choices=RETRIEVER_MODES)
     parser.add_argument("-k", type=int, default=config.TOP_K)
-    parser.add_argument("--min-hit", type=float, default=None,
-                        help=f"fail (exit 1) if hit@k of any mode is below this value")
+    parser.add_argument(
+        "--min-hit", type=float, default=None, help="fail (exit 1) if hit@k of any mode is below this value"
+    )
     args = parser.parse_args()
 
     rows = [evaluate(mode, args.k) for mode in args.modes]
@@ -44,7 +49,8 @@ def main() -> None:
     print(f"\n| Retriever | Hit@1 | Hit@{k} | MRR | Precision@{k} | sec/query |")
     print("|---|---|---|---|---|---|")
     for r in rows:
-        print(f"| {r['mode']} | {r['hit@1']:.2f} | {r[f'hit@{k}']:.2f} | {r['mrr']:.2f} | {r[f'precision@{k}']:.2f} | {r['sec_per_query']:.2f} |")
+        metrics = ("hit@1", f"hit@{k}", "mrr", f"precision@{k}", "sec_per_query")
+        print("| " + " | ".join([r["mode"], *(f"{r[m]:.2f}" for m in metrics)]) + " |")
     for r in rows:
         if r["misses"]:
             print(f"{r['mode']} misses (not in top {k}): {', '.join(r['misses'])}")

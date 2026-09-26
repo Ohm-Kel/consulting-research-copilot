@@ -70,10 +70,14 @@ async def score_one(metrics: dict, q: EvalQuestion, answer: str, contexts: list[
     results = await asyncio.gather(
         metrics["faithfulness"].ascore(user_input=q.question, response=answer, retrieved_contexts=contexts),
         metrics["answer_relevancy"].ascore(user_input=q.question, response=answer),
-        metrics["context_precision"].ascore(user_input=q.question, reference=q.expected_answer, retrieved_contexts=contexts),
-        metrics["context_recall"].ascore(user_input=q.question, retrieved_contexts=contexts, reference=q.expected_answer),
+        metrics["context_precision"].ascore(
+            user_input=q.question, reference=q.expected_answer, retrieved_contexts=contexts
+        ),
+        metrics["context_recall"].ascore(
+            user_input=q.question, retrieved_contexts=contexts, reference=q.expected_answer
+        ),
     )
-    return {name: float(r.value) for name, r in zip(METRIC_NAMES, results)}
+    return {name: float(r.value) for name, r in zip(METRIC_NAMES, results, strict=True)}
 
 
 async def run_mode(mode: str, questions: list[EvalQuestion], answer_model: str, metrics: dict) -> dict:

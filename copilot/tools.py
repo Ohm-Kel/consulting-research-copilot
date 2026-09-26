@@ -4,7 +4,8 @@ import ast
 import math
 import operator
 import re
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from copilot.retrieval import Hit, Retriever
 
@@ -14,6 +15,7 @@ class ToolError(ValueError):
 
 
 # ---------------------------------------------------------------- calculator
+
 
 def pct_change(old: float, new: float) -> float:
     """Percentage change from old to new, e.g. pct_change(5700, 3219) = -43.53."""
@@ -37,13 +39,22 @@ def cagr(start: float, end: float, years: float) -> float:
 
 
 _BINARY: dict[type, Callable[[Any, Any], Any]] = {
-    ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
-    ast.Div: operator.truediv, ast.Pow: operator.pow,
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.Pow: operator.pow,
 }
 _UNARY: dict[type, Callable[[Any], Any]] = {ast.USub: operator.neg, ast.UAdd: operator.pos}
 _FUNCTIONS: dict[str, Callable[..., float]] = {
-    "pct_change": pct_change, "share": share, "cagr": cagr,
-    "round": round, "abs": abs, "min": min, "max": max, "sqrt": math.sqrt,
+    "pct_change": pct_change,
+    "share": share,
+    "cagr": cagr,
+    "round": round,
+    "abs": abs,
+    "min": min,
+    "max": max,
+    "sqrt": math.sqrt,
 }
 
 
@@ -80,7 +91,12 @@ def calculate(expression: str) -> float:
             return result
         if isinstance(node, ast.UnaryOp) and type(node.op) in _UNARY:
             return _UNARY[type(node.op)](walk(node.operand))
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in _FUNCTIONS and not node.keywords:
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id in _FUNCTIONS
+            and not node.keywords
+        ):
             args = [walk(arg) for arg in node.args]
             if node.func.id == "round" and len(args) == 2:
                 args[1] = int(args[1])  # round(x, 2.0) -> round(x, 2)
@@ -100,6 +116,7 @@ def calculate(expression: str) -> float:
 
 # ----------------------------------------------------------------- retrieval
 
+
 def retrieve_documents(retriever: Retriever, query: str, k: int = 5) -> list[Hit]:
     if not query.strip():
         raise ToolError("query must not be empty")
@@ -107,6 +124,7 @@ def retrieve_documents(retriever: Retriever, query: str, k: int = 5) -> list[Hit
 
 
 # -------------------------------------------------------- schemas for the LLM
+
 
 def _function(name: str, description: str, properties: dict[str, Any]) -> dict[str, Any]:
     """An OpenAI Responses API function tool with strict argument checking."""

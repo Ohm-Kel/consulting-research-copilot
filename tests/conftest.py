@@ -10,16 +10,41 @@ from copilot import config
 from copilot.ingest import Chunk, build_index
 
 SAMPLE_CHUNKS = [
-    Chunk("nike-p38-0", "Nike_FY2025_10K.pdf", "Nike", 38,
-          "For fiscal 2025, gross margin decreased 190 basis points to 42.7% due to higher discounts."),
-    Chunk("lulu-p31-0", "Lululemon_FY2024_10K.pdf", "Lululemon", 31,
-          "Company-operated store net revenue increased 14% and e-commerce net revenue increased 6%."),
-    Chunk("colm-p5-0", "Columbia_FY2024_10K.pdf", "Columbia Sportswear", 5,
-          "We employed approximately 9,450 full-time employees as of December 31, 2024."),
-    Chunk("deck-p40-0", "Deckers_FY2025_AR.pdf", "Deckers Brands", 40,
-          "HOKA brand net sales increased 23.6% to $2,233 million, driven by strong wholesale demand."),
-    Chunk("ua-p30-0", "UnderArmour_FY2025_10K.pdf", "Under Armour", 30,
-          "Under Armour recorded restructuring charges related to its 2025 restructuring plan."),
+    Chunk(
+        "nike-p38-0",
+        "Nike_FY2025_10K.pdf",
+        "Nike",
+        38,
+        "For fiscal 2025, gross margin decreased 190 basis points to 42.7% due to higher discounts.",
+    ),
+    Chunk(
+        "lulu-p31-0",
+        "Lululemon_FY2024_10K.pdf",
+        "Lululemon",
+        31,
+        "Company-operated store net revenue increased 14% and e-commerce net revenue increased 6%.",
+    ),
+    Chunk(
+        "colm-p5-0",
+        "Columbia_FY2024_10K.pdf",
+        "Columbia Sportswear",
+        5,
+        "We employed approximately 9,450 full-time employees as of December 31, 2024.",
+    ),
+    Chunk(
+        "deck-p40-0",
+        "Deckers_FY2025_AR.pdf",
+        "Deckers Brands",
+        40,
+        "HOKA brand net sales increased 23.6% to $2,233 million, driven by strong wholesale demand.",
+    ),
+    Chunk(
+        "ua-p30-0",
+        "UnderArmour_FY2025_10K.pdf",
+        "Under Armour",
+        30,
+        "Under Armour recorded restructuring charges related to its 2025 restructuring plan.",
+    ),
 ]
 
 
@@ -48,11 +73,15 @@ class FakeLLM:
 
     def _create(self, **kwargs: Any) -> Any:
         # snapshot the conversation as it was when this request was sent
-        self.requests.append({**kwargs, "messages": list(kwargs.get("messages", [])), "input": list(kwargs.get("input", []))})
+        self.requests.append(
+            {**kwargs, "messages": list(kwargs.get("messages", [])), "input": list(kwargs.get("input", []))}
+        )
         return self.queue.pop(0)
 
 
-def completion(content: str | None = None, tool_calls: list[Any] | None = None, finish_reason: str | None = None) -> SimpleNamespace:
+def completion(
+    content: str | None = None, tool_calls: list[Any] | None = None, finish_reason: str | None = None
+) -> SimpleNamespace:
     """A Chat Completions response with one choice."""
     message = SimpleNamespace(content=content, tool_calls=tool_calls or None)
     reason = finish_reason or ("tool_calls" if tool_calls else "stop")
@@ -69,8 +98,12 @@ def _item(**fields: Any) -> SimpleNamespace:
     return SimpleNamespace(**fields, model_dump=lambda **_: dict(fields))
 
 
-def agent_response(text: str = "", calls: list[tuple[str, str, str]] | None = None, status: str = "completed",
-                   reason: str | None = None) -> SimpleNamespace:
+def agent_response(
+    text: str = "",
+    calls: list[tuple[str, str, str]] | None = None,
+    status: str = "completed",
+    reason: str | None = None,
+) -> SimpleNamespace:
     """A Responses API response. `calls` are (call_id, tool name, JSON arguments)."""
     output = [_item(type="function_call", call_id=cid, name=name, arguments=args) for cid, name, args in calls or []]
     if text:

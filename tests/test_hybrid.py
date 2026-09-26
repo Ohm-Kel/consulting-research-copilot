@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from copilot.evaluation import EvalQuestion, normalize, retrieval_metrics, supports
-from copilot.retrieval import BM25Retriever, HybridRetriever, Hit, reciprocal_rank_fusion, tokenize
+from copilot.retrieval import BM25Retriever, Hit, HybridRetriever, reciprocal_rank_fusion, tokenize
 from tests.conftest import SAMPLE_CHUNKS
 
 
@@ -64,7 +64,11 @@ def test_detect_companies_by_name_and_brand() -> None:
 def test_company_filter_restricts_every_retriever(sample_index: Path) -> None:
     from copilot.retrieval import VectorRetriever
 
-    for retriever in (VectorRetriever(sample_index), BM25Retriever(sample_index), HybridRetriever(sample_index, candidates=5)):
+    for retriever in (
+        VectorRetriever(sample_index),
+        BM25Retriever(sample_index),
+        HybridRetriever(sample_index, candidates=5),
+    ):
         hits = retriever.search("net revenue employees margin", k=3, companies={"Columbia Sportswear"})
         assert hits and {h.chunk.company for h in hits} == {"Columbia Sportswear"}
 

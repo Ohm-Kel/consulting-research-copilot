@@ -1,12 +1,11 @@
 """Agent loop and fallback guardrails, with a scripted fake LLM and retriever."""
 
+import json
 from types import SimpleNamespace
 from typing import Any
 
 from copilot.agent import DECLINE_MESSAGE, ResearchAgent, renumber_citations
 from copilot.retrieval import Hit
-import json
-
 from tests.conftest import SAMPLE_CHUNKS, FakeLLM, agent_response
 
 NIKE = SAMPLE_CHUNKS[0]
@@ -77,8 +76,10 @@ def test_fallback_when_no_passage_is_relevant() -> None:
 
 def test_fallback_when_model_reports_insufficient_context() -> None:
     agent, _, _ = make_agent(
-        [tool_use("retrieve_documents", {"query": "Nike revenue fiscal 2030"}),
-         text_response("INSUFFICIENT_CONTEXT: the reports cover fiscal 2025, not 2030.")],
+        [
+            tool_use("retrieve_documents", {"query": "Nike revenue fiscal 2030"}),
+            text_response("INSUFFICIENT_CONTEXT: the reports cover fiscal 2025, not 2030."),
+        ],
         [Hit(NIKE, 8.0)],
     )
     result = agent.run("What was Nike's revenue in fiscal 2030?")
@@ -95,7 +96,9 @@ def test_fallback_when_answer_cites_nothing() -> None:
 
 
 def test_fallback_when_step_limit_reached() -> None:
-    agent, _, _ = make_agent([tool_use("retrieve_documents", {"query": "q"}, f"tu_{i}") for i in range(6)], [Hit(NIKE, 8.0)])
+    agent, _, _ = make_agent(
+        [tool_use("retrieve_documents", {"query": "q"}, f"tu_{i}") for i in range(6)], [Hit(NIKE, 8.0)]
+    )
     result = agent.run("loop forever")
     assert result.fallback_triggered and "step limit" in result.fallback_reason
 

@@ -30,6 +30,9 @@ jobs:
           pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements-dev.txt
 
+      - name: Lint and format check
+        run: make lint
+
       - name: Cache models
         uses: actions/cache@v4
         with:

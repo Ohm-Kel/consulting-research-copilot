@@ -35,8 +35,10 @@ def main() -> None:
     answerable = [(q.id, top(q.question)) for q in load_questions()]
     blocked = [(qid, s) for qid, s in answerable if s < floor]
     print(f"Relevance floor: {floor}")
-    print(f"Answerable questions passing the floor: {len(answerable) - len(blocked)}/{len(answerable)} "
-          f"(lowest score {min(s for _, s in answerable):.2f})")
+    print(
+        f"Answerable questions passing the floor: {len(answerable) - len(blocked)}/{len(answerable)} "
+        f"(lowest score {min(s for _, s in answerable):.2f})"
+    )
     for qid, s in blocked:
         print(f"  BLOCKED {qid} ({s:.2f})")
 

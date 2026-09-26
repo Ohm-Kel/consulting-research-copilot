@@ -24,12 +24,12 @@ QUESTIONS_PATH = config.ROOT / "evals" / "questions.json"
 class EvalQuestion:
     id: str
     company: str
-    type: str                                # lookup | explanation | calculation
+    type: str  # lookup | explanation | calculation
     question: str
     expected_answer: str
-    source: str                              # PDF file name
-    facts: tuple[tuple[str, ...], ...]       # alternative fact sets; a chunk needs all facts of one set
-    pages: tuple[int, ...]                   # pages containing a fact set (derived from `facts`)
+    source: str  # PDF file name
+    facts: tuple[tuple[str, ...], ...]  # alternative fact sets; a chunk needs all facts of one set
+    pages: tuple[int, ...]  # pages containing a fact set (derived from `facts`)
 
 
 def load_questions(path: Path = QUESTIONS_PATH) -> list[EvalQuestion]:

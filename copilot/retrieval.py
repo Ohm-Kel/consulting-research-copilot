@@ -54,7 +54,7 @@ class VectorRetriever:
         result = self.collection.query(query_embeddings=[embed_query(query).tolist()], n_results=k, where=where)
         hits = []
         for chunk_id, text, meta, distance in zip(
-            result["ids"][0], result["documents"][0], result["metadatas"][0], result["distances"][0]
+            result["ids"][0], result["documents"][0], result["metadatas"][0], result["distances"][0], strict=True
         ):
             chunk = Chunk(chunk_id, meta["source"], meta["company"], int(meta["page"]), text)
             hits.append(Hit(chunk, 1.0 - distance))  # Chroma returns cosine distance
@@ -74,7 +74,7 @@ class BM25Retriever:
         records = _open_collection(chroma_dir).get(include=["documents", "metadatas"])
         self.chunks = [
             Chunk(cid, meta["source"], meta["company"], int(meta["page"]), text)
-            for cid, text, meta in zip(records["ids"], records["documents"], records["metadatas"])
+            for cid, text, meta in zip(records["ids"], records["documents"], records["metadatas"], strict=True)
         ]
         self.bm25 = BM25Okapi([tokenize(f"{c.header} {c.text}") for c in self.chunks])
 
@@ -135,7 +135,7 @@ class RerankedRetriever:
         if not candidates:
             return []
         scores = get_reranker().predict([(query, f"{h.chunk.header} {h.chunk.text}") for h in candidates])
-        ranked = sorted(zip(scores, candidates), key=lambda pair: pair[0], reverse=True)
+        ranked = sorted(zip(scores, candidates, strict=True), key=lambda pair: pair[0], reverse=True)
         return [Hit(hit.chunk, float(score)) for score, hit in ranked[:k]]
 
 

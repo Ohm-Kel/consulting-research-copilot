@@ -12,7 +12,7 @@ CHROMA_DIR = Path(os.getenv("COPILOT_CHROMA_DIR", ROOT / "chroma_db"))
 COLLECTION_NAME = "annual_reports"
 
 # Models (OpenAI). Override in .env with OPENAI_MODEL / OPENAI_EVAL_MODEL.
-DEV_MODEL = os.getenv("OPENAI_MODEL") or "gpt-5.6-luna"        # all development calls
+DEV_MODEL = os.getenv("OPENAI_MODEL") or "gpt-5.6-luna"  # all development calls
 EVAL_MODEL = os.getenv("OPENAI_EVAL_MODEL") or "gpt-5.6-terra"  # final evaluation runs only
 LLM_MODEL = DEV_MODEL
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
@@ -41,9 +41,21 @@ RELEVANCE_THRESHOLD = float(os.getenv("COPILOT_RELEVANCE_THRESHOLD", "2.0"))
 # Company name and report label for each file in data/.
 DOCUMENTS: dict[str, dict[str, str]] = {
     "Nike_FY2025_10K.pdf": {"company": "Nike", "report": "Nike FY2025 Form 10-K (fiscal year ended May 31, 2025)"},
-    "Lululemon_FY2024_10K.pdf": {"company": "Lululemon", "report": "Lululemon FY2024 Form 10-K (fiscal year ended February 2, 2025)"},
-    "UnderArmour_FY2025_10K.pdf": {"company": "Under Armour", "report": "Under Armour FY2025 Form 10-K (fiscal year ended March 31, 2025)"},
-    "Columbia_FY2024_10K.pdf": {"company": "Columbia Sportswear", "report": "Columbia Sportswear FY2024 Form 10-K (fiscal year ended December 31, 2024)"},
-    "Deckers_FY2025_AR.pdf": {"company": "Deckers Brands", "report": "Deckers Brands FY2025 Annual Report (fiscal year ended March 31, 2025)"},
+    "Lululemon_FY2024_10K.pdf": {
+        "company": "Lululemon",
+        "report": "Lululemon FY2024 Form 10-K (fiscal year ended February 2, 2025)",
+    },
+    "UnderArmour_FY2025_10K.pdf": {
+        "company": "Under Armour",
+        "report": "Under Armour FY2025 Form 10-K (fiscal year ended March 31, 2025)",
+    },
+    "Columbia_FY2024_10K.pdf": {
+        "company": "Columbia Sportswear",
+        "report": "Columbia Sportswear FY2024 Form 10-K (fiscal year ended December 31, 2024)",
+    },
+    "Deckers_FY2025_AR.pdf": {
+        "company": "Deckers Brands",
+        "report": "Deckers Brands FY2025 Annual Report (fiscal year ended March 31, 2025)",
+    },
 }
 COMPANIES = sorted({meta["company"] for meta in DOCUMENTS.values()})

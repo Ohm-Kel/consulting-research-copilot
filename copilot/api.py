@@ -1,15 +1,15 @@
 """FastAPI service.
 
-    uvicorn copilot.api:app --port 8000
-    POST /query   {"question": "..."}  -> agent answer with citations (needs OPENAI_API_KEY)
-    POST /search  {"question": "..."}  -> retrieved passages only (no key needed)
-    GET  /health
+uvicorn copilot.api:app --port 8000
+POST /query   {"question": "..."}  -> agent answer with citations (needs OPENAI_API_KEY)
+POST /search  {"question": "..."}  -> retrieved passages only (no key needed)
+GET  /health
 """
 
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from functools import lru_cache
-from typing import AsyncIterator
 
 import openai
 from dotenv import load_dotenv
@@ -75,18 +75,29 @@ async def llm_error(_: Request, exc: openai.APIError) -> JSONResponse:
 
 @app.get("/health")
 def health() -> dict[str, str | bool]:
-    return {"status": "ok", "retriever": config.RETRIEVER_MODE, "model": config.LLM_MODEL,
-            "llm_available": bool(os.getenv("OPENAI_API_KEY"))}
+    return {
+        "status": "ok",
+        "retriever": config.RETRIEVER_MODE,
+        "model": config.LLM_MODEL,
+        "llm_available": bool(os.getenv("OPENAI_API_KEY")),
+    }
 
 
 @app.post("/query", response_model=QueryResponse)
 def query(request: QueryRequest, agent: ResearchAgent = Depends(get_agent)) -> QueryResponse:
     result = agent.run(request.question)
-    return QueryResponse(answer=result.answer, sources=result.sources, tool_calls=result.tool_calls,
-                         fallback_triggered=result.fallback_triggered, fallback_reason=result.fallback_reason)
+    return QueryResponse(
+        answer=result.answer,
+        sources=result.sources,
+        tool_calls=result.tool_calls,
+        fallback_triggered=result.fallback_triggered,
+        fallback_reason=result.fallback_reason,
+    )
 
 
 @app.post("/search", response_model=list[Passage])
 def search(request: SearchRequest, retriever: Retriever = Depends(get_retriever)) -> list[Passage]:
-    return [Passage(citation=h.chunk.citation, company=h.chunk.company, score=round(h.score, 3), text=h.chunk.text)
-            for h in retriever.search(request.question, k=request.k)]
+    return [
+        Passage(citation=h.chunk.citation, company=h.chunk.company, score=round(h.score, 3), text=h.chunk.text)
+        for h in retriever.search(request.question, k=request.k)
+    ]

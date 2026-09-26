@@ -1,9 +1,9 @@
 """Command-line interface.
 
-    python -m copilot.cli ingest
-    python -m copilot.cli search "Nike gross margin fiscal 2025"
-    python -m copilot.cli ask "How did Nike's gross margin change in fiscal 2025?"
-    python -m copilot.cli agent "By what percentage did Nike's net income fall in fiscal 2025?"
+python -m copilot.cli ingest
+python -m copilot.cli search "Nike gross margin fiscal 2025"
+python -m copilot.cli ask "How did Nike's gross margin change in fiscal 2025?"
+python -m copilot.cli agent "By what percentage did Nike's net income fall in fiscal 2025?"
 """
 
 import argparse
@@ -45,8 +45,10 @@ def cmd_agent(args: argparse.Namespace) -> None:
     if result.sources:
         print("Sources: " + "  ".join(f"[{i}] {s}" for i, s in enumerate(result.sources, start=1)))
     print("Tool calls: " + (", ".join(f"{name} ({n})" for name, n in result.tool_calls.items()) or "none"))
-    print(f"Fallback triggered: {str(result.fallback_triggered).lower()}"
-          + (f" ({result.fallback_reason})" if result.fallback_reason else ""))
+    print(
+        f"Fallback triggered: {str(result.fallback_triggered).lower()}"
+        + (f" ({result.fallback_reason})" if result.fallback_reason else "")
+    )
 
 
 def main() -> None:
@@ -60,8 +62,11 @@ def main() -> None:
         p = sub.add_parser(name, help=help_text)
         p.add_argument("question")
         p.add_argument("-k", type=int, default=config.TOP_K, help="number of passages to retrieve")
-        p.add_argument("--retriever", default=config.RETRIEVER_MODE,
-                       choices=["vector", "bm25", "hybrid", "hybrid_rerank", "hybrid_rerank_company"])
+        p.add_argument(
+            "--retriever",
+            default=config.RETRIEVER_MODE,
+            choices=["vector", "bm25", "hybrid", "hybrid_rerank", "hybrid_rerank_company"],
+        )
         p.set_defaults(func=func)
     p = sub.add_parser("agent", help="tool-calling agent with calculator and fallback guardrail")
     p.add_argument("question")

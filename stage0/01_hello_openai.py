@@ -24,7 +24,12 @@ try:
     response = client.chat.completions.create(
         model=model,
         max_completion_tokens=1000,
-        messages=[{"role": "user", "content": "In two sentences, what is operating margin and why do consultants care about it?"}],
+        messages=[
+            {
+                "role": "user",
+                "content": "In two sentences, what is operating margin and why do consultants care about it?",
+            }
+        ],
     )
 except openai.AuthenticationError:
     sys.exit("The API key was rejected. Check OPENAI_API_KEY in .env (no quotes or spaces).")
@@ -38,4 +43,6 @@ except openai.APIConnectionError:
     sys.exit("Could not reach the OpenAI API. Check your internet connection.")
 
 print(response.choices[0].message.content)
-print(f"\n[model: {response.model}, tokens in: {response.usage.prompt_tokens}, out: {response.usage.completion_tokens}]")
+print(
+    f"\n[model: {response.model}, tokens in: {response.usage.prompt_tokens}, out: {response.usage.completion_tokens}]"
+)

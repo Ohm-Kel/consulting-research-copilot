@@ -3,7 +3,6 @@
 import asyncio
 import importlib.util
 import sys
-from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -38,10 +37,12 @@ class StubMetric:
 
 def test_ragas_runner_scores_all_modes_in_one_event_loop(monkeypatch: pytest.MonkeyPatch) -> None:
     ragas = load_script("run_ragas_eval")
-    stub_metrics = {name: StubMetric(v) for name, v in zip(ragas.METRIC_NAMES, (0.9, 0.8, 0.7, 0.6))}
+    stub_metrics = {name: StubMetric(v) for name, v in zip(ragas.METRIC_NAMES, (0.9, 0.8, 0.7, 0.6), strict=True)}
     monkeypatch.setattr(ragas, "build_metrics", lambda model: stub_metrics)
     monkeypatch.setattr(ragas, "make_client", lambda: None)
-    monkeypatch.setattr(ragas, "build_retriever", lambda mode: SimpleNamespace(search=lambda q: [Hit(SAMPLE_CHUNKS[0], 1.0)]))
+    monkeypatch.setattr(
+        ragas, "build_retriever", lambda mode: SimpleNamespace(search=lambda q: [Hit(SAMPLE_CHUNKS[0], 1.0)])
+    )
     monkeypatch.setattr(ragas, "answer_question", lambda q, hits, client, model: Answer("A [1].", ["x, p. 1"], ["ctx"]))
     StubMetric.loops.clear()
 
