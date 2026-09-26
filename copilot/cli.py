@@ -7,8 +7,18 @@ python -m copilot.cli agent "By what percentage did Nike's net income fall in fi
 """
 
 import argparse
+import os
+import sys
+
+import openai
 
 from copilot import config
+
+
+def require_api_key() -> None:
+    """Exit with a clear message if no OpenAI API key is configured."""
+    if not os.getenv("OPENAI_API_KEY"):
+        sys.exit("OPENAI_API_KEY is not set. Copy .env.example to .env and add your key.")
 
 
 def cmd_ingest(_: argparse.Namespace) -> None:
@@ -31,6 +41,7 @@ def cmd_search(args: argparse.Namespace) -> None:
 
 def cmd_ask(args: argparse.Namespace) -> None:
     """Answer a question with single-shot RAG (no tools)."""
+    require_api_key()
     from copilot.generate import answer_question
     from copilot.retrieval import build_retriever
 
@@ -42,6 +53,7 @@ def cmd_ask(args: argparse.Namespace) -> None:
 
 def cmd_agent(args: argparse.Namespace) -> None:
     """Answer a question with the tool-calling agent and print its trace."""
+    require_api_key()
     from copilot.agent import ResearchAgent
 
     result = ResearchAgent().run(args.question)
@@ -77,7 +89,10 @@ def main() -> None:
     p.add_argument("question")
     p.set_defaults(func=cmd_agent)
     args = parser.parse_args()
-    args.func(args)
+    try:
+        args.func(args)
+    except openai.APIError as exc:
+        sys.exit(f"OpenAI API error ({type(exc).__name__}): {exc}")
 
 
 if __name__ == "__main__":

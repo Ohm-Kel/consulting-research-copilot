@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Ohm-Kel/consulting-research-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Ohm-Kel/consulting-research-copilot/actions/workflows/ci.yml)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
-![Tests](https://img.shields.io/badge/tests-77%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-80%20passing-brightgreen)
 ![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)
 
 An AI research assistant for the desk research a consulting case team does in the first days of
@@ -147,7 +147,7 @@ guess past.
 | Area | What is in place |
 |---|---|
 | API | FastAPI: `POST /query` (agent), `POST /search` (retrieval only, no API key), `GET /health`; LLM errors mapped to 502, missing key to 503 |
-| Tests | 77 pytest tests; the LLM is replaced by a scripted fake, so the suite runs without a key |
+| Tests | 80 pytest tests; the LLM is replaced by a scripted fake, so the suite runs without a key |
 | Safety | AST-based calculator (no `eval`), capped expression size, rejects overflow and complex results |
 | Docker | One image with reports, models and a pre-built index |
 | CI | GitHub Actions: tests → build index → **retrieval regression gate** (Hit@5 ≥ 0.64) → **guardrail gate** → Docker build and smoke test; agent and RAGAS evals when an API key secret is configured |
