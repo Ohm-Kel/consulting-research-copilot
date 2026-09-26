@@ -265,6 +265,7 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 | v1.0 | Stage 4: FastAPI, Docker, CI with evaluation regression gates |
 | v1.0.1 | Hardening fixes from a full code review |
 | v1.1 | OpenAI provider, evidence-level metric, full LLM-judged results |
+| v1.2 | MIT licence, packaging, linting, docstrings, clearer CLI errors, README polish |
 
 ## License
 
