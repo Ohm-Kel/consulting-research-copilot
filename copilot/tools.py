@@ -109,19 +109,17 @@ def retrieve_documents(retriever: Retriever, query: str, k: int = 5) -> list[Hit
 # -------------------------------------------------------- schemas for the LLM
 
 def _function(name: str, description: str, properties: dict[str, Any]) -> dict[str, Any]:
-    """An OpenAI function-calling tool definition with strict argument checking."""
+    """An OpenAI Responses API function tool with strict argument checking."""
     return {
         "type": "function",
-        "function": {
-            "name": name,
-            "description": description,
-            "strict": True,
-            "parameters": {
-                "type": "object",
-                "properties": properties,
-                "required": list(properties),
-                "additionalProperties": False,
-            },
+        "name": name,
+        "description": description,
+        "strict": True,
+        "parameters": {
+            "type": "object",
+            "properties": properties,
+            "required": list(properties),
+            "additionalProperties": False,
         },
     }
 

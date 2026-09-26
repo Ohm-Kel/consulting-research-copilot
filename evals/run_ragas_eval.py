@@ -31,13 +31,32 @@ RESULTS_DIR = config.ROOT / "evals" / "results"
 METRIC_NAMES = ("faithfulness", "answer_relevancy", "context_precision", "context_recall")
 
 
+def use_reasoning_model_params(llm) -> None:
+    """Workaround for ragas 0.4.3: its GPT-5 detection parses the version as an
+    integer, so 'gpt-5.6-luna' is not recognised and gets `max_tokens`, which the
+    API rejects. Apply ragas's own GPT-5 rules: `max_completion_tokens`,
+    temperature 1.0, no top_p."""
+    original = llm._map_openai_params
+
+    def mapped() -> dict:
+        params = original()
+        if "max_tokens" in params:
+            params["max_completion_tokens"] = params.pop("max_tokens")
+        params["temperature"] = 1.0
+        params.pop("top_p", None)
+        return params
+
+    llm._map_openai_params = mapped
+
+
 def build_metrics(judge_model: str) -> dict:
     """RAGAS metrics judged by an OpenAI model, with local embeddings for answer relevancy."""
     from ragas.embeddings.base import embedding_factory
     from ragas.llms.base import llm_factory
     from ragas.metrics.collections import AnswerRelevancy, ContextPrecisionWithReference, ContextRecall, Faithfulness
 
-    llm = llm_factory(judge_model, provider="openai", client=AsyncOpenAI())
+    llm = llm_factory(judge_model, provider="openai", client=AsyncOpenAI(), max_tokens=4096)
+    use_reasoning_model_params(llm)
     embeddings = embedding_factory("huggingface", model=config.EMBEDDING_MODEL)
     return {
         "faithfulness": Faithfulness(llm=llm),

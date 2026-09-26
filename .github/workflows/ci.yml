@@ -52,8 +52,8 @@ jobs:
         run: python -m copilot.cli ingest
 
       - name: Retrieval regression gate (no API key needed)
-        # Current Hit@5 is 0.76; fail the build if retrieval quality drops below 0.72.
-        run: python evals/run_retrieval_eval.py --modes vector hybrid_rerank && python evals/run_retrieval_eval.py --modes hybrid_rerank --min-hit 0.72
+        # Current Hit@5 is 0.68 (evidence-level); fail if it drops by more than one question (0.04).
+        run: python evals/run_retrieval_eval.py --modes vector hybrid_rerank && python evals/run_retrieval_eval.py --modes hybrid_rerank --min-hit 0.64
 
       - name: Guardrail regression gate (no API key needed)
         run: python evals/run_guardrail_eval.py --strict

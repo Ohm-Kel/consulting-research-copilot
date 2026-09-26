@@ -41,13 +41,15 @@ class FakeLLM:
     records every request so tests can inspect what was sent."""
 
     def __init__(self, responses: list[Any]) -> None:
-        self.responses = list(responses)
+        self.queue = list(responses)
         self.requests: list[dict[str, Any]] = []
-        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._create))
+        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._create))  # generate.py
+        self.responses = SimpleNamespace(create=self._create)  # agent.py (Responses API)
 
     def _create(self, **kwargs: Any) -> Any:
-        self.requests.append({**kwargs, "messages": list(kwargs.get("messages", []))})
-        return self.responses.pop(0)
+        # snapshot the conversation as it was when this request was sent
+        self.requests.append({**kwargs, "messages": list(kwargs.get("messages", [])), "input": list(kwargs.get("input", []))})
+        return self.queue.pop(0)
 
 
 def completion(content: str | None = None, tool_calls: list[Any] | None = None, finish_reason: str | None = None) -> SimpleNamespace:
@@ -60,3 +62,18 @@ def completion(content: str | None = None, tool_calls: list[Any] | None = None, 
 def text_response(text: str) -> SimpleNamespace:
     """A response containing only a text answer."""
     return completion(content=text)
+
+
+def _item(**fields: Any) -> SimpleNamespace:
+    """A Responses API output item (supports .model_dump like the SDK objects)."""
+    return SimpleNamespace(**fields, model_dump=lambda **_: dict(fields))
+
+
+def agent_response(text: str = "", calls: list[tuple[str, str, str]] | None = None, status: str = "completed",
+                   reason: str | None = None) -> SimpleNamespace:
+    """A Responses API response. `calls` are (call_id, tool name, JSON arguments)."""
+    output = [_item(type="function_call", call_id=cid, name=name, arguments=args) for cid, name, args in calls or []]
+    if text:
+        output.append(_item(type="message", content=text))
+    details = SimpleNamespace(reason=reason) if reason else None
+    return SimpleNamespace(output=output, output_text=text, status=status, incomplete_details=details)

@@ -61,7 +61,7 @@ def main() -> None:
         p.add_argument("question")
         p.add_argument("-k", type=int, default=config.TOP_K, help="number of passages to retrieve")
         p.add_argument("--retriever", default=config.RETRIEVER_MODE,
-                       choices=["vector", "bm25", "hybrid", "hybrid_rerank"])
+                       choices=["vector", "bm25", "hybrid", "hybrid_rerank", "hybrid_rerank_company"])
         p.set_defaults(func=func)
     p = sub.add_parser("agent", help="tool-calling agent with calculator and fallback guardrail")
     p.add_argument("question")

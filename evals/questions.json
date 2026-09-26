@@ -6,11 +6,27 @@
     "question": "What were Nike's total revenues in fiscal 2025, and how did that compare with fiscal 2024?",
     "expected_answer": "NIKE, Inc. revenues were $46.3 billion in fiscal 2025 compared with $51.4 billion in fiscal 2024, a decline of about 10%.",
     "source": "Nike_FY2025_10K.pdf",
+    "facts": [
+      [
+        "46.3 billion",
+        "51.4 billion"
+      ],
+      [
+        "46,309",
+        "51,362"
+      ]
+    ],
     "pages": [
       32,
-      37
-    ],
-    "evidence": "Revenues for fiscal 2025 were $46.3 billion compared to $51.4 billion for fiscal 2024"
+      33,
+      35,
+      36,
+      37,
+      40,
+      59,
+      85,
+      88
+    ]
   },
   {
     "id": "nike-02",
@@ -19,11 +35,15 @@
     "question": "Why did Nike's gross margin decline in fiscal 2025?",
     "expected_answer": "Gross margin fell 190 basis points to 42.7% (from 44.6%), mainly because of lower NIKE Brand average selling prices from higher discounts and channel mix (about -180 bps) and higher other costs including inventory obsolescence reserves (about -90 bps), partially offset by lower product costs (about +80 bps) and lower warehousing and logistics costs.",
     "source": "Nike_FY2025_10K.pdf",
-    "pages": [
-      38,
-      32
+    "facts": [
+      [
+        "gross margin decreased 190 basis points"
+      ]
     ],
-    "evidence": "Gross margin decreased 190 basis points to 42.7% for fiscal 2025 compared to 44.6% for fiscal 2024"
+    "pages": [
+      32,
+      38
+    ]
   },
   {
     "id": "nike-03",
@@ -32,10 +52,14 @@
     "question": "How much did Nike spend on demand creation in fiscal 2025 and why did it change?",
     "expected_answer": "Demand creation expense rose 9% to $4,689 million from $4,285 million, due to higher brand marketing expense reflecting investment in key sports events and higher sports marketing expense.",
     "source": "Nike_FY2025_10K.pdf",
+    "facts": [
+      [
+        "demand creation expense increased 9%, due to higher brand marketing"
+      ]
+    ],
     "pages": [
       38
-    ],
-    "evidence": "Demand creation expense increased 9%, due to higher brand marketing expense"
+    ]
   },
   {
     "id": "nike-04",
@@ -44,11 +68,16 @@
     "question": "How did NIKE Direct revenues perform in fiscal 2025 and what share of NIKE Brand revenues did they represent?",
     "expected_answer": "NIKE Direct revenues declined 13%, from $21.5 billion to $18.8 billion, and represented approximately 42% of total NIKE Brand revenues.",
     "source": "Nike_FY2025_10K.pdf",
+    "facts": [
+      [
+        "18.8 billion",
+        "21.5 billion"
+      ]
+    ],
     "pages": [
       32,
       37
-    ],
-    "evidence": "NIKE Direct revenues declined 13% from $21.5 billion in fiscal 2024 to $18.8 billion in fiscal 2025"
+    ]
   },
   {
     "id": "nike-05",
@@ -57,13 +86,22 @@
     "question": "By what percentage did Nike's net income change from fiscal 2024 to fiscal 2025?",
     "expected_answer": "Net income fell from $5,700 million to $3,219 million, a decrease of about 43.5%.",
     "source": "Nike_FY2025_10K.pdf",
+    "facts": [
+      [
+        "3,219",
+        "5,700"
+      ]
+    ],
     "pages": [
       33,
       34,
+      35,
+      59,
       60,
-      62
-    ],
-    "evidence": "Net income $ 3,219 $ 5,700"
+      62,
+      63,
+      80
+    ]
   },
   {
     "id": "lulu-01",
@@ -72,10 +110,23 @@
     "question": "How much did Lululemon's net revenue grow in fiscal 2024?",
     "expected_answer": "Net revenue increased 10% to $10.6 billion (11% on a constant dollar basis).",
     "source": "Lululemon_FY2024_10K.pdf",
-    "pages": [
-      31
+    "facts": [
+      [
+        "increased 10% to $10.6 billion"
+      ],
+      [
+        "10,588,126",
+        "9,619,278"
+      ]
     ],
-    "evidence": "Net revenue increased 10% to $10.6 billion"
+    "pages": [
+      31,
+      32,
+      33,
+      49,
+      77,
+      79
+    ]
   },
   {
     "id": "lulu-02",
@@ -84,10 +135,19 @@
     "question": "How did Lululemon's comparable sales in China Mainland compare with the Americas in 2024?",
     "expected_answer": "China Mainland comparable sales increased 25% (27% in constant dollars) while Americas comparable sales decreased 1%.",
     "source": "Lululemon_FY2024_10K.pdf",
-    "pages": [
-      31
+    "facts": [
+      [
+        "china mainland comparable sales increased 25%"
+      ],
+      [
+        "comparable sales americas (1)%",
+        "china mainland 25 2 27"
+      ]
     ],
-    "evidence": "China Mainland comparable sales increased 25%"
+    "pages": [
+      31,
+      39
+    ]
   },
   {
     "id": "lulu-03",
@@ -96,10 +156,18 @@
     "question": "What was Lululemon's operating margin in 2024 and how did it change?",
     "expected_answer": "Operating margin increased 150 basis points to 23.7%, with income from operations up 17% to $2.5 billion.",
     "source": "Lululemon_FY2024_10K.pdf",
-    "pages": [
-      31
+    "facts": [
+      [
+        "operating margin increased 150 basis points to 23.7%"
+      ],
+      [
+        "income from operations 2,505,697 2,132,676 23.7 22.2"
+      ]
     ],
-    "evidence": "Operating margin increased 150 basis points to 23.7%"
+    "pages": [
+      31,
+      32
+    ]
   },
   {
     "id": "lulu-04",
@@ -108,10 +176,15 @@
     "question": "How much stock did Lululemon repurchase in 2024?",
     "expected_answer": "Lululemon repurchased 5.1 million shares for $1.6 billion in 2024, and the board approved increases to the repurchase authorization totaling $2.0 billion.",
     "source": "Lululemon_FY2024_10K.pdf",
-    "pages": [
-      31
+    "facts": [
+      [
+        "repurchased 5.1 million shares"
+      ]
     ],
-    "evidence": "We repurchased 5.1 million shares for $1.6 billion in 2024"
+    "pages": [
+      31,
+      40
+    ]
   },
   {
     "id": "lulu-05",
@@ -120,14 +193,19 @@
     "question": "By what percentage did Lululemon's net income grow from 2023 to 2024?",
     "expected_answer": "Net income rose from $1,550.2 million to $1,814.6 million, an increase of about 17.1%.",
     "source": "Lululemon_FY2024_10K.pdf",
+    "facts": [
+      [
+        "1,814,616",
+        "1,550,190"
+      ]
+    ],
     "pages": [
       32,
       37,
       49,
       52,
       75
-    ],
-    "evidence": "Net income $ 1,814,616 $ 1,550,190"
+    ]
   },
   {
     "id": "ua-01",
@@ -136,11 +214,14 @@
     "question": "How did Under Armour's net revenues change by region in fiscal 2025?",
     "expected_answer": "Total net revenues decreased 9.4%: North America -11.4%, EMEA +0.4%, Asia-Pacific -13.5% and Latin America -6.1%.",
     "source": "UnderArmour_FY2025_10K.pdf",
-    "pages": [
-      33,
-      38
+    "facts": [
+      [
+        "decreased 11.4% in north america"
+      ]
     ],
-    "evidence": "Net revenue decreased 11.4% in North America, increased 0.4% in EMEA, decreased 13.5% in Asia-Pacific"
+    "pages": [
+      33
+    ]
   },
   {
     "id": "ua-02",
@@ -149,10 +230,14 @@
     "question": "What drove the improvement in Under Armour's gross margin in fiscal 2025?",
     "expected_answer": "Gross margin rose about 180 basis points to 47.9% from 46.1%, driven by roughly 130 bps of supply chain benefits from lower freight and product costs and about 80 bps of pricing benefits from less discounting in direct-to-consumer, partially offset by unfavorable regional and channel mix (30 bps) and foreign exchange (10 bps).",
     "source": "UnderArmour_FY2025_10K.pdf",
+    "facts": [
+      [
+        "130 basis points from supply chain"
+      ]
+    ],
     "pages": [
       36
-    ],
-    "evidence": "primarily driven by favorable impacts of 130 basis points from supply chain benefits"
+    ]
   },
   {
     "id": "ua-03",
@@ -161,10 +246,15 @@
     "question": "What is the expected total cost of Under Armour's 2025 restructuring plan?",
     "expected_answer": "Approximately $140 million to $160 million of pre-tax restructuring and related charges, after a $70 million increase approved in September 2024, expected to be substantially complete by the end of fiscal 2026.",
     "source": "UnderArmour_FY2025_10K.pdf",
-    "pages": [
-      33
+    "facts": [
+      [
+        "$140 million to $160 million"
+      ]
     ],
-    "evidence": "approximately $140 million to $160 million of pre-tax restructuring and related charges"
+    "pages": [
+      33,
+      78
+    ]
   },
   {
     "id": "ua-04",
@@ -173,10 +263,14 @@
     "question": "How many people did Under Armour employ as of March 31, 2025?",
     "expected_answer": "About 14,400 teammates worldwide, including about 10,200 in Brand and Factory House stores and about 1,000 at distribution facilities; about 6,500 were full-time.",
     "source": "UnderArmour_FY2025_10K.pdf",
+    "facts": [
+      [
+        "approximately 14,400 teammates"
+      ]
+    ],
     "pages": [
       13
-    ],
-    "evidence": "we had approximately 14,400 teammates worldwide"
+    ]
   },
   {
     "id": "ua-05",
@@ -185,10 +279,14 @@
     "question": "What challenges did Under Armour face in fiscal 2025 that hurt revenue?",
     "expected_answer": "A challenging environment, particularly in North America and Asia-Pacific, with lower wholesale demand plus the impact of deliberately reducing discounting and promotions in the direct-to-consumer channel, especially e-commerce.",
     "source": "UnderArmour_FY2025_10K.pdf",
+    "facts": [
+      [
+        "challenging environment, particularly in north america"
+      ]
+    ],
     "pages": [
       33
-    ],
-    "evidence": "we faced a challenging environment, particularly in North America and Asia-Pacific"
+    ]
   },
   {
     "id": "colm-01",
@@ -197,10 +295,26 @@
     "question": "What was Columbia Sportswear's operating margin in 2024 compared with 2023?",
     "expected_answer": "Operating income was $270.7 million, 8.0% of net sales, in 2024 versus $310.3 million, 8.9% of net sales, in 2023.",
     "source": "Columbia_FY2024_10K.pdf",
-    "pages": [
-      28
+    "facts": [
+      [
+        "270,741",
+        "8.0%",
+        "310,284",
+        "8.9%"
+      ],
+      [
+        "270,741",
+        "310,284",
+        "3,368,582",
+        "3,487,203"
+      ]
     ],
-    "evidence": "Operating income 270,741 8.0 % 310,284 8.9 %"
+    "pages": [
+      28,
+      31,
+      43,
+      70
+    ]
   },
   {
     "id": "colm-02",
@@ -209,10 +323,19 @@
     "question": "By what percentage did Columbia Sportswear's net sales change in 2024?",
     "expected_answer": "Net sales fell from $3,487.2 million to $3,368.6 million, a decrease of about 3.4%.",
     "source": "Columbia_FY2024_10K.pdf",
-    "pages": [
-      28
+    "facts": [
+      [
+        "3,368,582",
+        "3,487,203"
+      ]
     ],
-    "evidence": "Net sales $ 3,368,582 100.0 % $ 3,487,203"
+    "pages": [
+      28,
+      29,
+      31,
+      43,
+      70
+    ]
   },
   {
     "id": "colm-03",
@@ -221,10 +344,14 @@
     "question": "Why did Columbia Sportswear's U.S. net sales decline in 2024?",
     "expected_answer": "U.S. net sales fell $173.2 million (8%), mainly from lower wholesale Spring and Fall 2024 orders due to retailer cautiousness (including the transition to non-PFAS chemistry and changed promotional practices) and a difficult competitive environment; e-commerce also declined.",
     "source": "Columbia_FY2024_10K.pdf",
+    "facts": [
+      [
+        "u.s. net sales decreased $173.2 million"
+      ]
+    ],
     "pages": [
       31
-    ],
-    "evidence": "U.S. net sales decreased $173.2 million, or 8%"
+    ]
   },
   {
     "id": "colm-04",
@@ -233,10 +360,14 @@
     "question": "How seasonal is Columbia Sportswear's business?",
     "expected_answer": "Sales are weighted toward the third and fourth quarters: in 2024 over 60% of net sales and over 90% of operating income were realized in the second half of the year.",
     "source": "Columbia_FY2024_10K.pdf",
+    "facts": [
+      [
+        "over 60% of our net sales"
+      ]
+    ],
     "pages": [
       27
-    ],
-    "evidence": "over 60% of our net sales and over 90% of o ur operating income were realized in the second half of the year"
+    ]
   },
   {
     "id": "colm-05",
@@ -245,10 +376,14 @@
     "question": "How did Red Sea disruptions affect Columbia Sportswear's supply chain?",
     "expected_answer": "Continuing Red Sea disruptions caused longer inbound transit times for Fall 2024 inventory, and Columbia expects transit times to stay elevated until the conflict is resolved.",
     "source": "Columbia_FY2024_10K.pdf",
+    "facts": [
+      [
+        "red sea disruptions"
+      ]
+    ],
     "pages": [
       27
-    ],
-    "evidence": "Continuing Red Sea disruptions resulted in longer inbound transit times for Fall 2024 inventory"
+    ]
   },
   {
     "id": "deck-01",
@@ -257,10 +392,21 @@
     "question": "How did Deckers' UGG and HOKA brands grow in fiscal 2025?",
     "expected_answer": "UGG net sales increased 13.1% to $2,531.4 million and HOKA net sales increased 23.6% to $2,233.1 million; total net sales rose 16.3% to $4,985.6 million.",
     "source": "Deckers_FY2025_AR.pdf",
-    "pages": [
-      38
+    "facts": [
+      [
+        "ugg brand net sales increased 13.1%",
+        "hoka brand net sales increased 23.6%"
+      ],
+      [
+        "2,531,351",
+        "2,233,090"
+      ]
     ],
-    "evidence": "HOKA brand net sales increased 23.6% to $2,233,090"
+    "pages": [
+      38,
+      42,
+      99
+    ]
   },
   {
     "id": "deck-02",
@@ -269,10 +415,14 @@
     "question": "Why did Deckers' gross margin increase in fiscal 2025?",
     "expected_answer": "Gross margin rose to 57.9% from 55.6% mainly due to favorable brand and product mix and more full-price selling, primarily for UGG, including fewer closeouts to wholesale, partially offset by unfavorable freight costs.",
     "source": "Deckers_FY2025_AR.pdf",
+    "facts": [
+      [
+        "gross margin increased to 57.9% from 55.6%"
+      ]
+    ],
     "pages": [
       43
-    ],
-    "evidence": "Gross margin increased to 57.9% from 55.6%"
+    ]
   },
   {
     "id": "deck-03",
@@ -281,14 +431,18 @@
     "question": "What did Deckers decide about the Koolaburra brand?",
     "expected_answer": "In the third quarter of fiscal 2025 Deckers began phasing out standalone operations for the Koolaburra brand.",
     "source": "Deckers_FY2025_AR.pdf",
+    "facts": [
+      [
+        "phase out",
+        "koolaburra"
+      ]
+    ],
     "pages": [
-      38,
       9,
-      12,
+      38,
       40,
       71
-    ],
-    "evidence": "we began taking steps to phase out our standalone operations for the Koolaburra brand"
+    ]
   },
   {
     "id": "deck-04",
@@ -297,10 +451,14 @@
     "question": "How many employees did Deckers have at the end of fiscal 2025?",
     "expected_answer": "About 5,500 employees as of March 31, 2025, up 14.6% year over year, including about 2,000 in retail stores.",
     "source": "Deckers_FY2025_AR.pdf",
+    "facts": [
+      [
+        "approximately 5,500 employees"
+      ]
+    ],
     "pages": [
       15
-    ],
-    "evidence": "we employed approximately 5,500 employees"
+    ]
   },
   {
     "id": "deck-05",
@@ -309,9 +467,16 @@
     "question": "What share of Deckers' total fiscal 2025 net sales came from the HOKA brand?",
     "expected_answer": "HOKA net sales of $2,233.1 million out of total net sales of $4,985.6 million, about 44.8%.",
     "source": "Deckers_FY2025_AR.pdf",
-    "pages": [
-      38
+    "facts": [
+      [
+        "2,233,090",
+        "4,985,612"
+      ]
     ],
-    "evidence": "Net sales increased 16.3% to $4,985,612"
+    "pages": [
+      38,
+      42,
+      99
+    ]
   }
 ]

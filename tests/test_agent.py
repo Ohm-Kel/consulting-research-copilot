@@ -7,7 +7,7 @@ from copilot.agent import DECLINE_MESSAGE, ResearchAgent, renumber_citations
 from copilot.retrieval import Hit
 import json
 
-from tests.conftest import SAMPLE_CHUNKS, FakeLLM, completion, text_response
+from tests.conftest import SAMPLE_CHUNKS, FakeLLM, agent_response
 
 NIKE = SAMPLE_CHUNKS[0]
 
@@ -23,12 +23,17 @@ class FakeRetriever:
 
 
 def tool_use(name: str, tool_input: dict[str, Any], call_id: str = "tu_1") -> SimpleNamespace:
-    call = SimpleNamespace(id=call_id, type="function", function=SimpleNamespace(name=name, arguments=json.dumps(tool_input)))
-    return completion(tool_calls=[call])
+    return agent_response(calls=[(call_id, name, json.dumps(tool_input))])
+
+
+def text_response(text: str) -> SimpleNamespace:
+    return agent_response(text=text)
 
 
 def last_tool_message(request: dict[str, Any]) -> dict[str, Any]:
-    return [m for m in request["messages"] if m["role"] == "tool"][-1]
+    """The most recent function_call_output sent to the model."""
+    output = [i for i in request["input"] if isinstance(i, dict) and i.get("type") == "function_call_output"][-1]
+    return {"tool_call_id": output["call_id"], "content": output["output"]}
 
 
 def make_agent(responses: list[Any], hits: list[Hit]) -> tuple[ResearchAgent, FakeLLM, FakeRetriever]:
@@ -96,10 +101,10 @@ def test_fallback_when_step_limit_reached() -> None:
 
 
 def test_fallback_when_answer_is_truncated() -> None:
-    truncated = completion(content="Gross margin fell [S1] because", finish_reason="length")
+    truncated = agent_response(text="Gross margin fell [S1] because", status="incomplete", reason="max_output_tokens")
     agent, _, _ = make_agent([tool_use("retrieve_documents", {"query": "q"}), truncated], [Hit(NIKE, 8.0)])
     result = agent.run("Nike margin?")
-    assert result.fallback_triggered and "length" in result.fallback_reason
+    assert result.fallback_triggered and "max_output_tokens" in result.fallback_reason
 
 
 def test_tool_errors_are_reported_to_the_model() -> None:
@@ -128,7 +133,7 @@ def test_relevance_floor_only_applies_to_reranker_scores() -> None:
 
 
 def test_malformed_tool_arguments_are_reported_to_the_model() -> None:
-    bad_call = SimpleNamespace(id="tu_1", type="function", function=SimpleNamespace(name="calculate", arguments="{not json"))
-    agent, fake, _ = make_agent([completion(tool_calls=[bad_call]), text_response("INSUFFICIENT_CONTEXT")], [Hit(NIKE, 8.0)])
+    bad_call = agent_response(calls=[("tu_1", "calculate", "{not json")])
+    agent, fake, _ = make_agent([bad_call, text_response("INSUFFICIENT_CONTEXT")], [Hit(NIKE, 8.0)])
     agent.run("?")
     assert "not valid JSON" in last_tool_message(fake.requests[1])["content"]

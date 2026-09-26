@@ -63,3 +63,10 @@ def test_agent_eval_percentage_parser() -> None:
     agent_eval = load_script("run_agent_eval")
     assert agent_eval.percentages("fell 43.5% to $3,219 million, or -3.4 %") == [43.5, -3.4]
     assert set(agent_eval.CALC_EXPECTED) <= {q.id for q in agent_eval.load_questions() if q.type == "calculation"}
+
+
+def test_reasoning_model_params_workaround() -> None:
+    ragas = load_script("run_ragas_eval")
+    llm = SimpleNamespace(_map_openai_params=lambda: {"max_tokens": 4096, "temperature": 0.01, "top_p": 0.9})
+    ragas.use_reasoning_model_params(llm)
+    assert llm._map_openai_params() == {"max_completion_tokens": 4096, "temperature": 1.0}

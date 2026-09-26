@@ -3,6 +3,10 @@
 Stage 1: VectorRetriever (dense embeddings in Chroma).
 Stage 2: BM25Retriever (keywords), HybridRetriever (reciprocal rank fusion of
 both), and RerankedRetriever (a cross-encoder re-scores the fused candidates).
+CompanyScopedRetriever restricts any of them to the companies a query names.
+
+Every retriever's search() accepts `companies`: when given, only chunks from
+those companies are considered.
 """
 
 import re
@@ -29,7 +33,7 @@ class Hit:
 
 
 class Retriever(Protocol):
-    def search(self, query: str, k: int = config.TOP_K) -> list[Hit]: ...
+    def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]: ...
 
 
 def _open_collection(chroma_dir: Path) -> chromadb.Collection:
@@ -45,8 +49,9 @@ class VectorRetriever:
     def __init__(self, chroma_dir: Path = config.CHROMA_DIR) -> None:
         self.collection = _open_collection(chroma_dir)
 
-    def search(self, query: str, k: int = config.TOP_K) -> list[Hit]:
-        result = self.collection.query(query_embeddings=[embed_query(query).tolist()], n_results=k)
+    def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
+        where = {"company": {"$in": sorted(companies)}} if companies else None
+        result = self.collection.query(query_embeddings=[embed_query(query).tolist()], n_results=k, where=where)
         hits = []
         for chunk_id, text, meta, distance in zip(
             result["ids"][0], result["documents"][0], result["metadatas"][0], result["distances"][0]
@@ -73,9 +78,10 @@ class BM25Retriever:
         ]
         self.bm25 = BM25Okapi([tokenize(f"{c.header} {c.text}") for c in self.chunks])
 
-    def search(self, query: str, k: int = config.TOP_K) -> list[Hit]:
+    def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
         scores = self.bm25.get_scores(tokenize(query))
-        best = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]
+        allowed = [i for i in range(len(scores)) if not companies or self.chunks[i].company in companies]
+        best = sorted(allowed, key=lambda i: scores[i], reverse=True)[:k]
         return [Hit(self.chunks[i], float(scores[i])) for i in best]
 
 
@@ -99,9 +105,9 @@ class HybridRetriever:
         self.bm25 = BM25Retriever(chroma_dir)
         self.candidates = candidates
 
-    def search(self, query: str, k: int = config.TOP_K) -> list[Hit]:
+    def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
         fused = reciprocal_rank_fusion(
-            [self.vector.search(query, self.candidates), self.bm25.search(query, self.candidates)]
+            [self.vector.search(query, self.candidates, companies), self.bm25.search(query, self.candidates, companies)]
         )
         return fused[:k]
 
@@ -118,12 +124,14 @@ class RerankedRetriever:
     cross-encoder, which reads the query and passage together. Too slow for
     the whole corpus, accurate on a short list."""
 
+    cross_encoder_scores = True  # scores are on the scale RELEVANCE_THRESHOLD was calibrated on
+
     def __init__(self, first_stage: Retriever, candidates: int = config.RERANK_CANDIDATES) -> None:
         self.first_stage = first_stage
         self.candidates = candidates
 
-    def search(self, query: str, k: int = config.TOP_K) -> list[Hit]:
-        candidates = self.first_stage.search(query, self.candidates)
+    def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
+        candidates = self.first_stage.search(query, self.candidates, companies)
         if not candidates:
             return []
         scores = get_reranker().predict([(query, f"{h.chunk.header} {h.chunk.text}") for h in candidates])
@@ -131,7 +139,40 @@ class RerankedRetriever:
         return [Hit(hit.chunk, float(score)) for score, hit in ranked[:k]]
 
 
-RETRIEVER_MODES = ("vector", "bm25", "hybrid", "hybrid_rerank")
+# Names, brands and subsidiaries that identify each company in a question.
+COMPANY_ALIASES: dict[str, tuple[str, ...]] = {
+    "Nike": ("nike", "converse", "jordan brand"),
+    "Lululemon": ("lululemon",),
+    "Under Armour": ("under armour", "underarmour"),
+    "Columbia Sportswear": ("columbia", "sorel", "prana", "mountain hardwear"),
+    "Deckers Brands": ("deckers", "ugg", "hoka", "teva", "koolaburra"),
+}
+
+
+def detect_companies(query: str) -> set[str]:
+    """Companies whose name or brand appears in the query (whole words only)."""
+    text = query.lower()
+    return {
+        company
+        for company, aliases in COMPANY_ALIASES.items()
+        if any(re.search(rf"\b{re.escape(alias)}\b", text) for alias in aliases)
+    }
+
+
+class CompanyScopedRetriever:
+    """Searches only the reports of the companies a query names, so a question
+    about Deckers cannot be answered from a similar-sounding Columbia passage.
+    Queries naming no covered company (e.g. "Adidas revenue") search everything."""
+
+    def __init__(self, inner: Retriever) -> None:
+        self.inner = inner
+        self.cross_encoder_scores = getattr(inner, "cross_encoder_scores", False)
+
+    def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
+        return self.inner.search(query, k, companies or detect_companies(query) or None)
+
+
+RETRIEVER_MODES = ("vector", "bm25", "hybrid", "hybrid_rerank", "hybrid_rerank_company")
 
 
 def build_retriever(mode: str = config.RETRIEVER_MODE, chroma_dir: Path = config.CHROMA_DIR) -> Retriever:
@@ -144,4 +185,6 @@ def build_retriever(mode: str = config.RETRIEVER_MODE, chroma_dir: Path = config
         return HybridRetriever(chroma_dir)
     if mode == "hybrid_rerank":
         return RerankedRetriever(HybridRetriever(chroma_dir))
+    if mode == "hybrid_rerank_company":
+        return CompanyScopedRetriever(RerankedRetriever(HybridRetriever(chroma_dir)))
     raise ValueError(f"unknown retriever mode {mode!r}; choose from {RETRIEVER_MODES}")

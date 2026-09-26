@@ -1,0 +1,598 @@
+[
+  {
+    "mode": "vector",
+    "answer_model": "gpt-5.6-terra",
+    "faithfulness": 0.972,
+    "answer_relevancy": 0.846,
+    "context_precision": 0.676,
+    "context_recall": 0.795,
+    "rows": [
+      {
+        "id": "nike-01",
+        "answer": "The excerpts do not provide Nike\u2019s consolidated total revenues for fiscal 2025 or fiscal 2024, so this cannot be determined from the provided material.\n\nThey report fiscal 2025 revenues of $19,572 million in North America (down 9% from $21,396 million in fiscal 2024), $12,257 million in EMEA (down 10% from $13,607 million), and $6,251 million in APLA (down 7% from $6,729 million). [1][2][3]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 42",
+          "Nike_FY2025_10K.pdf, p. 44",
+          "Nike_FY2025_10K.pdf, p. 41"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8485096792213375,
+        "context_precision": 0.249999999975,
+        "context_recall": 1.0
+      },
+      {
+        "id": "nike-02",
+        "answer": "Nike\u2019s consolidated gross margin declined 190 basis points to 42.7% in fiscal 2025, from 44.6% in fiscal 2024, principally because of lower NIKE Brand average selling prices (ASPs), driven mainly by higher discounts and channel-mix changes. [1]\n\nAdditional drivers were higher other costs\u2014including higher inventory-obsolescence reserves\u2014lower Converse gross margin, and unfavorable foreign-currency movements (including hedges). [1] These pressures were partly offset by lower NIKE Brand product costs, lower warehousing and logistics costs, and the absence of prior-year restructuring charges. [1]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 38"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.944983607248652,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      },
+      {
+        "id": "nike-03",
+        "answer": "Nike spent **$4,689 million** on demand creation in fiscal 2025, up **9%** from **$4,285 million** in fiscal 2024. [1]\n\nThe increase was driven by higher brand marketing and sports marketing expense, including within Global Brand Divisions. [2] Demand creation comprises brand marketing (e.g., advertising, promotion, digital marketing, brand events and retail presentation) and sports marketing (e.g., endorsement contracts, complimentary product and sports marketing events). [1]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 38",
+          "Nike_FY2025_10K.pdf, p. 45"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9627239683097292,
+        "context_precision": 0.32499999998375,
+        "context_recall": 0.6666666666666666
+      },
+      {
+        "id": "nike-04",
+        "answer": "NIKE Direct revenues were **$18.8 billion in fiscal 2025**, down **13%** from **$21.5 billion in fiscal 2024** (down **12% on a currency-neutral basis**). They represented approximately **42% of total NIKE Brand revenues** in fiscal 2025. [1][2]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 32",
+          "Nike_FY2025_10K.pdf, p. 37"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9264497786970866,
+        "context_precision": 0.9999999999666667,
+        "context_recall": 1.0
+      },
+      {
+        "id": "nike-05",
+        "answer": "Nike\u2019s net income decreased by approximately **43.5%** from fiscal 2024 to fiscal 2025, calculated as net income falling from **$5,700 million** ($6,700 million income before taxes less $1,000 million income tax expense) to **$3,219 million** ($3,885 million less $666 million). [1]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 75"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9573927443912699,
+        "context_precision": 0.19999999998,
+        "context_recall": 1.0
+      },
+      {
+        "id": "lulu-01",
+        "answer": "Lululemon\u2019s net revenue grew by **$968,848 thousand (10%)** in fiscal 2024, reaching **$10,588,126 thousand** versus **$9,619,278 thousand** in 2023. On a constant-dollar basis, net revenue increased **11%**. [1]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 33"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.993992613388599,
+        "context_precision": 0.8333333332916666,
+        "context_recall": 1.0
+      },
+      {
+        "id": "lulu-02",
+        "answer": "China Mainland comparable sales increased 25% in 2024 (27% on a constant-dollar basis), while Americas comparable sales decreased 1%. [1][2]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 36",
+          "Lululemon_FY2024_10K.pdf, p. 32"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.820985883978898,
+        "context_precision": 0.699999999965,
+        "context_recall": 1.0
+      },
+      {
+        "id": "lulu-03",
+        "answer": "Lululemon\u2019s operating margin was **23.7% in fiscal 2024**, up **150 basis points** from **22.2% in fiscal 2023**. [1]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 32"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9367385534201412,
+        "context_precision": 0.19999999998,
+        "context_recall": 1.0
+      },
+      {
+        "id": "lulu-04",
+        "answer": "Lululemon repurchased **5.1 million shares** in 2024 for a total cost, including commissions and excise taxes, of **$1.6 billion**. [1]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 75"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9589927774976051,
+        "context_precision": 0.999999999975,
+        "context_recall": 1.0
+      },
+      {
+        "id": "lulu-05",
+        "answer": "Lululemon\u2019s net income grew **17.1%** from 2023 to 2024, increasing from **$1,550,190 thousand** to **$1,814,616 thousand**. [1]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 37"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9904039900416727,
+        "context_precision": 0.5833333333041666,
+        "context_recall": 1.0
+      },
+      {
+        "id": "ua-01",
+        "answer": "In Fiscal 2025, Under Armour\u2019s net revenue declined in three regions and grew slightly in EMEA, versus Fiscal 2024:  \n\n- **North America:** decreased **11.4%**. [1]  \n- **EMEA:** increased **0.4%**. [1]  \n- **Asia-Pacific:** decreased **13.5%**. [1]  \n- **Latin America:** decreased **6.1%**. [1]  \n\nFiscal 2025 ended March 31, 2025. [2]",
+        "sources": [
+          "UnderArmour_FY2025_10K.pdf, p. 33",
+          "UnderArmour_FY2025_10K.pdf, p. 7"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9695334787240378,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      },
+      {
+        "id": "ua-02",
+        "answer": "The provided excerpts state that Under Armour\u2019s gross margin increased 180 basis points to 47.9% in Fiscal 2025, but they do not specify the drivers of that improvement. [1]",
+        "sources": [
+          "UnderArmour_FY2025_10K.pdf, p. 33"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9372572142481826,
+        "context_precision": 0.9999999999,
+        "context_recall": 0.2
+      },
+      {
+        "id": "ua-03",
+        "answer": "Under Armour expects total pre-tax restructuring and related charges of approximately **$140 million to $160 million** under its 2025 restructuring plan. The high-end estimate is **$160.0 million**, comprising **$94.0 million** of restructuring charges and **$66.0 million** recorded in selling, general and administrative expenses. [1]",
+        "sources": [
+          "UnderArmour_FY2025_10K.pdf, p. 78"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.924369827084413,
+        "context_precision": 0.94999999997625,
+        "context_recall": 1.0
+      },
+      {
+        "id": "ua-04",
+        "answer": "The provided excerpts do not disclose Under Armour\u2019s employee headcount as of March 31, 2025.",
+        "sources": [],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0
+      },
+      {
+        "id": "ua-05",
+        "answer": "Under Armour faced lower wholesale-channel demand, particularly in North America and Asia-Pacific. Revenue was also affected by its proactive efforts to reduce discounting and promotional activity in direct-to-consumer sales, especially e-commerce. [1]\n\nThese conditions contributed to a 9.4% decrease in total net revenues in Fiscal 2025, including an 11.4% decline in North America and a 13.5% decline in Asia-Pacific. [1]",
+        "sources": [
+          "UnderArmour_FY2025_10K.pdf, p. 33"
+        ],
+        "faithfulness": 0.8888888888888888,
+        "answer_relevancy": 0.8314768773699082,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      },
+      {
+        "id": "colm-01",
+        "answer": "Columbia Sportswear\u2019s operating margin was **8.0% in 2024**, compared with **8.9% in 2023**\u2014a decline of approximately **0.9 percentage points**. This reflects 2024 operating income of **$270,741 thousand** on net sales of **$3,368,582 thousand**, versus 2023 operating income of **$310,284 thousand** on net sales of **$3,487,203 thousand**. [1]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 43"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9998215416814631,
+        "context_precision": 0.19999999998,
+        "context_recall": 1.0
+      },
+      {
+        "id": "colm-02",
+        "answer": "Columbia Sportswear\u2019s total net sales decreased **3%** in 2024 versus 2023, from **$3,487,203 thousand** to **$3,368,582 thousand**. [1]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 29"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9406723263348701,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      },
+      {
+        "id": "colm-03",
+        "answer": "Columbia Sportswear\u2019s U.S. net sales declined primarily because of lower U.S. wholesale sales and lower e-commerce sales. [1]\n\n- Wholesale sales fell as Spring and Fall 2024 orders declined amid retailer cautiousness\u2014including the transition to non-PFAS chemistry and changed promotional practices\u2014and a difficult competitive environment. [1]  \n- DTC sales also declined because lower e-commerce sales more than offset growth from brick-and-mortar stores. [1]  \n- E-commerce was pressured by a challenging outdoor-brand environment, greater competition in outdoor lifestyle, and Columbia\u2019s decision to de-emphasize promotions on Columbia.com under its ACCELERATE Growth Strategy. [1]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 31"
+        ],
+        "faithfulness": 0.9166666666666666,
+        "answer_relevancy": 0.931076547465791,
+        "context_precision": 0.8666666666377778,
+        "context_recall": 1.0
+      },
+      {
+        "id": "colm-04",
+        "answer": "Columbia Sportswear\u2019s business is highly seasonal: sales are weighted substantially toward the third and fourth quarters (the fall/winter season), while operating costs are distributed more evenly throughout the year. [1][2][3]\n\nIn 2024, over 60% of net sales and over 90% of operating income were realized in the second half of the year. [1] This concentration means that an inability to manage fixed costs during lower-sales seasons could adversely affect profits. [3]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 27",
+          "Columbia_FY2024_10K.pdf, p. 4",
+          "Columbia_FY2024_10K.pdf, p. 18"
+        ],
+        "faithfulness": 0.8571428571428571,
+        "answer_relevancy": 0.8482208758996629,
+        "context_precision": 0.7555555555303703,
+        "context_recall": 1.0
+      },
+      {
+        "id": "colm-05",
+        "answer": "Red Sea disruptions caused longer inbound transit times for Fall 2024 inventory. Columbia expected transit times to remain elevated, and key trade-lane pressure to persist, until the conflict is resolved; resolution was expected to reduce transit times and improve transit pricing. [1]\n\nMore broadly, geopolitical conflicts in the Red Sea could constrain ocean, air and trucking capacity, disrupt ports or borders, hinder Columbia\u2019s ability to meet wholesale and DTC demand, and lead to missed delivery deadlines, cancellations, refused deliveries, or price-reduction demands. [2]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 27",
+          "Columbia_FY2024_10K.pdf, p. 12"
+        ],
+        "faithfulness": 0.625,
+        "answer_relevancy": 0.85230000650833,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0
+      },
+      {
+        "id": "deck-01",
+        "answer": "In fiscal 2025, HOKA revenue increased **24%** versus the prior year to **$2.2 billion**, while UGG revenue grew **13%** to **$2.5 billion**. [1]\n\n- **HOKA:** Growth was driven by higher global demand for performance products across wholesale and DTC channels. Wholesale benefited from global market-share gains and new distribution points with key partners; DTC growth reflected gains in consumer acquisition and retention globally. [2]\n- **UGG:** Growth reflected higher global demand across both channels, particularly internationally. Wholesale was supported by demand for year-round key product franchises and partnerships with brand-enhancing retailers; DTC growth was driven by global consumer-acquisition and retention gains. [2]",
+        "sources": [
+          "Deckers_FY2025_AR.pdf, p. 3",
+          "Deckers_FY2025_AR.pdf, p. 43"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8626338559613833,
+        "context_precision": 0.699999999965,
+        "context_recall": 0.3333333333333333
+      },
+      {
+        "id": "deck-02",
+        "answer": "Deckers\u2019 gross margin increased 230 basis points to 57.9% in fiscal 2025. [1] The company attributed the improvement to its marketplace inventory management strategy, including product-assortment alignment that drove higher full-price sell-through across all distribution channels. [2]",
+        "sources": [
+          "Deckers_FY2025_AR.pdf, p. 38",
+          "Deckers_FY2025_AR.pdf, p. 39"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9509445054880645,
+        "context_precision": 0.3333333333,
+        "context_recall": 0.3333333333333333
+      },
+      {
+        "id": "deck-03",
+        "answer": "Deckers decided to phase out standalone operations for the Koolaburra brand, to focus on its most significant organic opportunities. It closed Koolaburra.com effective March 31, 2025, and plans to wind down Koolaburra in the wholesale channel by the end of calendar year 2025. [1][2]",
+        "sources": [
+          "Deckers_FY2025_AR.pdf, p. 9",
+          "Deckers_FY2025_AR.pdf, p. 71"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8439752840433211,
+        "context_precision": 0.99999999998,
+        "context_recall": 1.0
+      },
+      {
+        "id": "deck-04",
+        "answer": "The provided excerpts do not disclose Deckers\u2019 employee headcount at the end of fiscal 2025.",
+        "sources": [],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0
+      },
+      {
+        "id": "deck-05",
+        "answer": "HOKA accounted for approximately **44.1%** of Deckers\u2019 fiscal 2025 net sales, based on HOKA revenue of **$2.2 billion** and total net sales of **$4,985,612** (in thousands). [1][2]",
+        "sources": [
+          "Deckers_FY2025_AR.pdf, p. 3",
+          "Deckers_FY2025_AR.pdf, p. 43"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9267547818030945,
+        "context_precision": 0.9999999999,
+        "context_recall": 0.3333333333333333
+      }
+    ]
+  },
+  {
+    "mode": "hybrid_rerank",
+    "answer_model": "gpt-5.6-terra",
+    "faithfulness": 0.97,
+    "answer_relevancy": 0.84,
+    "context_precision": 0.728,
+    "context_recall": 0.75,
+    "rows": [
+      {
+        "id": "nike-01",
+        "answer": "Nike\u2019s total revenues were **$46.3 billion in fiscal 2025**, compared with **$51.4 billion in fiscal 2024**\u2014a decrease of **10% on a reported basis** (and 9% currency-neutral). [1]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 37"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9903862930705585,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0
+      },
+      {
+        "id": "nike-02",
+        "answer": "Nike\u2019s gross margin declined 190 basis points to 42.7% in fiscal 2025, from 44.6% in fiscal 2024, primarily because of lower NIKE Brand average selling prices (ASPs), higher other costs, lower Converse margins, and unfavorable foreign-exchange movements. [1]\n\nKey drivers were:\n\n- Lower NIKE Brand ASP reduced gross margin by approximately 180 basis points, primarily due to higher discounts and channel-mix changes, partly offset by strategic pricing actions. [1]\n- Higher other costs, including higher inventory obsolescence reserves, reduced margin by approximately 90 basis points. [1]\n- Lower gross margin at Converse reduced margin by approximately 20 basis points. [1]\n- Unfavorable net foreign-currency exchange-rate changes, including hedges, reduced margin by approximately 10 basis points. [1]\n- Nike specifically attributed the lower ASP environment to increased markdowns in NIKE Direct and discounts and higher sales returns with wholesale partners as it reduced supply of certain footwear products. [2]\n\nThese pressures were partly offset by lower NIKE Brand product costs (+approximately 80 basis points), lower warehousing and logistics costs (+approximately 20 basis points), and prior-year restructuring charges (+approximately 10 basis points). [1]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 38",
+          "Nike_FY2025_10K.pdf, p. 32"
+        ],
+        "faithfulness": 0.95,
+        "answer_relevancy": 0.9283485640449443,
+        "context_precision": 0.999999999975,
+        "context_recall": 1.0
+      },
+      {
+        "id": "nike-03",
+        "answer": "Nike spent **$4,689 million** on demand creation in fiscal 2025, up **9%** from **$4,285 million** in fiscal 2024. [1][2]\n\nDemand creation consists of brand marketing and sports marketing expenses. The excerpts provided do not state a company-wide reason for the increase; however, Global Brand Divisions\u2019 higher demand-creation expense was attributed to higher brand marketing and sports marketing expense. [2][3]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 35",
+          "Nike_FY2025_10K.pdf, p. 38",
+          "Nike_FY2025_10K.pdf, p. 45"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9594962553007865,
+        "context_precision": 0.5833333333041666,
+        "context_recall": 0.6666666666666666
+      },
+      {
+        "id": "nike-04",
+        "answer": "NIKE Direct revenues declined 13% to $18.8 billion in fiscal 2025, from $21.5 billion in fiscal 2024, and represented approximately 42% of total NIKE Brand revenues. [1]  \n\nOn a currency-neutral basis, NIKE Direct revenues decreased 12%, driven by a 20% decline in NIKE Brand Digital sales; NIKE store sales were flat. [2]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 32",
+          "Nike_FY2025_10K.pdf, p. 37"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8854690086253156,
+        "context_precision": 0.94999999997625,
+        "context_recall": 1.0
+      },
+      {
+        "id": "nike-05",
+        "answer": "Nike\u2019s net income decreased **44%** from **$5,700 million in fiscal 2024** to **$3,219 million in fiscal 2025**. [1]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 35"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9607543921929053,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      },
+      {
+        "id": "lulu-01",
+        "answer": "Lululemon\u2019s net revenue grew **10%** in fiscal 2024, increasing from **$9,619,278 thousand** in fiscal 2023 to **$10,588,126 thousand** in fiscal 2024. [1][2]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 30",
+          "Lululemon_FY2024_10K.pdf, p. 49"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9820503379674491,
+        "context_precision": 0.4499999999775,
+        "context_recall": 0.5
+      },
+      {
+        "id": "lulu-02",
+        "answer": "China Mainland comparable sales increased **25%** in 2024 (**27% on a constant dollar basis**), while Americas comparable sales **decreased 1%**. [1][2]  \n\nThus, China Mainland outperformed the Americas by **26 percentage points** on reported comparable-sales growth. [2]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 31",
+          "Lululemon_FY2024_10K.pdf, p. 39"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8262091740111773,
+        "context_precision": 0.8874999999778125,
+        "context_recall": 1.0
+      },
+      {
+        "id": "lulu-03",
+        "answer": "The excerpts do not provide Lululemon\u2019s consolidated operating margin for 2024 or its year-over-year change.\n\nBy disclosed segment, Americas operating margin was **38.0%** in 2024, down **50 basis points** from **38.5%** in 2023; Rest of World operating margin was **24.3%**, up **460 basis points** from **19.7%**. [1][2]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 35",
+          "Lululemon_FY2024_10K.pdf, p. 36"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9150631137125659,
+        "context_precision": 0.0,
+        "context_recall": 0.0
+      },
+      {
+        "id": "lulu-04",
+        "answer": "Lululemon repurchased **5.1 million shares** in 2024 for a total cost, including commissions and excise taxes, of **$1.6 billion**. [1]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 75"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9589927774976051,
+        "context_precision": 0.94999999997625,
+        "context_recall": 1.0
+      },
+      {
+        "id": "lulu-05",
+        "answer": "Lululemon\u2019s net income grew by approximately **17.1%** from 2023 to 2024, rising from **$1,550,190 thousand** to **$1,814,616 thousand**. [1]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 32"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9972740326196345,
+        "context_precision": 0.49999999995,
+        "context_recall": 1.0
+      },
+      {
+        "id": "ua-01",
+        "answer": "Under Armour\u2019s total net revenues decreased by **$537.569 million, or 9.4%, to $5.164 billion** in fiscal 2025 versus fiscal 2024. By region: [1]\n\n- **North America:** decreased **$399.543 million (11.4%)** to **$3.106 billion**. [1]  \n- **EMEA:** increased **$4.663 million (0.4%)** to **$1.087 billion**. [1]  \n- **Asia-Pacific:** decreased **$117.582 million (13.5%)** to **$755.437 million**. [1]  \n- **Latin America:** decreased **$14.054 million (6.1%)** to **$215.427 million**. [1]  \n\nCorporate Other revenues also decreased **$11.053 million (89.9%)** to **$1.244 million**. [1]",
+        "sources": [
+          "UnderArmour_FY2025_10K.pdf, p. 38"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9120338667318718,
+        "context_precision": 0.8333333332916666,
+        "context_recall": 1.0
+      },
+      {
+        "id": "ua-02",
+        "answer": "The excerpts state that gross margin increased 180 basis points to 47.9% in Fiscal 2025, but they do not provide the specific drivers of that improvement. [1]",
+        "sources": [
+          "UnderArmour_FY2025_10K.pdf, p. 33"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8124608772016392,
+        "context_precision": 0.0,
+        "context_recall": 0.25
+      },
+      {
+        "id": "ua-03",
+        "answer": "Under Armour expects total pre-tax restructuring and related charges of approximately **$140 million to $160 million** under its 2025 restructuring plan. The current estimate uses the high end of that range: **$160,000 thousand ($160 million)**. [1][2]",
+        "sources": [
+          "UnderArmour_FY2025_10K.pdf, p. 78",
+          "UnderArmour_FY2025_10K.pdf, p. 34"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9248916443476141,
+        "context_precision": 0.999999999975,
+        "context_recall": 1.0
+      },
+      {
+        "id": "ua-04",
+        "answer": "The provided excerpts do not disclose Under Armour\u2019s employee headcount as of March 31, 2025.",
+        "sources": [],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0
+      },
+      {
+        "id": "ua-05",
+        "answer": "Under Armour faced lower demand\u2014particularly in North America and Asia-Pacific\u2014and lower demand in its wholesale channel. Its own efforts to reduce discounting and promotional activity in direct-to-consumer, especially e-commerce, also reduced revenue. [1]\n\nThese factors contributed to a 9.4% decline in total net revenues in Fiscal 2025: wholesale revenue fell 8.1%, direct-to-consumer revenue fell 10.5%, and North America revenue fell 11.4%, while Asia-Pacific revenue fell 13.5%. [1]",
+        "sources": [
+          "UnderArmour_FY2025_10K.pdf, p. 33"
+        ],
+        "faithfulness": 0.7777777777777778,
+        "answer_relevancy": 0.8259627538259764,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      },
+      {
+        "id": "colm-01",
+        "answer": "The excerpts do not provide Columbia Sportswear\u2019s consolidated operating margin for 2024 or 2023. They report consolidated operating income of $270.741 million in 2024 and $310.284 million in 2023, but do not provide the consolidated net sales figures needed to calculate operating margin. [1]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 31"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8910042549959613,
+        "context_precision": 0.9999999999,
+        "context_recall": 0.0
+      },
+      {
+        "id": "colm-02",
+        "answer": "Columbia Sportswear\u2019s net sales decreased by **3%** in 2024 versus 2023, falling from **$3,487,203 thousand** to **$3,368,582 thousand**. [1][2]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 29",
+          "Columbia_FY2024_10K.pdf, p. 28"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9469926343084373,
+        "context_precision": 0.699999999965,
+        "context_recall": 1.0
+      },
+      {
+        "id": "colm-03",
+        "answer": "Columbia Sportswear\u2019s U.S. net sales decreased $173.2 million, or 8%, in 2024 versus 2023, primarily because of lower U.S. wholesale sales. Wholesale declines reflected lower Spring and Fall 2024 orders amid retailer cautiousness, the transition to non-PFAS product chemistry, changed promotional practices, and a difficult competitive environment. [1]\n\nDTC sales also declined because e-commerce sales fell, owing to a challenging e-commerce environment for outdoor brands, increased outdoor-lifestyle competition, and Columbia\u2019s decision to de-emphasize promotions on Columbia.com. Higher brick-and-mortar sales from temporary clearance locations and new stores only partially offset the e-commerce decline. [1]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 31"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9733355327830905,
+        "context_precision": 0.8333333332916666,
+        "context_recall": 1.0
+      },
+      {
+        "id": "colm-04",
+        "answer": "Columbia Sportswear\u2019s business is highly seasonal. Sales are weighted substantially toward the third and fourth quarters, while operating costs are distributed more evenly throughout the year. [1][2]\n\nIn 2024, over 60% of net sales and over 90% of operating income were realized in the second half of the year. [1] Cash and short-term investment balances generally reach their lowest point immediately before the U.S. holiday season, then rise in the fourth quarter as wholesale receivables are collected and direct-to-consumer sales occur. [3]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 27",
+          "Columbia_FY2024_10K.pdf, p. 4",
+          "Columbia_FY2024_10K.pdf, p. 32"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.852648526853804,
+        "context_precision": 0.999999999975,
+        "context_recall": 1.0
+      },
+      {
+        "id": "colm-05",
+        "answer": "Red Sea disruptions lengthened inbound transit times for Fall 2024 inventory. Columbia expects inbound transit times to remain elevated while the conflict continues; resolution should reduce transit times and improve transit pricing. [1]\n\nMore broadly, geopolitical conflicts in the Red Sea can constrain ocean, air and trucking capacity and disrupt ports or borders, potentially hindering product availability, causing missed delivery deadlines, customer cancellations or price concessions, and increasing distribution and freight costs. [2]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 27",
+          "Columbia_FY2024_10K.pdf, p. 12"
+        ],
+        "faithfulness": 0.5333333333333333,
+        "answer_relevancy": 0.8641231398134224,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0
+      },
+      {
+        "id": "deck-01",
+        "answer": "In fiscal year 2025, HOKA grew faster than UGG:\n\n- **HOKA:** Net sales increased **23.6% to $2,233,090**, driven by global market-share gains, new distribution points with key partners, and DTC consumer acquisition and retention gains. [1][2]\n- **UGG:** Net sales increased **13.1% to $2,531,351**, driven by higher global demand across wholesale and DTC, particularly internationally; wholesale growth reflected year-round key-product demand and brand-enhancing retail partnerships, while DTC growth reflected consumer acquisition and retention. [1][2]",
+        "sources": [
+          "Deckers_FY2025_AR.pdf, p. 38",
+          "Deckers_FY2025_AR.pdf, p. 43"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8817305149348948,
+        "context_precision": 0.9999999999666667,
+        "context_recall": 1.0
+      },
+      {
+        "id": "deck-02",
+        "answer": "Deckers\u2019 gross margin increased 230 basis points to 57.9% in fiscal year 2025, primarily because its marketplace inventory-management strategy improved product-assortment alignment and drove higher full-price sell-through across distribution channels. [1][2]\n\nHigher gross margins also contributed to operating-income gains at UGG and the Other brands; HOKA generated slightly lower gross margins. [3]",
+        "sources": [
+          "Deckers_FY2025_AR.pdf, p. 38",
+          "Deckers_FY2025_AR.pdf, p. 39",
+          "Deckers_FY2025_AR.pdf, p. 45"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9675153386147596,
+        "context_precision": 0.9999999999,
+        "context_recall": 0.3333333333333333
+      },
+      {
+        "id": "deck-03",
+        "answer": "Deckers decided to phase out Koolaburra\u2019s standalone operations to focus on its most significant organic opportunities. It closed Koolaburra.com on March 31, 2025, and plans to wind down the brand in the wholesale channel by the end of calendar year 2025. [1][2]",
+        "sources": [
+          "Deckers_FY2025_AR.pdf, p. 71",
+          "Deckers_FY2025_AR.pdf, p. 9"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8089713942593466,
+        "context_precision": 0.7555555555303703,
+        "context_recall": 1.0
+      },
+      {
+        "id": "deck-04",
+        "answer": "The provided excerpts do not state how many employees Deckers had at the end of fiscal 2025. [1][2][3][1][4]",
+        "sources": [
+          "Deckers_FY2025_AR.pdf, p. 88",
+          "Deckers_FY2025_AR.pdf, p. 95",
+          "Deckers_FY2025_AR.pdf, p. 81",
+          "Deckers_FY2025_AR.pdf, p. 15"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0
+      },
+      {
+        "id": "deck-05",
+        "answer": "HOKA represented approximately **44.8%** of Deckers\u2019 total fiscal 2025 net sales, calculated as $2,233,090 of HOKA net sales divided by total net sales of $4,985,612. [1]",
+        "sources": [
+          "Deckers_FY2025_AR.pdf, p. 38"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9385117400290796,
+        "context_precision": 0.7499999999625,
+        "context_recall": 1.0
+      }
+    ]
+  }
+]

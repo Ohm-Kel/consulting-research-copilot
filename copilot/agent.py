@@ -20,7 +20,7 @@ from openai import OpenAI
 
 from copilot import config
 from copilot.generate import make_client
-from copilot.retrieval import Hit, RerankedRetriever, Retriever, build_retriever
+from copilot.retrieval import Hit, Retriever, build_retriever
 from copilot.tools import TOOL_SCHEMAS, ToolError, calculate, retrieve_documents
 
 DECLINE_MESSAGE = "The available reports do not contain this information."
@@ -86,7 +86,7 @@ class ResearchAgent:
         retriever returns cross-encoder scores (the scale it was calibrated on) and
         is disabled for other retrievers, whose scores use different scales."""
         self.retriever = retriever or build_retriever()
-        if relevance_threshold is None and isinstance(self.retriever, RerankedRetriever):
+        if relevance_threshold is None and getattr(self.retriever, "cross_encoder_scores", False):
             relevance_threshold = config.RELEVANCE_THRESHOLD
         self.client = client or make_client()
         self.model = model
@@ -97,44 +97,36 @@ class ResearchAgent:
         sources: dict[str, Hit] = {}  # source ID (S1, S2...) -> passage, across all searches
         tool_calls: dict[str, int] = {}
         best_score = float("-inf")
-        messages: list[dict[str, Any]] = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": question},
-        ]
+        # Responses API: function tools work together with reasoning on GPT-5.6
+        # models (Chat Completions rejects that combination).
+        items: list[Any] = [{"role": "user", "content": question}]
         final_text = ""
 
         for _ in range(self.max_turns):
-            response = self.client.chat.completions.create(
-                model=self.model, max_completion_tokens=4096, tools=TOOL_SCHEMAS, messages=messages
+            response = self.client.responses.create(
+                model=self.model, instructions=SYSTEM_PROMPT, input=items, tools=TOOL_SCHEMAS, max_output_tokens=4096
             )
-            choice = response.choices[0]
-            if choice.finish_reason in ("length", "content_filter"):
-                return self._decline(f"the model stopped early ({choice.finish_reason})", tool_calls, sources)
-            message = choice.message
-            if not message.tool_calls:
-                final_text = (message.content or "").strip()
+            if response.status == "incomplete":
+                reason = getattr(response.incomplete_details, "reason", None) or "unknown"
+                return self._decline(f"the model stopped early ({reason})", tool_calls, sources)
+            calls = [item for item in response.output if item.type == "function_call"]
+            if not calls:
+                final_text = (response.output_text or "").strip()
                 break
 
-            messages.append({
-                "role": "assistant",
-                "content": message.content,
-                "tool_calls": [
-                    {"id": c.id, "type": "function", "function": {"name": c.function.name, "arguments": c.function.arguments}}
-                    for c in message.tool_calls
-                ],
-            })
-            for call in message.tool_calls:  # every call gets a reply, in order
-                name = call.function.name
-                tool_calls[name] = tool_calls.get(name, 0) + 1
+            # Send back everything the model produced (reasoning and calls), then one output per call.
+            items.extend(item.model_dump(exclude_none=True) for item in response.output)
+            for call in calls:
+                tool_calls[call.name] = tool_calls.get(call.name, 0) + 1
                 try:
-                    arguments = json.loads(call.function.arguments or "{}")
+                    arguments = json.loads(call.arguments or "{}")
                 except json.JSONDecodeError:
                     content, hits = "Error: arguments were not valid JSON", []
                 else:
-                    content, _, hits = self._execute(name, arguments, sources)
+                    content, _, hits = self._execute(call.name, arguments, sources)
                 for hit in hits:
                     best_score = max(best_score, hit.score)
-                messages.append({"role": "tool", "tool_call_id": call.id, "content": content})
+                items.append({"type": "function_call_output", "call_id": call.call_id, "output": content})
         else:
             return self._decline("the agent reached its step limit without answering", tool_calls, sources)
 
