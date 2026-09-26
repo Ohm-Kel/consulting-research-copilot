@@ -190,6 +190,10 @@ python evals/run_agent_eval.py --final    # agent table (uses the OpenAI API)
 python evals/run_ragas_eval.py --final    # RAGAS table (uses the OpenAI API)
 ```
 
+With `make` available (Linux, macOS, WSL), the same steps are shortcuts: `make install`,
+`make data`, `make index`, `make test`, `make lint`, `make eval`, `make eval-llm`, `make serve`
+and `make docker-build`. Run `make` on its own to list them.
+
 ## Project structure
 
 ```
@@ -208,6 +212,8 @@ evals/            question sets, page labeller, retrieval / guardrail / agent / 
 scripts/          report download, example generation
 stage0/           foundation scripts: API call, embeddings, cosine similarity, chunking
 tests/            pytest suite
+pyproject.toml    project metadata, ruff and pytest settings
+Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 ```
 
 ## Design decisions
