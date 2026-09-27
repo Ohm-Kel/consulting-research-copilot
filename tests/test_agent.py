@@ -143,3 +143,24 @@ def test_malformed_tool_arguments_are_reported_to_the_model() -> None:
     agent, fake, _ = make_agent([bad_call, text_response("INSUFFICIENT_CONTEXT")], [Hit(NIKE, 8.0)])
     agent.run("?")
     assert "not valid JSON" in last_tool_message(fake.requests[1])["content"]
+
+
+def test_fallback_when_answer_cites_only_weak_passages() -> None:
+    # A strong passage was retrieved (so the retrieval floor passes) but the answer cites only a weak one.
+    weak = SAMPLE_CHUNKS[1]
+    agent, _, _ = make_agent(
+        [tool_use("retrieve_documents", {"query": "Nike margin"}), text_response("Margins fell [S2].")],
+        [Hit(NIKE, 8.0), Hit(weak, 0.5)],
+    )
+    result = agent.run("Nike margin?")
+    assert result.fallback_triggered and "weakly related" in result.fallback_reason
+
+
+def test_answer_citing_a_strong_passage_is_returned() -> None:
+    weak = SAMPLE_CHUNKS[1]
+    agent, _, _ = make_agent(
+        [tool_use("retrieve_documents", {"query": "Nike margin"}), text_response("Fell to 42.7% [S1][S2].")],
+        [Hit(NIKE, 8.0), Hit(weak, 0.5)],
+    )
+    result = agent.run("Nike margin?")
+    assert not result.fallback_triggered and len(result.sources) == 2

@@ -8,7 +8,9 @@ guardrails decide whether that answer is returned or replaced by a decline:
    RELEVANCE_THRESHOLD, the reports do not cover the question.
 2. Model judgement: the model replies INSUFFICIENT_CONTEXT when the passages are
    on-topic but do not contain the answer (e.g. a future fiscal year).
-3. Citations: an answer that cites no retrieved source is not returned.
+3. Citations: an answer must cite at least one retrieved passage, and (with a
+   relevance floor) at least one cited passage must clear it, so an answer
+   resting only on weakly related passages is not returned.
 """
 
 import json
@@ -148,6 +150,9 @@ class ResearchAgent:
         answer, cited = renumber_citations(final_text, sources)
         if not cited:
             return self._decline("the draft answer cited no retrieved source", tool_calls, sources)
+        cited_scores = [sources[sid].score for sid in set(re.findall(r"\bS\d+\b", final_text)) if sid in sources]
+        if self.relevance_threshold is not None and max(cited_scores) < self.relevance_threshold:
+            return self._decline("the answer cited only weakly related passages", tool_calls, sources)
         return AgentResult(answer, cited, tool_calls, False, None, [h.chunk.text for h in sources.values()])
 
     def _execute(self, name: str, tool_input: dict[str, Any], sources: dict[str, Hit]) -> tuple[str, bool, list[Hit]]:
