@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: ["**"]  # branch pushes only; pushing a release tag does not re-run CI
   pull_request:
   workflow_dispatch:
     inputs:
@@ -9,6 +10,15 @@ on:
         description: "Also run the RAGAS answer-quality eval (uses the OpenAI API)"
         type: boolean
         default: false
+
+# Read-only token: the workflow only checks out code and uploads artifacts.
+permissions:
+  contents: read
+
+# A newer push to the same branch cancels the run it supersedes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test-and-eval:
