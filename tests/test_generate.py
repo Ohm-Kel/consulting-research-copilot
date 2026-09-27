@@ -28,3 +28,13 @@ def test_answer_question_sends_excerpts_and_returns_citations() -> None:
     assert "[1] Nike_FY2025_10K.pdf, p. 38" in request["messages"][1]["content"]
     assert answer.sources == ["Nike_FY2025_10K.pdf, p. 38"]
     assert len(answer.contexts) == 3
+
+
+def test_client_has_a_bounded_timeout(monkeypatch) -> None:
+    from copilot import config
+    from copilot.generate import make_client
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    client = make_client()
+    assert client.timeout == config.LLM_TIMEOUT_SECONDS
+    assert client.max_retries == config.LLM_MAX_RETRIES

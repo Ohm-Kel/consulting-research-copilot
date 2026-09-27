@@ -164,3 +164,11 @@ def test_answer_citing_a_strong_passage_is_returned() -> None:
     )
     result = agent.run("Nike margin?")
     assert not result.fallback_triggered and len(result.sources) == 2
+
+
+def test_fallback_when_time_budget_is_spent() -> None:
+    fake, retriever = FakeLLM([text_response("unused")]), FakeRetriever([Hit(NIKE, 8.0)])
+    agent = ResearchAgent(retriever=retriever, client=fake, model="test", time_budget=-1)
+    result = agent.run("Nike margin?")
+    assert result.fallback_triggered and "out of time" in result.fallback_reason
+    assert fake.requests == []  # no LLM call once the budget is gone

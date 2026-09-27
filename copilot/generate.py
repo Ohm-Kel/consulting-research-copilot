@@ -59,8 +59,8 @@ def cited_sources(text: str, hits: list[Hit]) -> tuple[str, list[str]]:
 
 
 def make_client() -> OpenAI:
-    """OpenAI client; reads OPENAI_API_KEY (loaded from .env by copilot.config)."""
-    return OpenAI()
+    """OpenAI client with a bounded timeout; reads OPENAI_API_KEY (loaded from .env by copilot.config)."""
+    return OpenAI(timeout=config.LLM_TIMEOUT_SECONDS, max_retries=config.LLM_MAX_RETRIES)
 
 
 def answer_question(

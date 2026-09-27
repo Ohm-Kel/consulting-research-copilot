@@ -15,6 +15,7 @@ guardrails decide whether that answer is returned or replaced by a decline:
 
 import json
 import re
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -88,6 +89,7 @@ class ResearchAgent:
         model: str = config.LLM_MODEL,
         relevance_threshold: float | None = None,
         max_turns: int = config.MAX_AGENT_TURNS,
+        time_budget: float = config.AGENT_TIME_BUDGET_SECONDS,
     ) -> None:
         """`relevance_threshold` defaults to config.RELEVANCE_THRESHOLD when the
         retriever returns cross-encoder scores (the scale it was calibrated on) and
@@ -99,6 +101,7 @@ class ResearchAgent:
         self.model = model
         self.relevance_threshold = relevance_threshold
         self.max_turns = max_turns
+        self.time_budget = time_budget
 
     def run(self, question: str) -> AgentResult:
         """Answer `question`, or return a decline if any guardrail fails."""
@@ -109,8 +112,11 @@ class ResearchAgent:
         # models (Chat Completions rejects that combination).
         items: list[Any] = [{"role": "user", "content": question}]
         final_text = ""
+        started = time.monotonic()
 
         for _ in range(self.max_turns):
+            if time.monotonic() - started > self.time_budget:
+                return self._decline("the agent ran out of time", tool_calls, sources)
             response = self.client.responses.create(
                 model=self.model, instructions=SYSTEM_PROMPT, input=items, tools=TOOL_SCHEMAS, max_output_tokens=4096
             )

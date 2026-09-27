@@ -15,6 +15,9 @@ COLLECTION_NAME = "annual_reports"
 DEV_MODEL = os.getenv("OPENAI_MODEL") or "gpt-5.6-luna"  # all development calls
 EVAL_MODEL = os.getenv("OPENAI_EVAL_MODEL") or "gpt-5.6-terra"  # final evaluation runs only
 LLM_MODEL = DEV_MODEL
+# Per-request timeout and retries for OpenAI calls (the SDK default is 10 minutes).
+LLM_TIMEOUT_SECONDS = float(os.getenv("COPILOT_LLM_TIMEOUT", "90"))
+LLM_MAX_RETRIES = 2
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 # bge models are trained to see this prefix on queries (not on passages).
 QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
@@ -33,6 +36,7 @@ RERANK_CANDIDATES = int(os.getenv("COPILOT_RERANK_CANDIDATES", "30"))  # fused c
 
 # Agent and guardrails (Stage 3)
 MAX_AGENT_TURNS = 6
+AGENT_TIME_BUDGET_SECONDS = float(os.getenv("COPILOT_AGENT_TIME_BUDGET", "180"))  # per question
 # Minimum cross-encoder score (ms-marco logit) for a passage to count as relevant.
 # Measured: all 25 eval questions score 3.5 or more; unrelated questions score 0.6 or less.
 # Recalibrate if you change RERANKER_MODEL (bge-reranker outputs 0-1 probabilities).

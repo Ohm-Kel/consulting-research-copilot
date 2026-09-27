@@ -55,7 +55,12 @@ def build_metrics(judge_model: str) -> dict:
     from ragas.llms.base import llm_factory
     from ragas.metrics.collections import AnswerRelevancy, ContextPrecisionWithReference, ContextRecall, Faithfulness
 
-    llm = llm_factory(judge_model, provider="openai", client=AsyncOpenAI(), max_tokens=4096)
+    llm = llm_factory(
+        judge_model,
+        provider="openai",
+        client=AsyncOpenAI(timeout=config.LLM_TIMEOUT_SECONDS, max_retries=config.LLM_MAX_RETRIES),
+        max_tokens=4096,
+    )
     use_reasoning_model_params(llm)
     embeddings = embedding_factory("huggingface", model=config.EMBEDDING_MODEL)
     return {
