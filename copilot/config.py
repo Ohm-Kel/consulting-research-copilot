@@ -28,7 +28,8 @@ OVERLAP_WORDS = 50
 
 # Retrieval
 TOP_K = 5
-RETRIEVER_MODE = os.getenv("COPILOT_RETRIEVER", "hybrid_rerank")  # vector | bm25 | hybrid | hybrid_rerank
+# vector | bm25 | hybrid | hybrid_rerank | hybrid_rerank_company
+RETRIEVER_MODE = os.getenv("COPILOT_RETRIEVER", "hybrid_rerank")
 # Measured on the eval set (see README): the MiniLM cross-encoder over 30 candidates
 # matched BAAI/bge-reranker-base (20) on Hit@5, beat it on Hit@1 and MRR, and ran ~3.5x faster on CPU.
 RERANKER_MODEL = os.getenv("COPILOT_RERANKER", "cross-encoder/ms-marco-MiniLM-L-6-v2")
@@ -62,4 +63,3 @@ DOCUMENTS: dict[str, dict[str, str]] = {
         "report": "Deckers Brands FY2025 Annual Report (fiscal year ended March 31, 2025)",
     },
 }
-COMPANIES = sorted({meta["company"] for meta in DOCUMENTS.values()})

@@ -137,7 +137,7 @@ class ResearchAgent:
                 except json.JSONDecodeError:
                     content, hits = "Error: arguments were not valid JSON", []
                 else:
-                    content, _, hits = self._execute(call.name, arguments, sources)
+                    content, hits = self._execute(call.name, arguments, sources)
                 for hit in hits:
                     best_score = max(best_score, hit.score)
                 items.append({"type": "function_call_output", "call_id": call.call_id, "output": content})
@@ -161,8 +161,8 @@ class ResearchAgent:
             return self._decline("the answer cited only weakly related passages", tool_calls, sources)
         return AgentResult(answer, cited, tool_calls, False, None, [h.chunk.text for h in sources.values()])
 
-    def _execute(self, name: str, tool_input: dict[str, Any], sources: dict[str, Hit]) -> tuple[str, bool, list[Hit]]:
-        """Run one tool call. Returns (content for the model, is_error, hits)."""
+    def _execute(self, name: str, tool_input: dict[str, Any], sources: dict[str, Hit]) -> tuple[str, list[Hit]]:
+        """Run one tool call. Returns (content for the model, retrieved hits)."""
         try:
             if name == "retrieve_documents":
                 hits = retrieve_documents(self.retriever, str(tool_input.get("query", "")))
@@ -178,13 +178,13 @@ class ResearchAgent:
                     self.relevance_threshold is not None and max(h.score for h in hits) < self.relevance_threshold
                 ):
                     lines.append("NOTE: these results look weakly related to the query. Try different wording.")
-                return "\n\n".join(lines) or "No passages found.", False, hits
+                return "\n\n".join(lines) or "No passages found.", hits
             if name == "calculate":
                 value = calculate(str(tool_input.get("expression", "")))
-                return json.dumps({"expression": tool_input.get("expression"), "result": round(value, 4)}), False, []
-            return f"Unknown tool {name!r}", True, []
+                return json.dumps({"expression": tool_input.get("expression"), "result": round(value, 4)}), []
+            return f"Error: unknown tool {name!r}", []
         except ToolError as exc:
-            return f"Error: {exc}", True, []
+            return f"Error: {exc}", []
 
     @staticmethod
     def _decline(reason: str, tool_calls: dict[str, int], sources: dict[str, Hit]) -> AgentResult:
