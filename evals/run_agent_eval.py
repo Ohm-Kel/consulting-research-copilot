@@ -29,9 +29,33 @@ OUT_OF_SCOPE_PATH = config.ROOT / "evals" / "out_of_scope.json"
 CALC_EXPECTED = {"nike-05": -43.5, "lulu-05": 17.1, "colm-02": -3.4, "deck-05": 44.8}
 
 
+DECREASE_WORDS = re.compile(r"\b(decreas|declin|fell|fall|drop|down|lower|shrank|contract)", re.IGNORECASE)
+INCREASE_WORDS = re.compile(r"\b(increas|grew|grow|rose|rise|up\b|higher|gain)", re.IGNORECASE)
+
+
+PERCENT = re.compile(r"(-?\d+(?:\.\d+)?)\s?%")
+
+
 def percentages(text: str) -> list[float]:
     """Extract every percentage figure from `text`."""
-    return [float(x) for x in re.findall(r"(-?\d+(?:\.\d+)?)\s?%", text.replace(",", ""))]
+    return [float(x) for x in PERCENT.findall(text.replace(",", ""))]
+
+
+def calc_correct(answer: str, expected: float, tolerance: float = 0.2) -> bool:
+    """True if `answer` states `expected` (a percentage) with the right direction.
+
+    "-43.5%" and "fell 43.5%" both match -43.5, but "rose 43.5%" does not; likewise "fell
+    17.1%" does not match +17.1. The direction is read from the words just before the number."""
+    text = answer.replace(",", "")
+    for match in PERCENT.finditer(text):
+        value = float(match.group(1))
+        before = text[max(0, match.start() - 60) : match.start()]
+        says_decrease = bool(DECREASE_WORDS.search(before)) and not INCREASE_WORDS.search(before)
+        if abs(value - expected) <= tolerance and not (expected > 0 and says_decrease):
+            return True
+        if expected < 0 and abs(-value - expected) <= tolerance and says_decrease:
+            return True
+    return False
 
 
 def main() -> None:
@@ -52,8 +76,7 @@ def main() -> None:
         answered += not r.fallback_triggered
         cited_ok += hit
         if q.id in CALC_EXPECTED:
-            # Accept the magnitude too: "decreased 43.5%" is correct for -43.5.
-            calc_ok += any(abs(abs(p) - abs(CALC_EXPECTED[q.id])) <= 0.2 for p in percentages(r.answer))
+            calc_ok += calc_correct(r.answer, CALC_EXPECTED[q.id])
         rows.append(
             {
                 "id": q.id,

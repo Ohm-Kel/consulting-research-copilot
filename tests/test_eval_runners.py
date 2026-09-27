@@ -71,3 +71,21 @@ def test_reasoning_model_params_workaround() -> None:
     llm = SimpleNamespace(_map_openai_params=lambda: {"max_tokens": 4096, "temperature": 0.01, "top_p": 0.9})
     ragas.use_reasoning_model_params(llm)
     assert llm._map_openai_params() == {"max_completion_tokens": 4096, "temperature": 1.0}
+
+
+@pytest.mark.parametrize(
+    ("answer", "expected", "correct"),
+    [
+        ("Net income fell 43.5% in fiscal 2025.", -43.5, True),
+        ("Net income changed by -43.5%.", -43.5, True),
+        ("Net income decreased by **43.5%**, while revenue increased 2%.", -43.5, True),
+        ("Net income rose 43.5% in fiscal 2025.", -43.5, False),  # right number, wrong direction
+        ("Net income grew 17.1%.", 17.1, True),
+        ("Net income fell 17.1%.", 17.1, False),  # a rise described as a fall
+        ("HOKA was 44.8% of net sales.", 44.8, True),
+        ("HOKA was 40.0% of net sales.", 44.8, False),
+    ],
+)
+def test_agent_eval_calc_check_uses_direction(answer: str, expected: float, correct: bool) -> None:
+    agent_eval = load_script("run_agent_eval")
+    assert agent_eval.calc_correct(answer, expected) is correct
