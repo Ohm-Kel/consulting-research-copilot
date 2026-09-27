@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Ohm-Kel/consulting-research-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Ohm-Kel/consulting-research-copilot/actions/workflows/ci.yml)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
-![Tests](https://img.shields.io/badge/tests-80%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-104%20passing-brightgreen)
 ![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)
 
 An AI research assistant for the desk research a consulting case team does in the first days of
@@ -62,16 +62,19 @@ flowchart TB
 
 1. **Ingestion.** Each PDF page is split into 300-word chunks that never cross a page boundary,
    so every citation points to an exact page. Chunks are embedded locally with
-   `bge-small-en-v1.5` and stored in Chroma.
+   `bge-small-en-v1.5` and stored in Chroma. Citations use PDF page numbers, which can differ
+   from the page numbers printed in a report.
 2. **Hybrid retrieval.** Vector search captures meaning; BM25 keyword search catches exact names
    and figures ("HOKA", "$4,689 million"). Their rankings are merged with reciprocal rank
    fusion, and a cross-encoder reranker re-reads the top 30 candidates to pick the best 5.
 3. **Agent.** An LLM (OpenAI `gpt-5.6`) decides when to search, re-searches with different
    wording when results are weak, and calls a calculator for growth rates and margins instead
-   of doing mental math. The loop is ~100 lines of plain Python, with no agent framework.
+   of doing mental math. Each passage it sees is labelled with its report and fiscal-year end,
+   since fiscal years differ between companies. The loop is plain Python, with no agent framework.
 4. **Guardrails.** The agent declines when (a) no retrieved passage clears a relevance floor
-   calibrated on measured scores, (b) the model judges the passages insufficient, or (c) a draft
-   answer cites no source.
+   calibrated on measured scores, (b) the model judges the passages insufficient, (c) a draft
+   answer cites no source or cites only passages below the floor, or (d) the question exceeds
+   its time budget.
 5. **Service.** FastAPI endpoint, Docker image, and a CI pipeline that re-runs the evaluation on
    every push and fails the build if retrieval quality regresses.
 
@@ -147,8 +150,9 @@ guess past.
 | Area | What is in place |
 |---|---|
 | API | FastAPI: `POST /query` (agent), `POST /search` (retrieval only, no API key), `GET /health`; LLM errors mapped to 502, missing key to 503 |
-| Tests | 80 pytest tests; the LLM is replaced by a scripted fake, so the suite runs without a key |
-| Safety | AST-based calculator (no `eval`), capped expression size, rejects overflow and complex results |
+| Tests | 104 pytest tests; the LLM is replaced by a scripted fake, so the suite runs without a key |
+| Safety | AST-based calculator (no `eval`), capped expression size, rejects overflow and complex results; 90-second timeout on every OpenAI call and a 3-minute budget per question |
+| Reproducibility | Every report is verified against a SHA-256 checksum, so the evaluation always runs on the documents it was built from |
 | Docker | One image with reports, models and a pre-built index |
 | CI | GitHub Actions: tests → build index → **retrieval regression gate** (Hit@5 ≥ 0.64) → **guardrail gate** → Docker build and smoke test; agent and RAGAS evals when an API key secret is configured |
 
