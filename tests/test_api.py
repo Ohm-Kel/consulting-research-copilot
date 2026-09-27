@@ -90,3 +90,10 @@ def test_llm_api_errors_become_502(client: TestClient) -> None:
     app.dependency_overrides[get_agent] = FailingAgent
     response = client.post("/query", json={"question": "Nike revenue?"})
     assert response.status_code == 502 and "APIConnectionError" in response.json()["detail"]
+
+
+def test_api_reports_the_package_version(client: TestClient) -> None:
+    from copilot import __version__
+
+    assert client.get("/health").json()["version"] == __version__
+    assert app.version == __version__

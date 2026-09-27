@@ -17,7 +17,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from copilot import config
+from copilot import __version__, config
 from copilot.agent import ResearchAgent
 from copilot.retrieval import Retriever, build_retriever
 
@@ -75,7 +75,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-app = FastAPI(title="Consulting Research Copilot", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Consulting Research Copilot", version=__version__, lifespan=lifespan)
 
 
 @app.exception_handler(openai.APIError)
@@ -89,6 +89,7 @@ def health() -> dict[str, str | bool]:
     """Report service status, retriever mode, model and whether the LLM is configured."""
     return {
         "status": "ok",
+        "version": __version__,
         "retriever": config.RETRIEVER_MODE,
         "model": config.LLM_MODEL,
         "llm_available": bool(os.getenv("OPENAI_API_KEY")),

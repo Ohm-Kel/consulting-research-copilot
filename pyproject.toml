@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "consulting-research-copilot"
-version = "1.2.0"
 description = "Question answering over company annual reports with page-level citations, hybrid retrieval, a tool-calling agent and evidence-level evaluation."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,7 +11,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Semanu Kwaku Sebuava" }]
 keywords = ["rag", "retrieval", "llm", "agents", "evaluation", "fastapi"]
-dynamic = ["dependencies"]
+dynamic = ["version", "dependencies"]
 
 [project.urls]
 Repository = "https://github.com/Ohm-Kel/consulting-research-copilot"
@@ -24,6 +23,7 @@ copilot = "copilot.cli:main"
 packages = ["copilot"]
 
 [tool.setuptools.dynamic]
+version = { attr = "copilot.__version__" }
 dependencies = { file = ["requirements.txt"] }
 
 [tool.pytest.ini_options]
