@@ -26,6 +26,12 @@ class Chunk:
         return f"{self.company} annual report, page {self.page}."
 
     @property
+    def report(self) -> str:
+        """Report name with its fiscal-year end, e.g. 'Nike FY2025 Form 10-K (fiscal year ended May 31, 2025)'.
+        Fiscal years differ between companies, so the model is shown which period a passage covers."""
+        return config.DOCUMENTS.get(self.source, {}).get("report", self.source)
+
+    @property
     def citation(self) -> str:
         """Source reference used in answers, e.g. 'Nike_FY2025_10K.pdf, p. 38'."""
         return f"{self.source}, p. {self.page}"

@@ -59,6 +59,9 @@ def test_agent_retrieves_calculates_and_cites() -> None:
     # the calculator result went back to the model as a tool_result
     calc_result = last_tool_message(fake.requests[2])
     assert calc_result["tool_call_id"] == "tu_2" and '"result": -4.2601' in calc_result["content"]
+    # passages are labelled with their report and fiscal-year end
+    search_result = last_tool_message(fake.requests[1])["content"]
+    assert "Nike FY2025 Form 10-K (fiscal year ended May 31, 2025)" in search_result
 
 
 def test_fallback_when_no_passage_is_relevant() -> None:

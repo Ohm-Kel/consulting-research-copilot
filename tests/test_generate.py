@@ -7,7 +7,7 @@ HITS = [Hit(chunk, 0.9 - i * 0.1) for i, chunk in enumerate(SAMPLE_CHUNKS[:3])]
 
 def test_format_context_numbers_excerpts_with_citations() -> None:
     context = format_context(HITS)
-    assert context.startswith("[1] Nike_FY2025_10K.pdf, p. 38 (Nike)")
+    assert context.startswith("[1] Nike_FY2025_10K.pdf, p. 38 | Nike FY2025 Form 10-K (fiscal year ended May 31, 2025)")
     assert "[3] Columbia_FY2024_10K.pdf, p. 5" in context
 
 

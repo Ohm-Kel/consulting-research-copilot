@@ -14,6 +14,8 @@ using only the numbered excerpts from company annual reports that the user provi
 Rules:
 - Cite every factual claim with the excerpt number in square brackets, e.g. [2].
 - Quote figures exactly as they appear, with units and the fiscal year they refer to.
+- Each excerpt names its report and when that company's fiscal year ended; fiscal years differ
+  between companies, so say which fiscal year each figure belongs to.
 - If the excerpts do not contain the answer, say so plainly instead of guessing.
 - Be concise: a direct answer first, then brief supporting detail."""
 
@@ -30,7 +32,7 @@ class Answer:
 def format_context(hits: list[Hit]) -> str:
     """Render hits as numbered excerpts the model can cite."""
     return "\n\n".join(
-        f"[{i}] {hit.chunk.citation} ({hit.chunk.company})\n{hit.chunk.text}" for i, hit in enumerate(hits, start=1)
+        f"[{i}] {hit.chunk.citation} | {hit.chunk.report}\n{hit.chunk.text}" for i, hit in enumerate(hits, start=1)
     )
 
 

@@ -35,7 +35,8 @@ How to work:
 - If the passages do not answer the question, search again with different wording (at most 3 searches).
 - Use the calculate tool for any growth rate, margin, share or other derived figure.
 - Cite every factual claim with the source IDs of the passages it comes from, e.g. [S2] or [S1][S4].
-- Quote figures exactly, with units and fiscal year.
+- Quote figures exactly, with units and fiscal year. Each passage names its report and when that
+  company's fiscal year ended; fiscal years differ between companies, so say which one a figure belongs to.
 - Answer in a few sentences: the direct answer first, then the supporting detail or drivers.
 
 If the passages do not contain enough information to answer, reply with exactly \
@@ -160,7 +161,7 @@ class ResearchAgent:
                     if sid is None:
                         sid = f"S{len(sources) + 1}"
                         sources[sid] = hit
-                    label = f"[{sid}] {hit.chunk.citation} ({hit.chunk.company}) relevance={hit.score:.2f}"
+                    label = f"[{sid}] {hit.chunk.citation} | {hit.chunk.report} | relevance={hit.score:.2f}"
                     lines.append(f"{label}\n{hit.chunk.text}")
                 if not hits or (
                     self.relevance_threshold is not None and max(h.score for h in hits) < self.relevance_threshold
