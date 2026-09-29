@@ -87,6 +87,16 @@ def load_corpus(data_dir: Path = config.DATA_DIR) -> list[Chunk]:
     return chunks
 
 
+def index_settings() -> dict[str, str | int]:
+    """Settings an index depends on. They are stored with the index when it is built and
+    checked when it is opened, so a config change cannot silently reuse a stale index."""
+    return {
+        "embedding_model": config.EMBEDDING_MODEL,
+        "chunk_words": config.CHUNK_WORDS,
+        "overlap_words": config.OVERLAP_WORDS,
+    }
+
+
 def build_index(chunks: list[Chunk], chroma_dir: Path = config.CHROMA_DIR) -> int:
     """Embed chunks and (re)write the Chroma collection. Returns the chunk count."""
     import chromadb
@@ -96,7 +106,7 @@ def build_index(chunks: list[Chunk], chroma_dir: Path = config.CHROMA_DIR) -> in
     client = chromadb.PersistentClient(path=str(chroma_dir))
     if config.COLLECTION_NAME in [c.name for c in client.list_collections()]:
         client.delete_collection(config.COLLECTION_NAME)
-    collection = client.create_collection(config.COLLECTION_NAME, metadata={"hnsw:space": "cosine"})
+    collection = client.create_collection(config.COLLECTION_NAME, metadata={"hnsw:space": "cosine", **index_settings()})
 
     vectors = embed_passages([f"{c.header} {c.text}" for c in chunks])
     batch = 1000  # Chroma caps how many records one add() call accepts

@@ -21,7 +21,7 @@ from rank_bm25 import BM25Okapi
 
 from copilot import config
 from copilot.embeddings import embed_query
-from copilot.ingest import Chunk
+from copilot.ingest import Chunk, index_settings
 
 if TYPE_CHECKING:
     from sentence_transformers import CrossEncoder
@@ -52,7 +52,13 @@ def _open_collection(chroma_dir: Path) -> chromadb.Collection:
     client = chromadb.PersistentClient(path=str(chroma_dir))
     if config.COLLECTION_NAME not in [c.name for c in client.list_collections()]:
         raise RuntimeError(f"No index found in {chroma_dir}. Run: python -m copilot.cli ingest")
-    return client.get_collection(config.COLLECTION_NAME)
+    collection = client.get_collection(config.COLLECTION_NAME)
+    stored = collection.metadata or {}
+    stale = {key: (stored.get(key), value) for key, value in index_settings().items() if stored.get(key) != value}
+    if stale:
+        details = ", ".join(f"{key}: index has {old!r}, config has {new!r}" for key, (old, new) in stale.items())
+        raise RuntimeError(f"The index is out of date ({details}). Rebuild it: python -m copilot.cli ingest")
+    return collection
 
 
 class VectorRetriever:

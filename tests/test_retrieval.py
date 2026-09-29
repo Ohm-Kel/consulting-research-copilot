@@ -72,3 +72,19 @@ def test_build_retriever_returns_each_mode(sample_index: Path, mode: str, expect
 def test_build_retriever_rejects_unknown_mode(sample_index: Path) -> None:
     with pytest.raises(ValueError, match="unknown retriever mode"):
         build_retriever("magic", sample_index)
+
+
+def test_index_records_its_settings(sample_index: Path) -> None:
+    from copilot.ingest import index_settings
+    from copilot.retrieval import _open_collection
+
+    metadata = _open_collection(sample_index).metadata or {}
+    assert all(metadata[key] == value for key, value in index_settings().items())
+
+
+def test_stale_index_is_rejected(sample_index: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from copilot import config
+
+    monkeypatch.setattr(config, "CHUNK_WORDS", config.CHUNK_WORDS + 100)
+    with pytest.raises(RuntimeError, match="out of date.*chunk_words"):
+        VectorRetriever(sample_index)
