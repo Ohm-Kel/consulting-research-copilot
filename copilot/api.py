@@ -4,16 +4,24 @@ uvicorn copilot.api:app --port 8000
 POST /query   {"question": "..."}  -> agent answer with citations (needs OPENAI_API_KEY)
 POST /search  {"question": "..."}  -> retrieved passages only (no key needed)
 GET  /health
+
+If COPILOT_API_KEYS is set, /query and /search require a matching X-API-Key header.
+Both are rate limited per client (API key, or IP address when keys are not used).
 """
 
+import hmac
+import math
 import os
-from collections.abc import AsyncIterator
+import threading
+import time
+from collections import defaultdict, deque
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from functools import lru_cache
 
 import openai
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -51,6 +59,60 @@ class Passage(BaseModel):
     company: str
     score: float
     text: str
+
+
+class RateLimiter:
+    """Allows `per_minute` requests per client in any rolling 60-second window.
+
+    State is kept in memory, so the limit applies per server process."""
+
+    def __init__(self, per_minute: int) -> None:
+        self.per_minute = per_minute
+        self._requests: dict[str, deque[float]] = defaultdict(deque)
+        self._lock = threading.Lock()
+
+    def seconds_until_allowed(self, client_id: str) -> float:
+        """Record a request and return 0 if it is allowed, else how long to wait."""
+        now = time.monotonic()
+        with self._lock:
+            window = self._requests[client_id]
+            while window and now - window[0] >= 60:
+                window.popleft()
+            if len(window) >= self.per_minute:
+                return 60 - (now - window[0])
+            window.append(now)
+            return 0.0
+
+    def reset(self) -> None:
+        """Forget all recorded requests."""
+        with self._lock:
+            self._requests.clear()
+
+
+query_limiter = RateLimiter(config.QUERY_RATE_LIMIT)
+search_limiter = RateLimiter(config.SEARCH_RATE_LIMIT)
+
+
+def client_identity(request: Request, x_api_key: str | None = Header(default=None)) -> str:
+    """Authenticate the caller and return an ID to rate-limit on.
+
+    With no API keys configured the API is open and callers are identified by IP."""
+    if not config.API_KEYS:
+        return f"ip:{request.client.host if request.client else 'unknown'}"
+    if x_api_key is None or not any(hmac.compare_digest(x_api_key, key) for key in config.API_KEYS):
+        raise HTTPException(401, "Missing or invalid X-API-Key header.")
+    return f"key:{x_api_key}"
+
+
+def rate_limit(limiter: RateLimiter) -> Callable[[str], None]:
+    """Dependency that rejects a caller who is over `limiter`'s quota with 429."""
+
+    def check(client_id: str = Depends(client_identity)) -> None:
+        wait = limiter.seconds_until_allowed(client_id)
+        if wait > 0:
+            raise HTTPException(429, "Rate limit exceeded.", headers={"Retry-After": str(math.ceil(wait))})
+
+    return check
 
 
 @lru_cache(maxsize=1)
@@ -96,7 +158,7 @@ def health() -> dict[str, str | bool]:
     }
 
 
-@app.post("/query", response_model=QueryResponse)
+@app.post("/query", response_model=QueryResponse, dependencies=[Depends(rate_limit(query_limiter))])
 def query(request: QueryRequest, agent: ResearchAgent = Depends(get_agent)) -> QueryResponse:
     """Answer a question with the agent, including citations and fallback status."""
     result = agent.run(request.question)
@@ -109,7 +171,7 @@ def query(request: QueryRequest, agent: ResearchAgent = Depends(get_agent)) -> Q
     )
 
 
-@app.post("/search", response_model=list[Passage])
+@app.post("/search", response_model=list[Passage], dependencies=[Depends(rate_limit(search_limiter))])
 def search(request: SearchRequest, retriever: Retriever = Depends(get_retriever)) -> list[Passage]:
     """Return the top passages for a question without calling the LLM."""
     return [

@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 os.environ["COPILOT_SKIP_WARMUP"] = "1"
 
+from copilot import api, config  # noqa: E402
 from copilot.agent import AgentResult  # noqa: E402
 from copilot.api import app, get_agent, get_retriever  # noqa: E402
 from copilot.retrieval import Hit  # noqa: E402
@@ -28,7 +29,10 @@ class StubAgent:
 
 
 @pytest.fixture
-def client() -> Iterator[TestClient]:
+def client(monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
+    monkeypatch.setattr(config, "API_KEYS", [])  # open API unless a test configures keys
+    api.query_limiter.reset()
+    api.search_limiter.reset()
     app.dependency_overrides[get_retriever] = StubRetriever
     with TestClient(app) as c:
         yield c
@@ -97,3 +101,41 @@ def test_api_reports_the_package_version(client: TestClient) -> None:
 
     assert client.get("/health").json()["version"] == __version__
     assert app.version == __version__
+
+
+def test_api_keys_protect_query_and_search(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(config, "API_KEYS", ["secret-1", "secret-2"])
+    body = {"question": "margin", "k": 1}
+    assert client.post("/search", json=body).status_code == 401
+    assert client.post("/search", json=body, headers={"X-API-Key": "wrong"}).status_code == 401
+    assert client.post("/search", json=body, headers={"X-API-Key": "secret-2"}).status_code == 200
+    assert client.post("/query", json={"question": "Nike revenue?"}).status_code == 401
+    assert client.get("/health").status_code == 200  # health stays open for load balancers
+
+
+def test_rate_limit_returns_429_with_retry_after(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(api.search_limiter, "per_minute", 2)
+    body = {"question": "margin", "k": 1}
+    assert [client.post("/search", json=body).status_code for _ in range(2)] == [200, 200]
+    blocked = client.post("/search", json=body)
+    assert blocked.status_code == 429
+    assert 0 < int(blocked.headers["Retry-After"]) <= 60
+
+
+def test_rate_limits_are_per_client(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(config, "API_KEYS", ["alice", "bob"])
+    monkeypatch.setattr(api.search_limiter, "per_minute", 1)
+    body = {"question": "margin", "k": 1}
+    assert client.post("/search", json=body, headers={"X-API-Key": "alice"}).status_code == 200
+    assert client.post("/search", json=body, headers={"X-API-Key": "alice"}).status_code == 429
+    assert client.post("/search", json=body, headers={"X-API-Key": "bob"}).status_code == 200
+
+
+def test_rate_limiter_window_expires(monkeypatch: pytest.MonkeyPatch) -> None:
+    clock = [1000.0]
+    monkeypatch.setattr(api.time, "monotonic", lambda: clock[0])
+    limiter = api.RateLimiter(per_minute=1)
+    assert limiter.seconds_until_allowed("c") == 0
+    assert limiter.seconds_until_allowed("c") == 60
+    clock[0] += 60  # a minute later the first request has left the window
+    assert limiter.seconds_until_allowed("c") == 0

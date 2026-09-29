@@ -58,7 +58,7 @@ ignore = [
 
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI dependency injection uses calls in defaults by design
-extend-immutable-calls = ["fastapi.Depends"]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Header"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D1"]

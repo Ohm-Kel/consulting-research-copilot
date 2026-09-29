@@ -149,7 +149,7 @@ guess past.
 
 | Area | What is in place |
 |---|---|
-| API | FastAPI: `POST /query` (agent), `POST /search` (retrieval only, no API key), `GET /health`; LLM errors mapped to 502, missing key to 503 |
+| API | FastAPI: `POST /query` (agent), `POST /search` (retrieval only, no LLM), `GET /health`; optional API-key auth (`X-API-Key`, set `COPILOT_API_KEYS`), per-client rate limits (429 with `Retry-After`), LLM errors mapped to 502 |
 | Tests | 104 pytest tests; the LLM is replaced by a scripted fake, so the suite runs without a key |
 | Safety | AST-based calculator (no `eval`), capped expression size, rejects overflow and complex results; 90-second timeout on every OpenAI call and a 3-minute budget per question |
 | Reproducibility | Every report is verified against a SHA-256 checksum, so the evaluation always runs on the documents it was built from |

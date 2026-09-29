@@ -35,6 +35,13 @@ RETRIEVER_MODE = os.getenv("COPILOT_RETRIEVER", "hybrid_rerank")
 RERANKER_MODEL = os.getenv("COPILOT_RERANKER", "cross-encoder/ms-marco-MiniLM-L-6-v2")
 RERANK_CANDIDATES = int(os.getenv("COPILOT_RERANK_CANDIDATES", "30"))  # fused candidates the cross-encoder re-scores
 
+# API access control. With COPILOT_API_KEYS unset (local use) the API is open; when set
+# (comma-separated), /query and /search require a matching X-API-Key header.
+API_KEYS = [key.strip() for key in os.getenv("COPILOT_API_KEYS", "").split(",") if key.strip()]
+# Requests per minute per client. /query calls the paid LLM, so its limit is lower.
+QUERY_RATE_LIMIT = int(os.getenv("COPILOT_QUERY_RATE_LIMIT", "10"))
+SEARCH_RATE_LIMIT = int(os.getenv("COPILOT_SEARCH_RATE_LIMIT", "60"))
+
 # Agent and guardrails (Stage 3)
 MAX_AGENT_TURNS = 6
 AGENT_TIME_BUDGET_SECONDS = float(os.getenv("COPILOT_AGENT_TIME_BUDGET", "180"))  # per question
