@@ -30,6 +30,11 @@ dependencies = { file = ["requirements.txt"] }
 testpaths = ["tests"]
 filterwarnings = ["ignore::DeprecationWarning"]
 
+[tool.mypy]
+python_version = "3.12"
+files = ["copilot", "evals", "scripts"]
+ignore_missing_imports = true  # several ML libraries ship without type stubs
+
 [tool.ruff]
 line-length = 120
 target-version = "py312"

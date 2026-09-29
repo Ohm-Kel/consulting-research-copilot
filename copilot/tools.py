@@ -7,6 +7,8 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from openai.types.responses import FunctionToolParam
+
 from copilot.retrieval import Hit, Retriever
 
 
@@ -77,7 +79,8 @@ def calculate(expression: str) -> float:
     def walk(node: ast.AST) -> float:
         if isinstance(node, ast.Expression):
             return walk(node.body)
-        if isinstance(node, ast.Constant) and type(node.value) in (int, float):
+        # bool is a subclass of int, so True/False are rejected explicitly
+        if isinstance(node, ast.Constant) and isinstance(node.value, int | float) and not isinstance(node.value, bool):
             return float(node.value)
         if isinstance(node, ast.BinOp) and type(node.op) in _BINARY:
             left, right = walk(node.left), walk(node.right)
@@ -127,7 +130,7 @@ def retrieve_documents(retriever: Retriever, query: str, k: int = 5) -> list[Hit
 # -------------------------------------------------------- schemas for the LLM
 
 
-def _function(name: str, description: str, properties: dict[str, Any]) -> dict[str, Any]:
+def _function(name: str, description: str, properties: dict[str, Any]) -> FunctionToolParam:
     """An OpenAI Responses API function tool with strict argument checking."""
     return {
         "type": "function",
@@ -143,7 +146,7 @@ def _function(name: str, description: str, properties: dict[str, Any]) -> dict[s
     }
 
 
-TOOL_SCHEMAS: list[dict[str, Any]] = [
+TOOL_SCHEMAS: list[FunctionToolParam] = [
     _function(
         "retrieve_documents",
         "Search the annual reports of Nike (FY2025), Lululemon (FY2024), Under Armour (FY2025), "

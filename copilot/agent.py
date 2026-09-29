@@ -132,6 +132,7 @@ class ResearchAgent:
             items.extend(item.model_dump(exclude_none=True) for item in response.output)
             for call in calls:
                 tool_calls[call.name] = tool_calls.get(call.name, 0) + 1
+                hits: list[Hit]
                 try:
                     arguments = json.loads(call.arguments or "{}")
                 except json.JSONDecodeError:

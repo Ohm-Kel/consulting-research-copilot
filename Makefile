@@ -19,9 +19,10 @@ index: ## Build the Chroma index from the reports
 test: ## Run the test suite (no API key needed)
 	$(PYTHON) -m pytest -q
 
-lint: ## Check formatting and lint rules
+lint: ## Check formatting, lint rules and types
 	$(PYTHON) -m ruff check .
 	$(PYTHON) -m ruff format --check .
+	$(PYTHON) -m mypy
 
 format: ## Format code and apply safe lint fixes
 	$(PYTHON) -m ruff format .

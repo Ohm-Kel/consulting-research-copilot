@@ -10,10 +10,11 @@ those companies are considered.
 """
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import chromadb
 from rank_bm25 import BM25Okapi
@@ -42,6 +43,11 @@ class Retriever(Protocol):
         """Return the `k` best hits for `query`, optionally limited to `companies`."""
 
 
+def _chunk(chunk_id: str, text: str, meta: Mapping[str, Any]) -> Chunk:
+    """Rebuild a Chunk from a Chroma record and its metadata."""
+    return Chunk(chunk_id, str(meta["source"]), str(meta["company"]), int(meta["page"]), text)
+
+
 def _open_collection(chroma_dir: Path) -> chromadb.Collection:
     client = chromadb.PersistentClient(path=str(chroma_dir))
     if config.COLLECTION_NAME not in [c.name for c in client.list_collections()]:
@@ -57,15 +63,17 @@ class VectorRetriever:
 
     def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
         """Return the `k` chunks closest to the query embedding."""
-        where = {"company": {"$in": sorted(companies)}} if companies else None
+        where = cast(chromadb.Where, {"company": {"$in": sorted(companies)}}) if companies else None
         result = self.collection.query(query_embeddings=[embed_query(query).tolist()], n_results=k, where=where)
-        hits = []
-        for chunk_id, text, meta, distance in zip(
-            result["ids"][0], result["documents"][0], result["metadatas"][0], result["distances"][0], strict=True
-        ):
-            chunk = Chunk(chunk_id, meta["source"], meta["company"], int(meta["page"]), text)
-            hits.append(Hit(chunk, 1.0 - distance))  # Chroma returns cosine distance
-        return hits
+        documents, metadatas, distances = result["documents"], result["metadatas"], result["distances"]
+        if documents is None or metadatas is None or distances is None:
+            raise RuntimeError("Chroma returned no documents; rebuild the index with: python -m copilot.cli ingest")
+        return [
+            Hit(_chunk(chunk_id, text, meta), 1.0 - distance)  # Chroma returns cosine distance
+            for chunk_id, text, meta, distance in zip(
+                result["ids"][0], documents[0], metadatas[0], distances[0], strict=True
+            )
+        ]
 
 
 def tokenize(text: str) -> list[str]:
@@ -79,9 +87,11 @@ class BM25Retriever:
 
     def __init__(self, chroma_dir: Path = config.CHROMA_DIR) -> None:
         records = _open_collection(chroma_dir).get(include=["documents", "metadatas"])
+        documents, metadatas = records["documents"], records["metadatas"]
+        if documents is None or metadatas is None:
+            raise RuntimeError("Chroma returned no documents; rebuild the index with: python -m copilot.cli ingest")
         self.chunks = [
-            Chunk(cid, meta["source"], meta["company"], int(meta["page"]), text)
-            for cid, text, meta in zip(records["ids"], records["documents"], records["metadatas"], strict=True)
+            _chunk(cid, text, meta) for cid, text, meta in zip(records["ids"], documents, metadatas, strict=True)
         ]
         self.bm25 = BM25Okapi([tokenize(f"{c.header} {c.text}") for c in self.chunks])
 

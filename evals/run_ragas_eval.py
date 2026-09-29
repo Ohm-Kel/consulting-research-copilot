@@ -16,6 +16,7 @@ import asyncio
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -51,7 +52,7 @@ def use_reasoning_model_params(llm) -> None:
 
 def build_metrics(judge_model: str) -> dict:
     """RAGAS metrics judged by an OpenAI model, with local embeddings for answer relevancy."""
-    from ragas.embeddings.base import embedding_factory
+    from ragas.embeddings.base import BaseRagasEmbedding, embedding_factory
     from ragas.llms.base import llm_factory
     from ragas.metrics.collections import AnswerRelevancy, ContextPrecisionWithReference, ContextRecall, Faithfulness
 
@@ -63,6 +64,8 @@ def build_metrics(judge_model: str) -> dict:
     )
     use_reasoning_model_params(llm)
     embeddings = embedding_factory("huggingface", model=config.EMBEDDING_MODEL)
+    if not isinstance(embeddings, BaseRagasEmbedding):  # AnswerRelevancy needs the modern interface
+        raise TypeError(f"unexpected ragas embeddings type: {type(embeddings).__name__}")
     return {
         "faithfulness": Faithfulness(llm=llm),
         "answer_relevancy": AnswerRelevancy(llm=llm, embeddings=embeddings),
@@ -90,14 +93,16 @@ async def run_mode(mode: str, questions: list[EvalQuestion], answer_model: str, 
     """Answer and score every question with one retrieval pipeline."""
     retriever = build_retriever(mode)
     client = make_client()
-    rows = []
+    rows: list[dict[str, Any]] = []
+    all_scores: list[dict[str, float]] = []
     for q in questions:
         hits = retriever.search(q.question)
         answer = answer_question(q.question, hits, client=client, model=answer_model)
         scores = await score_one(metrics, q, answer.text, answer.contexts)
         rows.append({"id": q.id, "answer": answer.text, "sources": answer.sources, **scores})
+        all_scores.append(scores)
         print(f"  {q.id}: " + "  ".join(f"{m}={scores[m]:.2f}" for m in METRIC_NAMES))
-    means = {m: round(sum(r[m] for r in rows) / len(rows), 3) for m in METRIC_NAMES}
+    means = {m: round(sum(s[m] for s in all_scores) / len(all_scores), 3) for m in METRIC_NAMES}
     return {"mode": mode, "answer_model": answer_model, **means, "rows": rows}
 
 

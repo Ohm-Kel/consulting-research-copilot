@@ -4,6 +4,7 @@
 pytest==9.1.1
 httpx==0.28.1
 ruff==0.16.9
+mypy==2.3.1
 
 # LLM-judged evaluation
 ragas==0.4.3
