@@ -10,6 +10,7 @@ Both are rate limited per client (API key, or IP address when keys are not used)
 """
 
 import hmac
+import logging
 import math
 import os
 import threading
@@ -36,14 +37,25 @@ class QueryRequest(BaseModel):
     question: str = Field(min_length=3, max_length=500, examples=["How did Nike's gross margin change in fiscal 2025?"])
 
 
+class UsageReport(BaseModel):
+    """LLM calls, tokens, time and estimated cost for one question (cost is null without prices)."""
+
+    llm_calls: int
+    input_tokens: int
+    output_tokens: int
+    seconds: float
+    cost_usd: float | None
+
+
 class QueryResponse(BaseModel):
-    """Agent answer with citations, tool usage and fallback status."""
+    """Agent answer with citations, tool usage, fallback status and LLM usage."""
 
     answer: str
     sources: list[str]
     tool_calls: dict[str, int]
     fallback_triggered: bool
     fallback_reason: str | None = None
+    usage: UsageReport
 
 
 class SearchRequest(QueryRequest):
@@ -128,10 +140,21 @@ def get_agent(retriever: Retriever = Depends(get_retriever)) -> ResearchAgent:
     return ResearchAgent(retriever=retriever)
 
 
+def configure_logging() -> None:
+    """Send the copilot's INFO logs (one JSON line per agent run) to stderr."""
+    logger = logging.getLogger("copilot")
+    logger.setLevel(logging.INFO)
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+        logger.addHandler(handler)
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    """Load .env and warm up the models before serving the first request."""
+    """Load .env, enable request logs and warm up the models before serving the first request."""
     load_dotenv()
+    configure_logging()
     if os.getenv("COPILOT_SKIP_WARMUP") != "1":
         get_retriever().search("warm up", k=1)  # load models before the first request
     yield
@@ -168,6 +191,7 @@ def query(request: QueryRequest, agent: ResearchAgent = Depends(get_agent)) -> Q
         tool_calls=result.tool_calls,
         fallback_triggered=result.fallback_triggered,
         fallback_reason=result.fallback_reason,
+        usage=UsageReport(**result.usage.as_dict()),
     )
 
 

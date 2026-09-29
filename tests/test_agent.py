@@ -1,8 +1,11 @@
 """Agent loop and fallback guardrails, with a scripted fake LLM and retriever."""
 
 import json
+import logging
 from types import SimpleNamespace
 from typing import Any
+
+import pytest
 
 from copilot.agent import DECLINE_MESSAGE, ResearchAgent, renumber_citations
 from copilot.retrieval import Hit
@@ -172,3 +175,32 @@ def test_fallback_when_time_budget_is_spent() -> None:
     result = agent.run("Nike margin?")
     assert result.fallback_triggered and "out of time" in result.fallback_reason
     assert fake.requests == []  # no LLM call once the budget is gone
+
+
+def test_usage_is_recorded_and_logged(caplog: pytest.LogCaptureFixture) -> None:
+    agent, _, _ = make_agent(
+        [
+            tool_use("retrieve_documents", {"query": "Nike gross margin"}),
+            tool_use("calculate", {"expression": "pct_change(44.6, 42.7)"}, "tu_2"),
+            text_response("Gross margin fell to 42.7% [S1]."),
+        ],
+        [Hit(NIKE, 7.5)],
+    )
+    with caplog.at_level(logging.INFO, logger="copilot.agent"):
+        result = agent.run("How did Nike's gross margin change?")
+
+    assert (result.usage.llm_calls, result.usage.input_tokens, result.usage.output_tokens) == (3, 300, 60)
+    assert result.usage.cost_usd is None  # no prices configured
+    line = json.loads(caplog.records[-1].getMessage())
+    assert line["event"] == "agent_run" and line["llm_calls"] == 3 and line["fallback"] is False
+    assert line["tool_calls"] == {"retrieve_documents": 1, "calculate": 1}
+
+
+def test_cost_estimate_uses_configured_prices(monkeypatch: pytest.MonkeyPatch) -> None:
+    from copilot import config
+    from copilot.agent import Usage
+
+    monkeypatch.setattr(config, "PRICE_INPUT_PER_MTOK", 2.0)
+    monkeypatch.setattr(config, "PRICE_OUTPUT_PER_MTOK", 8.0)
+    usage = Usage(llm_calls=3, input_tokens=300, output_tokens=60)
+    assert usage.cost_usd == pytest.approx((300 * 2.0 + 60 * 8.0) / 1_000_000)

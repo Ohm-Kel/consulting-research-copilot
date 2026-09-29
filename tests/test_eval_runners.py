@@ -89,3 +89,13 @@ def test_reasoning_model_params_workaround() -> None:
 def test_agent_eval_calc_check_uses_direction(answer: str, expected: float, correct: bool) -> None:
     agent_eval = load_script("run_agent_eval")
     assert agent_eval.calc_correct(answer, expected) is correct
+
+
+def test_agent_eval_usage_summary() -> None:
+    agent_eval = load_script("run_agent_eval")
+    from copilot.agent import Usage
+
+    summary = agent_eval.usage_summary([Usage(2, 100, 20, 3.0), Usage(4, 300, 60, 5.0)])
+    assert summary["llm_calls"] == 6 and summary["input_tokens"] == 400 and summary["output_tokens"] == 80
+    assert summary["mean_seconds_per_question"] == 4.0
+    assert summary["total_cost_usd"] is None  # prices not configured

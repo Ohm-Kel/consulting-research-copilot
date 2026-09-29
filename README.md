@@ -152,6 +152,7 @@ guess past.
 | API | FastAPI: `POST /query` (agent), `POST /search` (retrieval only, no LLM), `GET /health`; optional API-key auth (`X-API-Key`, set `COPILOT_API_KEYS`), per-client rate limits (429 with `Retry-After`), LLM errors mapped to 502 |
 | Tests | 104 pytest tests; the LLM is replaced by a scripted fake, so the suite runs without a key |
 | Safety | AST-based calculator (no `eval`), capped expression size, rejects overflow and complex results; 90-second timeout on every OpenAI call and a 3-minute budget per question |
+| Observability | One JSON log line per question (model, tool calls, LLM calls, tokens, seconds, fallback); the same usage is returned by `/query` and summarised by the agent eval, with cost estimates when token prices are set in `.env` |
 | Reproducibility | Every report is verified against a SHA-256 checksum, so the evaluation always runs on the documents it was built from |
 | Docker | One image with reports, models and a pre-built index |
 | CI | GitHub Actions: lint, format and type checks (ruff, mypy) → tests → build index → **retrieval regression gate** (Hit@5 ≥ 0.64) → **guardrail gate** → Docker build and smoke test; agent and RAGAS evals when an API key secret is configured |

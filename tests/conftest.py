@@ -109,4 +109,5 @@ def agent_response(
     if text:
         output.append(_item(type="message", content=text))
     details = SimpleNamespace(reason=reason) if reason else None
-    return SimpleNamespace(output=output, output_text=text, status=status, incomplete_details=details)
+    usage = SimpleNamespace(input_tokens=100, output_tokens=20)  # every fake call reports the same token counts
+    return SimpleNamespace(output=output, output_text=text, status=status, incomplete_details=details, usage=usage)

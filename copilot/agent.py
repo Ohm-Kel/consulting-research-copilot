@@ -14,6 +14,7 @@ guardrails decide whether that answer is returned or replaced by a decline:
 """
 
 import json
+import logging
 import re
 import time
 from dataclasses import dataclass, field
@@ -25,6 +26,8 @@ from copilot import config
 from copilot.generate import make_client
 from copilot.retrieval import Hit, Retriever, build_retriever
 from copilot.tools import TOOL_SCHEMAS, ToolError, calculate, retrieve_documents
+
+logger = logging.getLogger(__name__)
 
 DECLINE_MESSAGE = "The available reports do not contain this information."
 INSUFFICIENT_MARKER = "INSUFFICIENT_CONTEXT"
@@ -68,8 +71,44 @@ def renumber_citations(text: str, sources: dict[str, Hit]) -> tuple[str, list[st
 
 
 @dataclass
+class Usage:
+    """LLM usage for one question: calls, tokens, wall-clock time and estimated cost."""
+
+    llm_calls: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0  # includes reasoning tokens
+    seconds: float = 0.0
+
+    def record(self, response: Any) -> None:
+        """Add one LLM response's token counts."""
+        self.llm_calls += 1
+        tokens = getattr(response, "usage", None)
+        if tokens is not None:
+            self.input_tokens += getattr(tokens, "input_tokens", 0) or 0
+            self.output_tokens += getattr(tokens, "output_tokens", 0) or 0
+
+    @property
+    def cost_usd(self) -> float | None:
+        """Estimated cost, or None when token prices are not configured."""
+        if config.PRICE_INPUT_PER_MTOK is None or config.PRICE_OUTPUT_PER_MTOK is None:
+            return None
+        dollars = self.input_tokens * config.PRICE_INPUT_PER_MTOK + self.output_tokens * config.PRICE_OUTPUT_PER_MTOK
+        return round(dollars / 1_000_000, 6)
+
+    def as_dict(self) -> dict[str, Any]:
+        """Plain-dict form for logs and API responses."""
+        return {
+            "llm_calls": self.llm_calls,
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens,
+            "seconds": self.seconds,
+            "cost_usd": self.cost_usd,
+        }
+
+
+@dataclass
 class AgentResult:
-    """Outcome of one agent run: answer, citations, tool usage and fallback status."""
+    """Outcome of one agent run: answer, citations, tool usage, fallback status and LLM usage."""
 
     answer: str
     sources: list[str] = field(default_factory=list)
@@ -77,6 +116,7 @@ class AgentResult:
     fallback_triggered: bool = False
     fallback_reason: str | None = None
     contexts: list[str] = field(default_factory=list)
+    usage: Usage = field(default_factory=Usage)
 
 
 class ResearchAgent:
@@ -104,7 +144,32 @@ class ResearchAgent:
         self.time_budget = time_budget
 
     def run(self, question: str) -> AgentResult:
-        """Answer `question`, or return a decline if any guardrail fails."""
+        """Answer `question`, or return a decline if any guardrail fails.
+
+        Records token usage and time on the result and logs one JSON line per run."""
+        usage = Usage()
+        started = time.monotonic()
+        result = self._answer(question, usage, started)
+        usage.seconds = round(time.monotonic() - started, 2)
+        result.usage = usage
+        logger.info(
+            json.dumps(
+                {
+                    "event": "agent_run",
+                    "model": self.model,
+                    "question": question[:200],
+                    "fallback": result.fallback_triggered,
+                    "fallback_reason": result.fallback_reason,
+                    "sources": len(result.sources),
+                    "tool_calls": result.tool_calls,
+                    **usage.as_dict(),
+                }
+            )
+        )
+        return result
+
+    def _answer(self, question: str, usage: Usage, started: float) -> AgentResult:
+        """The tool-calling loop and guardrails behind run()."""
         sources: dict[str, Hit] = {}  # source ID (S1, S2...) -> passage, across all searches
         tool_calls: dict[str, int] = {}
         best_score = float("-inf")
@@ -112,7 +177,6 @@ class ResearchAgent:
         # models (Chat Completions rejects that combination).
         items: list[Any] = [{"role": "user", "content": question}]
         final_text = ""
-        started = time.monotonic()
 
         for _ in range(self.max_turns):
             if time.monotonic() - started > self.time_budget:
@@ -120,6 +184,7 @@ class ResearchAgent:
             response = self.client.responses.create(
                 model=self.model, instructions=SYSTEM_PROMPT, input=items, tools=TOOL_SCHEMAS, max_output_tokens=4096
             )
+            usage.record(response)
             if response.status == "incomplete":
                 reason = getattr(response.incomplete_details, "reason", None) or "unknown"
                 return self._decline(f"the model stopped early ({reason})", tool_calls, sources)

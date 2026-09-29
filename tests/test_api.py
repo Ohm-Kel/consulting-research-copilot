@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 os.environ["COPILOT_SKIP_WARMUP"] = "1"
 
 from copilot import api, config  # noqa: E402
-from copilot.agent import AgentResult  # noqa: E402
+from copilot.agent import AgentResult, Usage  # noqa: E402
 from copilot.api import app, get_agent, get_retriever  # noqa: E402
 from copilot.retrieval import Hit  # noqa: E402
 from tests.conftest import SAMPLE_CHUNKS  # noqa: E402
@@ -46,6 +46,7 @@ def test_health(client: TestClient) -> None:
 
 def test_query_returns_answer_with_sources(client: TestClient) -> None:
     result = AgentResult("Gross margin fell to 42.7% [1].", ["Nike_FY2025_10K.pdf, p. 38"], {"retrieve_documents": 1})
+    result.usage = Usage(llm_calls=2, input_tokens=1500, output_tokens=300, seconds=4.2)
     app.dependency_overrides[get_agent] = lambda: StubAgent(result)
     body = client.post("/query", json={"question": "Nike gross margin?"}).json()
     assert body == {
@@ -54,6 +55,7 @@ def test_query_returns_answer_with_sources(client: TestClient) -> None:
         "tool_calls": {"retrieve_documents": 1},
         "fallback_triggered": False,
         "fallback_reason": None,
+        "usage": {"llm_calls": 2, "input_tokens": 1500, "output_tokens": 300, "seconds": 4.2, "cost_usd": None},
     }
 
 

@@ -65,6 +65,10 @@ def cmd_agent(args: argparse.Namespace) -> None:
         f"Fallback triggered: {str(result.fallback_triggered).lower()}"
         + (f" ({result.fallback_reason})" if result.fallback_reason else "")
     )
+    u = result.usage
+    tokens = f"{u.input_tokens:,} input / {u.output_tokens:,} output tokens"
+    cost = f", ~${u.cost_usd:.4f}" if u.cost_usd is not None else ""
+    print(f"Usage: {u.llm_calls} LLM calls, {tokens}, {u.seconds}s{cost}")
 
 
 def main() -> None:

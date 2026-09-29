@@ -35,6 +35,17 @@ RETRIEVER_MODE = os.getenv("COPILOT_RETRIEVER", "hybrid_rerank")
 RERANKER_MODEL = os.getenv("COPILOT_RERANKER", "cross-encoder/ms-marco-MiniLM-L-6-v2")
 RERANK_CANDIDATES = int(os.getenv("COPILOT_RERANK_CANDIDATES", "30"))  # fused candidates the cross-encoder re-scores
 
+
+def _optional_float(name: str) -> float | None:
+    value = os.getenv(name)
+    return float(value) if value else None
+
+
+# Optional token prices (USD per million tokens) for cost estimates in logs and eval summaries.
+# Not set by default: take them from your provider's pricing page for the model you use.
+PRICE_INPUT_PER_MTOK = _optional_float("COPILOT_PRICE_INPUT_PER_MTOK")
+PRICE_OUTPUT_PER_MTOK = _optional_float("COPILOT_PRICE_OUTPUT_PER_MTOK")
+
 # API access control. With COPILOT_API_KEYS unset (local use) the API is open; when set
 # (comma-separated), /query and /search require a matching X-API-Key header.
 API_KEYS = [key.strip() for key in os.getenv("COPILOT_API_KEYS", "").split(",") if key.strip()]
