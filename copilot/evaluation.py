@@ -7,6 +7,10 @@ every fact of at least one set, i.e. the model was actually shown the evidence.
 This needs no LLM and runs in CI. The `pages` field (pages containing a fact set)
 is derived from the facts by evals/label_pages.py and used to check citations.
 LLM-judged answer metrics (RAGAS) live in evals/run_ragas_eval.py.
+
+There are two question sets. "dev" (25 questions) was used to choose the retrieval
+settings; "heldout" (20 questions about facts the dev set never asks about) was written afterwards
+and is only scored, never tuned on, so it shows how well those choices generalise.
 """
 
 import json
@@ -18,6 +22,8 @@ from copilot import config
 from copilot.retrieval import Hit
 
 QUESTIONS_PATH = config.ROOT / "evals" / "questions.json"
+HELDOUT_PATH = config.ROOT / "evals" / "heldout_questions.json"
+QUESTION_SETS = {"dev": QUESTIONS_PATH, "heldout": HELDOUT_PATH}
 
 
 @dataclass(frozen=True)

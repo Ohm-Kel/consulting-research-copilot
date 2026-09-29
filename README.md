@@ -82,10 +82,13 @@ flowchart TB
 
 Evaluation was the core of the project, done before and after each change.
 
-**Test set.** `evals/questions.json` has 25 questions, five per company: 14 lookups, 7 "why"
-questions and 4 calculations. Each has a reference answer and one or more **fact sets**: short
-strings copied from the report that together answer the question, for example `46.3 billion`
-and `51.4 billion`, or the table figures `46,309` and `51,362`.
+**Test sets.** `evals/questions.json` (the dev set) has 25 questions, five per company: 14
+lookups, 7 "why" questions and 4 calculations. Each has a reference answer and one or more
+**fact sets**: short strings copied from the report that together answer the question, for
+example `46.3 billion` and `51.4 billion`, or the table figures `46,309` and `51,362`. All
+design choices below were made on this set. `evals/heldout_questions.json` has 20 more
+questions (four per company, about facts the dev set never asks about) that were written
+afterwards and are only ever scored, never tuned on.
 
 **Evidence-level scoring.** A retrieved chunk counts only if its own text contains a complete
 fact set, so the metric measures whether the model was actually shown the answer. Supporting
@@ -105,6 +108,20 @@ they ever drift from the documents.
 Hit@k: an answer chunk is in the top k. MRR: mean reciprocal rank of the first answer chunk.
 Precision@5: share of the top 5 chunks that contain the answer. With 25 questions each
 question is 4 points, so read small differences with care.
+
+**Held-out check.** The same pipelines on the 20 held-out questions, with nothing changed:
+
+| Retriever | Hit@1 | Hit@5 | MRR | Precision@5 |
+|---|---|---|---|---|
+| Vector only | 0.65 | 0.90 | 0.73 | 0.24 |
+| BM25 only | 0.30 | 0.55 | 0.41 | 0.17 |
+| Hybrid (RRF) | 0.40 | 0.95 | 0.62 | 0.25 |
+| Hybrid + rerank (default) | 0.50 | 0.80 | 0.60 | 0.24 |
+
+The held-out questions are easier (most answers sit in one sentence), so every score is higher.
+The ordering is not the same: the reranker, which won on the dev set, finds fewer answers here
+than hybrid or vector search alone. Across all 45 questions hybrid finds 35 and hybrid + rerank
+33, so the reranker's dev-set gain did not generalise.
 
 ### Answer quality: RAGAS (`gpt-5.6-terra` as generator and judge)
 
@@ -150,12 +167,12 @@ guess past.
 | Area | What is in place |
 |---|---|
 | API | FastAPI: `POST /query` (agent), `POST /search` (retrieval only, no LLM), `GET /health`; optional API-key auth (`X-API-Key`, set `COPILOT_API_KEYS`), per-client rate limits (429 with `Retry-After`), LLM errors mapped to 502 |
-| Tests | 104 pytest tests; the LLM is replaced by a scripted fake, so the suite runs without a key |
+| Tests | 117 pytest tests; the LLM is replaced by a scripted fake, so the suite runs without a key |
 | Safety | AST-based calculator (no `eval`), capped expression size, rejects overflow and complex results; 90-second timeout on every OpenAI call and a 3-minute budget per question |
 | Observability | One JSON log line per question (model, tool calls, LLM calls, tokens, seconds, fallback); the same usage is returned by `/query` and summarised by the agent eval, with cost estimates when token prices are set in `.env` |
 | Reproducibility | Every report is verified against a SHA-256 checksum, so the evaluation always runs on the documents it was built from |
 | Docker | One image with reports, models and a pre-built index |
-| CI | GitHub Actions: lint, format and type checks (ruff, mypy) → tests → build index → **retrieval regression gate** (Hit@5 ≥ 0.64) → **guardrail gate** → Docker build and smoke test; agent and RAGAS evals when an API key secret is configured |
+| CI | GitHub Actions: lint, format and type checks (ruff, mypy) → tests → build index → **retrieval regression gate** (Hit@5 ≥ 0.64) → held-out retrieval report → **guardrail gate** → Docker build and smoke test; agent and RAGAS evals when an API key secret is configured |
 
 ## Quick start
 
@@ -190,6 +207,7 @@ Reproduce the evaluation:
 
 ```powershell
 python evals/run_retrieval_eval.py        # retrieval table (free, ~5 min on CPU)
+python evals/run_retrieval_eval.py --set heldout   # the same on the held-out questions
 python evals/run_guardrail_eval.py        # relevance-floor check (free)
 python evals/run_agent_eval.py --final    # agent table (uses the OpenAI API)
 python evals/run_ragas_eval.py --final    # RAGAS table (uses the OpenAI API)
@@ -249,11 +267,11 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 
 ## Limitations and next steps
 
-- **8 of 25 questions still miss the top 5**, all within the right report (e.g. Under Armour
+- **8 of 25 dev questions still miss the top 5**, all within the right report (e.g. Under Armour
   and Deckers headcount). Next experiments: smaller or section-aware chunks and query
-  rewriting, validated on *new* questions to avoid overfitting these 25.
-- **Small evaluation set.** 25 questions means a few points of difference are within noise;
-  expanding it is the most valuable next step.
+  rewriting, chosen on the dev set and checked on the held-out set.
+- **Small evaluation sets.** 25 + 20 questions means a few points of difference are within
+  noise, as the held-out check shows.
 - **Tables are flattened to text.** Structured table extraction (e.g. pdfplumber) would help
   numeric questions.
 - **Cross-company comparison** works through the agent (see [docs/examples.md](docs/examples.md))

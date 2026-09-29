@@ -63,7 +63,17 @@ def test_eval_scripts_import(name: str) -> None:
 def test_agent_eval_percentage_parser() -> None:
     agent_eval = load_script("run_agent_eval")
     assert agent_eval.percentages("fell 43.5% to $3,219 million, or -3.4 %") == [43.5, -3.4]
-    assert set(agent_eval.CALC_EXPECTED) <= {q.id for q in agent_eval.load_questions() if q.type == "calculation"}
+
+
+def test_every_calculation_question_has_an_expected_value() -> None:
+    agent_eval = load_script("run_agent_eval")
+    calc_ids = {
+        q.id
+        for path in agent_eval.QUESTION_SETS.values()
+        for q in agent_eval.load_questions(path)
+        if q.type == "calculation"
+    }
+    assert set(agent_eval.CALC_EXPECTED) == calc_ids
 
 
 def test_reasoning_model_params_workaround() -> None:

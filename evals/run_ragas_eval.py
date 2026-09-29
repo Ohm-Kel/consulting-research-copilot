@@ -3,6 +3,7 @@
     python evals/run_ragas_eval.py --modes vector hybrid_rerank          # development run, gpt-5.6-luna
     python evals/run_ragas_eval.py --modes vector hybrid_rerank --final  # final run, gpt-5.6-terra
     python evals/run_ragas_eval.py --limit 3                             # quick smoke test
+    python evals/run_ragas_eval.py --set heldout --final                 # held-out questions
 
 Metrics (0-1, higher is better):
     faithfulness       every claim in the answer is supported by the retrieved context
@@ -24,7 +25,7 @@ from dotenv import load_dotenv  # noqa: E402
 from openai import AsyncOpenAI  # noqa: E402
 
 from copilot import config  # noqa: E402
-from copilot.evaluation import EvalQuestion, load_questions  # noqa: E402
+from copilot.evaluation import QUESTION_SETS, EvalQuestion, load_questions  # noqa: E402
 from copilot.generate import answer_question, make_client  # noqa: E402
 from copilot.retrieval import RETRIEVER_MODES, build_retriever  # noqa: E402
 
@@ -123,11 +124,12 @@ def main() -> None:
     parser.add_argument("--modes", nargs="+", default=["vector", "hybrid_rerank"], choices=RETRIEVER_MODES)
     parser.add_argument("--final", action="store_true", help=f"use {config.EVAL_MODEL} to answer and judge")
     parser.add_argument("--limit", type=int, default=None, help="only the first N questions")
+    parser.add_argument("--set", dest="question_set", default="dev", choices=QUESTION_SETS)
     args = parser.parse_args()
 
     load_dotenv()
     model = config.EVAL_MODEL if args.final else config.DEV_MODEL
-    questions = load_questions()[: args.limit]
+    questions = load_questions(QUESTION_SETS[args.question_set])[: args.limit]
     summaries = asyncio.run(run_all(args.modes, questions, model))
 
     print("\n| Metric | " + " | ".join(s["mode"] for s in summaries) + " |")
@@ -136,7 +138,8 @@ def main() -> None:
         print(f"| {m} | " + " | ".join(f"{s[m]:.2f}" for s in summaries) + " |")
 
     RESULTS_DIR.mkdir(exist_ok=True)
-    out = RESULTS_DIR / f"ragas_{'final' if args.final else 'dev'}.json"
+    suffix = "" if args.question_set == "dev" else f"_{args.question_set}"
+    out = RESULTS_DIR / f"ragas_{'final' if args.final else 'dev'}{suffix}.json"
     out.write_text(json.dumps(summaries, indent=2), encoding="utf-8")
     print(f"\nSaved {out.relative_to(config.ROOT)}")
 

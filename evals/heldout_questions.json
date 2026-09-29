@@ -1,0 +1,346 @@
+[
+  {
+    "id": "nike-h1",
+    "company": "Nike",
+    "type": "lookup",
+    "question": "How many employees did Nike have at the end of fiscal 2025?",
+    "expected_answer": "As of May 31, 2025, Nike had approximately 77,800 employees worldwide, including retail and part-time employees.",
+    "source": "Nike_FY2025_10K.pdf",
+    "facts": [
+      [
+        "77,800 employees"
+      ]
+    ],
+    "pages": [
+      9
+    ]
+  },
+  {
+    "id": "nike-h2",
+    "company": "Nike",
+    "type": "explanation",
+    "question": "Why did Nike's effective tax rate rise in fiscal 2025?",
+    "expected_answer": "The effective tax rate rose to 17.1% in fiscal 2025 from 14.9% in fiscal 2024, primarily due to changes in earnings mix, decreased benefits from stock-based compensation and non-recurring one-time benefits in fiscal 2024.",
+    "source": "Nike_FY2025_10K.pdf",
+    "facts": [
+      [
+        "17.1%",
+        "14.9%",
+        "earnings mix"
+      ]
+    ],
+    "pages": [
+      39,
+      75
+    ]
+  },
+  {
+    "id": "nike-h3",
+    "company": "Nike",
+    "type": "explanation",
+    "question": "What drove the decline in Converse revenues in fiscal 2025?",
+    "expected_answer": "Converse revenues decreased 18% on a currency-neutral basis, with declines across all territories. Unit sales fell 12% and lower average selling prices, mainly from higher discounts in direct to consumer, reduced revenues by about 6 percentage points.",
+    "source": "Nike_FY2025_10K.pdf",
+    "facts": [
+      [
+        "Converse revenues decreased 18%",
+        "Unit sales decreased 12%"
+      ]
+    ],
+    "pages": [
+      46
+    ]
+  },
+  {
+    "id": "nike-h4",
+    "company": "Nike",
+    "type": "calculation",
+    "question": "What percentage of Nike's $18 billion share repurchase program had been used by May 31, 2025?",
+    "expected_answer": "Nike had repurchased about $12.0 billion (122.6 million shares at an average of $98.00) under the $18 billion program, about 66.7% of it, leaving roughly $6.0 billion.",
+    "source": "Nike_FY2025_10K.pdf",
+    "facts": [
+      [
+        "$18 billion",
+        "$12.0 billion"
+      ]
+    ],
+    "pages": [
+      29,
+      49
+    ]
+  },
+  {
+    "id": "lulu-h1",
+    "company": "Lululemon",
+    "type": "lookup",
+    "question": "How many people did Lululemon employ at the end of fiscal 2024?",
+    "expected_answer": "As of February 2, 2025, Lululemon employed approximately 39,000 people worldwide.",
+    "source": "Lululemon_FY2024_10K.pdf",
+    "facts": [
+      [
+        "approximately 39,000 people"
+      ]
+    ],
+    "pages": [
+      12
+    ]
+  },
+  {
+    "id": "lulu-h2",
+    "company": "Lululemon",
+    "type": "calculation",
+    "question": "By what percentage did Lululemon's number of company-operated stores grow in 2024?",
+    "expected_answer": "Company-operated stores rose from 711 to 767, a net increase of 56 stores or about 7.9%.",
+    "source": "Lululemon_FY2024_10K.pdf",
+    "facts": [
+      [
+        "Total company-operated stores 767 711"
+      ]
+    ],
+    "pages": [
+      9
+    ]
+  },
+  {
+    "id": "lulu-h3",
+    "company": "Lululemon",
+    "type": "lookup",
+    "question": "What share of Lululemon's 2024 net revenue came from the Americas?",
+    "expected_answer": "The Americas generated 75% of Lululemon's total net revenue in 2024.",
+    "source": "Lululemon_FY2024_10K.pdf",
+    "facts": [
+      [
+        "Americas represented 75% of our total net revenue"
+      ]
+    ],
+    "pages": [
+      7
+    ]
+  },
+  {
+    "id": "lulu-h4",
+    "company": "Lululemon",
+    "type": "explanation",
+    "question": "What happened to Lululemon's MIRROR acquisition?",
+    "expected_answer": "Lululemon acquired MIRROR in July 2020 and rebranded it as lululemon Studio; in 2023 it stopped selling the hardware and discontinued the digital app-only subscription.",
+    "source": "Lululemon_FY2024_10K.pdf",
+    "facts": [
+      [
+        "acquired MIRROR",
+        "lululemon Studio"
+      ]
+    ],
+    "pages": [
+      15
+    ]
+  },
+  {
+    "id": "ua-h1",
+    "company": "Under Armour",
+    "type": "lookup",
+    "question": "How much cash and cash equivalents did Under Armour hold at the end of fiscal 2025?",
+    "expected_answer": "As of March 31, 2025, Under Armour's cash and cash equivalents totaled $501 million.",
+    "source": "UnderArmour_FY2025_10K.pdf",
+    "facts": [
+      [
+        "cash and cash equivalents totaled $501 million"
+      ]
+    ],
+    "pages": [
+      24
+    ]
+  },
+  {
+    "id": "ua-h2",
+    "company": "Under Armour",
+    "type": "calculation",
+    "question": "By what percentage did Under Armour's selling, general and administrative expenses change in fiscal 2025?",
+    "expected_answer": "SG&A rose from $2,400.5 million in fiscal 2024 to $2,602.0 million in fiscal 2025, an increase of $201.5 million or 8.4%.",
+    "source": "UnderArmour_FY2025_10K.pdf",
+    "facts": [
+      [
+        "2,601,991",
+        "2,400,502"
+      ]
+    ],
+    "pages": [
+      35,
+      37,
+      52
+    ]
+  },
+  {
+    "id": "ua-h3",
+    "company": "Under Armour",
+    "type": "explanation",
+    "question": "Why did Under Armour's cash flow from operating activities fall in fiscal 2025?",
+    "expected_answer": "Operating cash flow decreased by $413.3 million, to an outflow of $59.3 million, mainly because net income before non-cash items fell by $455.5 million, partly offset by a $42.2 million increase from changes in working capital.",
+    "source": "UnderArmour_FY2025_10K.pdf",
+    "facts": [
+      [
+        "decreased by $413.3 million",
+        "455.5 million"
+      ]
+    ],
+    "pages": [
+      42
+    ]
+  },
+  {
+    "id": "ua-h4",
+    "company": "Under Armour",
+    "type": "lookup",
+    "question": "What happened to Under Armour's MapMyFitness platform?",
+    "expected_answer": "Under Armour sold its MapMyFitness digital platform during the second quarter of fiscal 2025.",
+    "source": "UnderArmour_FY2025_10K.pdf",
+    "facts": [
+      [
+        "MapMyFitness",
+        "sold during the second quarter of Fiscal 2025"
+      ]
+    ],
+    "pages": [
+      9,
+      38,
+      61,
+      89
+    ]
+  },
+  {
+    "id": "colm-h1",
+    "company": "Columbia",
+    "type": "lookup",
+    "question": "How many employees did Columbia Sportswear have at the end of 2024?",
+    "expected_answer": "As of December 31, 2024, Columbia had approximately 9,780 employees: about 5,630 retail, 1,080 distribution center and 3,070 corporate or office employees.",
+    "source": "Columbia_FY2024_10K.pdf",
+    "facts": [
+      [
+        "approximately 9,780 employees"
+      ]
+    ],
+    "pages": [
+      7
+    ]
+  },
+  {
+    "id": "colm-h2",
+    "company": "Columbia",
+    "type": "calculation",
+    "question": "By what percentage did Columbia Sportswear's share repurchases increase from 2023 to 2024?",
+    "expected_answer": "Columbia repurchased $317.8 million of stock in 2024 compared with $184.0 million in 2023, an increase of about 72.7%.",
+    "source": "Columbia_FY2024_10K.pdf",
+    "facts": [
+      [
+        "317.8 million",
+        "184.0 million"
+      ]
+    ],
+    "pages": [
+      33,
+      62
+    ]
+  },
+  {
+    "id": "colm-h3",
+    "company": "Columbia",
+    "type": "lookup",
+    "question": "What was Columbia Sportswear's effective income tax rate in 2024 compared with 2023?",
+    "expected_answer": "The effective income tax rate was 25.1% in 2024, up from 22.9% in 2023.",
+    "source": "Columbia_FY2024_10K.pdf",
+    "facts": [
+      [
+        "effective income tax rate 25.1% 22.9%"
+      ]
+    ],
+    "pages": [
+      30
+    ]
+  },
+  {
+    "id": "colm-h4",
+    "company": "Columbia",
+    "type": "lookup",
+    "question": "How concentrated are Columbia Sportswear's U.S. wholesale customers?",
+    "expected_answer": "Columbia has over 1,850 U.S. wholesale customers; in 2024 its five largest accounted for approximately 20% of U.S. net sales.",
+    "source": "Columbia_FY2024_10K.pdf",
+    "facts": [
+      [
+        "five largest U.S. wholesale customers accounted for approximately 20%"
+      ]
+    ],
+    "pages": [
+      6
+    ]
+  },
+  {
+    "id": "deck-h1",
+    "company": "Deckers",
+    "type": "lookup",
+    "question": "How much of Deckers' fiscal 2025 net sales came from its ten largest customers?",
+    "expected_answer": "Deckers' ten largest customers made up 23.7% of total net sales in fiscal 2025, and no single customer accounted for 10% or more.",
+    "source": "Deckers_FY2025_AR.pdf",
+    "facts": [
+      [
+        "top ten customers made up 23.7%"
+      ],
+      [
+        "ten largest global customers as % of net sales 23.7%"
+      ]
+    ],
+    "pages": [
+      21,
+      101
+    ]
+  },
+  {
+    "id": "deck-h2",
+    "company": "Deckers",
+    "type": "calculation",
+    "question": "By what percentage did Deckers' international net sales grow in fiscal 2025?",
+    "expected_answer": "International net sales grew from $1,424.1 million to $1,798.9 million, about 26.3%, rising to 36.1% of net sales from 33.2%.",
+    "source": "Deckers_FY2025_AR.pdf",
+    "facts": [
+      [
+        "1,798,903",
+        "1,424,089"
+      ]
+    ],
+    "pages": [
+      43,
+      101
+    ]
+  },
+  {
+    "id": "deck-h3",
+    "company": "Deckers",
+    "type": "lookup",
+    "question": "What did Deckers do with the Sanuk brand?",
+    "expected_answer": "Deckers completed the sale of the Sanuk brand and certain related assets on August 15, 2024.",
+    "source": "Deckers_FY2025_AR.pdf",
+    "facts": [
+      [
+        "sale of our Sanuk brand",
+        "August 15, 2024"
+      ]
+    ],
+    "pages": [
+      10
+    ]
+  },
+  {
+    "id": "deck-h4",
+    "company": "Deckers",
+    "type": "lookup",
+    "question": "What stock split did Deckers carry out in fiscal 2025?",
+    "expected_answer": "Deckers effected a six-for-one forward stock split on September 13, 2024: each share outstanding on the September 6 record date became six shares, and trading on a split-adjusted basis began on September 17, 2024.",
+    "source": "Deckers_FY2025_AR.pdf",
+    "facts": [
+      [
+        "split into six shares"
+      ]
+    ],
+    "pages": [
+      72
+    ]
+  }
+]

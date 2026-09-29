@@ -1,0 +1,72 @@
+[
+  {
+    "mode": "vector",
+    "hit@1": 0.65,
+    "hit@5": 0.9,
+    "mrr": 0.731,
+    "precision@5": 0.24,
+    "sec_per_query": 0.232,
+    "misses": [
+      "lulu-h1",
+      "ua-h1"
+    ]
+  },
+  {
+    "mode": "bm25",
+    "hit@1": 0.3,
+    "hit@5": 0.55,
+    "mrr": 0.415,
+    "precision@5": 0.17,
+    "sec_per_query": 0.003,
+    "misses": [
+      "nike-h1",
+      "nike-h3",
+      "lulu-h1",
+      "lulu-h2",
+      "lulu-h4",
+      "ua-h1",
+      "colm-h1",
+      "colm-h2",
+      "deck-h2"
+    ]
+  },
+  {
+    "mode": "hybrid",
+    "hit@1": 0.4,
+    "hit@5": 0.95,
+    "mrr": 0.618,
+    "precision@5": 0.25,
+    "sec_per_query": 0.031,
+    "misses": [
+      "ua-h1"
+    ]
+  },
+  {
+    "mode": "hybrid_rerank",
+    "hit@1": 0.5,
+    "hit@5": 0.8,
+    "mrr": 0.605,
+    "precision@5": 0.24,
+    "sec_per_query": 4.4,
+    "misses": [
+      "lulu-h2",
+      "lulu-h3",
+      "ua-h1",
+      "colm-h2"
+    ]
+  },
+  {
+    "mode": "hybrid_rerank_company",
+    "hit@1": 0.5,
+    "hit@5": 0.8,
+    "mrr": 0.605,
+    "precision@5": 0.24,
+    "sec_per_query": 4.086,
+    "misses": [
+      "lulu-h2",
+      "lulu-h3",
+      "ua-h1",
+      "colm-h2"
+    ]
+  }
+]
