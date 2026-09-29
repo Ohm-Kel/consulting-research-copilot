@@ -270,6 +270,7 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 | v1.0.1 | Hardening fixes from a full code review |
 | v1.1 | OpenAI provider, evidence-level metric, full LLM-judged results |
 | v1.2 | MIT licence, packaging, linting, docstrings, clearer CLI errors, README polish |
+| v1.3 | Fiscal-year labels, stricter citation guardrail, timeouts, checksummed data, CI hardening |
 
 ## License
 
