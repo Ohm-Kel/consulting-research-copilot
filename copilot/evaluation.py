@@ -9,12 +9,15 @@ is derived from the facts by evals/label_pages.py and used to check citations.
 LLM-judged answer metrics (RAGAS) live in evals/run_ragas_eval.py.
 
 There are two question sets. "dev" (25 questions) was used to choose the retrieval
-settings; "heldout" (20 questions about facts the dev set never asks about) was written afterwards
-and is only scored, never tuned on, so it shows how well those choices generalise.
+settings; "heldout" (20 questions about facts the dev set never asks about) was
+written afterwards and is only scored, never tuned on, so it shows how well those
+choices generalise. With sets this small, results carry bootstrap confidence intervals.
 """
 
 import json
+import random
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -93,3 +96,20 @@ def retrieval_metrics(results: list[tuple[EvalQuestion, list[Hit]]], k: int = co
         "mrr": sum(1.0 / r for r in ranks if r is not None) / n,
         f"precision@{k}": sum(sum(is_relevant(h, q) for h in hits[:k]) / k for q, hits in results) / n,
     }
+
+
+def bootstrap_ci(
+    values: Sequence[float], level: float = 0.95, samples: int = 10_000, seed: int = 0
+) -> tuple[float, float]:
+    """Percentile-bootstrap confidence interval for the mean of per-question `values`.
+
+    Resamples the questions with replacement. Pass per-question differences between
+    two pipelines (scored on the same questions) to get a paired interval for the gap:
+    if it excludes 0, the difference is unlikely to be noise from this particular set."""
+    if not values:
+        return 0.0, 0.0
+    rng = random.Random(seed)
+    n = len(values)
+    means = sorted(sum(rng.choices(values, k=n)) / n for _ in range(samples))
+    tail = (1 - level) / 2
+    return means[int(tail * samples)], means[int((1 - tail) * samples) - 1]

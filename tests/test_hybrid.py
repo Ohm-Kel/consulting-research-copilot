@@ -52,6 +52,17 @@ def test_retrieval_metrics_are_evidence_level() -> None:
     assert m["precision@2"] == 0.25
 
 
+def test_bootstrap_ci_brackets_the_mean_and_narrows_with_more_questions() -> None:
+    from copilot.evaluation import bootstrap_ci
+
+    low, high = bootstrap_ci([1.0] * 17 + [0.0] * 8)  # 0.68 on 25 questions
+    assert low < 0.68 < high and 0.3 < high - low < 0.45
+    wide, narrow = bootstrap_ci([1.0, 0.0] * 10), bootstrap_ci([1.0, 0.0] * 200)
+    assert narrow[1] - narrow[0] < wide[1] - wide[0]
+    assert bootstrap_ci([1.0] * 5) == (1.0, 1.0)  # no variation, no uncertainty
+    assert bootstrap_ci([]) == (0.0, 0.0)
+
+
 def test_detect_companies_by_name_and_brand() -> None:
     from copilot.retrieval import detect_companies
 
