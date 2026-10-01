@@ -28,12 +28,17 @@ OVERLAP_WORDS = 50
 
 # Retrieval
 TOP_K = 5
-# vector | bm25 | hybrid | hybrid_rerank | hybrid_rerank_company
+# vector | bm25 | hybrid | hybrid_rerank_whole | hybrid_rerank | hybrid_rerank_company
 RETRIEVER_MODE = os.getenv("COPILOT_RETRIEVER", "hybrid_rerank")
 # Measured on the eval set (see README): the MiniLM cross-encoder over 30 candidates
 # matched BAAI/bge-reranker-base (20) on Hit@5, beat it on Hit@1 and MRR, and ran ~3.5x faster on CPU.
 RERANKER_MODEL = os.getenv("COPILOT_RERANKER", "cross-encoder/ms-marco-MiniLM-L-6-v2")
 RERANK_CANDIDATES = int(os.getenv("COPILOT_RERANK_CANDIDATES", "30"))  # fused candidates the cross-encoder re-scores
+# The cross-encoder was trained on short web passages, so it scores each chunk by its best
+# window of this many words (windows overlap by half) instead of reading 300 words at once.
+# 150 follows BERT-MaxP (Dai & Callan, 2019); on the dev set every window from 96 to 160 words
+# lifted Hit@5 from 0.68 to 0.84-0.88. Set to 0 to score whole chunks.
+RERANK_WINDOW_WORDS = int(os.getenv("COPILOT_RERANK_WINDOW_WORDS", "150"))
 
 
 def _optional_float(name: str) -> float | None:
@@ -57,8 +62,11 @@ SEARCH_RATE_LIMIT = int(os.getenv("COPILOT_SEARCH_RATE_LIMIT", "60"))
 MAX_AGENT_TURNS = 6
 AGENT_TIME_BUDGET_SECONDS = float(os.getenv("COPILOT_AGENT_TIME_BUDGET", "180"))  # per question
 # Minimum cross-encoder score (ms-marco logit) for a passage to count as relevant.
-# Measured: all 25 eval questions score 3.5 or more; unrelated questions score 0.6 or less.
-# Recalibrate if you change RERANKER_MODEL (bge-reranker outputs 0-1 probabilities).
+# Measured with windowed scoring: every dev question's best passage scores 5.3 or more;
+# unrelated and other-company questions score 1.6 or less. The floor sits nearer the low
+# end on purpose: a wrongly passed question still meets the model's own check, while a
+# wrongly blocked one is simply refused. Recalibrate if you change RERANKER_MODEL or
+# RERANK_WINDOW_WORDS (bge-reranker outputs 0-1 probabilities).
 RELEVANCE_THRESHOLD = float(os.getenv("COPILOT_RELEVANCE_THRESHOLD", "2.0"))
 
 # Company name and report label for each file in data/.

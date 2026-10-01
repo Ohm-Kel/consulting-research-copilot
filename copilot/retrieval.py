@@ -145,25 +145,55 @@ def get_reranker() -> "CrossEncoder":
     return CrossEncoder(config.RERANKER_MODEL, max_length=512)
 
 
+def passage_windows(text: str, size: int) -> list[str]:
+    """Windows of `size` words that overlap by half and together cover `text`."""
+    words = text.split()
+    if len(words) <= size:
+        return [text]
+    stride = max(size // 2, 1)
+    starts = list(range(0, len(words) - size + 1, stride))
+    if starts[-1] + size < len(words):
+        starts.append(len(words) - size)  # a last window flush with the end
+    return [" ".join(words[start : start + size]) for start in starts]
+
+
 class RerankedRetriever:
     """Re-scores the top candidates of a first-stage retriever with a
     cross-encoder, which reads the query and passage together. Too slow for
-    the whole corpus, accurate on a short list."""
+    the whole corpus, accurate on a short list.
+
+    With `window_words` set, a chunk's score is that of its best-matching window
+    (MaxP): the cross-encoder was trained on short passages and judges a focused
+    window better than a 300-word chunk. With None it reads each chunk whole."""
 
     cross_encoder_scores = True  # scores are on the scale RELEVANCE_THRESHOLD was calibrated on
 
-    def __init__(self, first_stage: Retriever, candidates: int = config.RERANK_CANDIDATES) -> None:
+    def __init__(
+        self,
+        first_stage: Retriever,
+        candidates: int = config.RERANK_CANDIDATES,
+        window_words: int | None = config.RERANK_WINDOW_WORDS,
+    ) -> None:
         self.first_stage = first_stage
         self.candidates = candidates
+        self.window_words = window_words
 
     def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
         """Re-score the first-stage candidates with the cross-encoder and return the top `k`."""
         candidates = self.first_stage.search(query, self.candidates, companies)
         if not candidates:
             return []
-        scores = get_reranker().predict([(query, f"{h.chunk.header} {h.chunk.text}") for h in candidates])
-        ranked = sorted(zip(scores, candidates, strict=True), key=lambda pair: pair[0], reverse=True)
-        return [Hit(hit.chunk, float(score)) for score, hit in ranked[:k]]
+        pairs: list[tuple[str, str]] = []
+        owners: list[int] = []  # index of the candidate each pair belongs to
+        for i, hit in enumerate(candidates):
+            windows = passage_windows(hit.chunk.text, self.window_words) if self.window_words else [hit.chunk.text]
+            pairs += [(query, f"{hit.chunk.header} {window}") for window in windows]
+            owners += [i] * len(windows)
+        best = [float("-inf")] * len(candidates)
+        for i, score in zip(owners, get_reranker().predict(pairs), strict=True):
+            best[i] = max(best[i], float(score))
+        ranked = sorted(range(len(candidates)), key=lambda i: best[i], reverse=True)
+        return [Hit(candidates[i].chunk, best[i]) for i in ranked[:k]]
 
 
 # Names, brands and subsidiaries that identify each company in a question.
@@ -200,7 +230,7 @@ class CompanyScopedRetriever:
         return self.inner.search(query, k, companies or detect_companies(query) or None)
 
 
-RETRIEVER_MODES = ("vector", "bm25", "hybrid", "hybrid_rerank", "hybrid_rerank_company")
+RETRIEVER_MODES = ("vector", "bm25", "hybrid", "hybrid_rerank_whole", "hybrid_rerank", "hybrid_rerank_company")
 
 
 def build_retriever(mode: str = config.RETRIEVER_MODE, chroma_dir: Path = config.CHROMA_DIR) -> Retriever:
@@ -211,6 +241,8 @@ def build_retriever(mode: str = config.RETRIEVER_MODE, chroma_dir: Path = config
         return BM25Retriever(chroma_dir)
     if mode == "hybrid":
         return HybridRetriever(chroma_dir)
+    if mode == "hybrid_rerank_whole":  # the reranker reads each chunk whole (before windowed scoring)
+        return RerankedRetriever(HybridRetriever(chroma_dir), window_words=None)
     if mode == "hybrid_rerank":
         return RerankedRetriever(HybridRetriever(chroma_dir))
     if mode == "hybrid_rerank_company":

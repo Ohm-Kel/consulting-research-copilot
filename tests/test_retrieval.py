@@ -1,15 +1,19 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
+from copilot.ingest import Chunk
 from copilot.retrieval import (
     RETRIEVER_MODES,
     BM25Retriever,
     CompanyScopedRetriever,
+    Hit,
     HybridRetriever,
     RerankedRetriever,
     VectorRetriever,
     build_retriever,
+    passage_windows,
 )
 
 
@@ -54,12 +58,50 @@ def test_reranked_scores_separate_relevant_from_unrelated(sample_index: Path) ->
     assert relevant > unrelated
 
 
+def test_passage_windows_overlap_by_half_and_cover_the_text() -> None:
+    words = [f"w{i}" for i in range(10)]
+    assert passage_windows(" ".join(words), 4) == ["w0 w1 w2 w3", "w2 w3 w4 w5", "w4 w5 w6 w7", "w6 w7 w8 w9"]
+    assert passage_windows(" ".join(words[:9]), 4)[-1] == "w5 w6 w7 w8"  # last window flush with the end
+    assert passage_windows("a short passage", 4) == ["a short passage"]
+
+
+class StubCrossEncoder:
+    """Scores 5.0 for a passage containing 'needle', else 0.0; records what it was shown."""
+
+    def __init__(self) -> None:
+        self.pairs: list[tuple[str, str]] = []
+
+    def predict(self, pairs: list[tuple[str, str]]) -> list[float]:
+        self.pairs += pairs
+        return [5.0 if "needle" in passage else 0.0 for _, passage in pairs]
+
+
+def test_reranker_scores_each_chunk_by_its_best_window(monkeypatch: pytest.MonkeyPatch) -> None:
+    from copilot import retrieval
+
+    needle = Chunk("a-p1-0", "a.pdf", "A", 1, " ".join(["filler"] * 250 + ["needle"] + ["filler"] * 49))
+    plain = Chunk("b-p1-0", "b.pdf", "B", 1, " ".join(["filler"] * 300))
+    first_stage = SimpleNamespace(search=lambda query, k, companies=None: [Hit(plain, 1.0), Hit(needle, 0.5)])
+    stub = StubCrossEncoder()
+    monkeypatch.setattr(retrieval, "get_reranker", lambda: stub)
+
+    hits = RerankedRetriever(first_stage, candidates=2, window_words=128).search("q", k=2)
+    assert [(h.chunk.chunk_id, h.score) for h in hits] == [("a-p1-0", 5.0), ("b-p1-0", 0.0)]
+    header_words = len(needle.header.split())
+    assert len(stub.pairs) > 2 and all(len(p.split()) <= 128 + header_words for _, p in stub.pairs)
+
+    stub.pairs.clear()
+    RerankedRetriever(first_stage, candidates=2, window_words=None).search("q", k=2)
+    assert len(stub.pairs) == 2  # whole chunks: one pair per candidate
+
+
 @pytest.mark.parametrize(
     ("mode", "expected"),
     [
         ("vector", VectorRetriever),
         ("bm25", BM25Retriever),
         ("hybrid", HybridRetriever),
+        ("hybrid_rerank_whole", RerankedRetriever),
         ("hybrid_rerank", RerankedRetriever),
         ("hybrid_rerank_company", CompanyScopedRetriever),
     ],

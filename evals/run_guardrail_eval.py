@@ -5,8 +5,9 @@ wrongly decline it); out-of-scope questions should fall below it. On-topic
 out-of-scope questions (another company's figures, a future year) can clear
 the floor by design: the model-judgement guardrail handles them.
 
-    python evals/run_guardrail_eval.py            # report
-    python evals/run_guardrail_eval.py --strict   # exit 1 if any answerable question is blocked (CI)
+    python evals/run_guardrail_eval.py                 # report (dev questions)
+    python evals/run_guardrail_eval.py --strict        # exit 1 if any answerable question is blocked (CI)
+    python evals/run_guardrail_eval.py --set heldout   # check the floor on questions it was not set on
 """
 
 import argparse
@@ -17,7 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from copilot import config  # noqa: E402
-from copilot.evaluation import load_questions  # noqa: E402
+from copilot.evaluation import QUESTION_SETS, load_questions  # noqa: E402
 from copilot.retrieval import build_retriever  # noqa: E402
 
 OUT_OF_SCOPE_PATH = config.ROOT / "evals" / "out_of_scope.json"
@@ -27,13 +28,14 @@ def main() -> None:
     """Report how the relevance floor treats answerable and out-of-scope questions."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--strict", action="store_true")
+    parser.add_argument("--set", dest="question_set", default="dev", choices=QUESTION_SETS)
     args = parser.parse_args()
 
     retriever = build_retriever("hybrid_rerank")
     floor = config.RELEVANCE_THRESHOLD
     top = lambda q: retriever.search(q, k=1)[0].score  # noqa: E731
 
-    answerable = [(q.id, top(q.question)) for q in load_questions()]
+    answerable = [(q.id, top(q.question)) for q in load_questions(QUESTION_SETS[args.question_set])]
     blocked = [(qid, s) for qid, s in answerable if s < floor]
     print(f"Relevance floor: {floor}")
     print(

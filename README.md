@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Ohm-Kel/consulting-research-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Ohm-Kel/consulting-research-copilot/actions/workflows/ci.yml)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
-![Tests](https://img.shields.io/badge/tests-104%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-126%20passing-brightgreen)
 ![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)
 
 An AI research assistant for the desk research a consulting case team does in the first days of
@@ -26,16 +26,19 @@ Sources: [1] Nike_FY2025_10K.pdf, p. 38  [2] Nike_FY2025_10K.pdf, p. 35
 
 ## Results at a glance
 
-Measured on a 25-question evaluation set with verified answers (details in [Evaluation](#evaluation)).
+Measured on 25 development questions and 20 held-out questions with verified answers (details
+in [Evaluation](#evaluation)).
 
 | What was measured | Result |
 |---|---|
-| Answer passage in the top 5 search results | **68%**, up from 60% for the vector-search baseline |
-| Answer passage ranked first | **48%**, up from 40% |
-| Out-of-scope questions declined instead of guessed | **8 / 8** |
-| Answerable questions answered, with a correct page cited | 24 / 25 answered, 23 / 24 cited correctly |
-| Financial calculations correct | **4 / 4** |
-| Faithfulness: answers grounded in the retrieved text (RAGAS) | **0.97** |
+| Answer passage in the top 5 search results, development questions | **88%**, up from 60% for the vector-search baseline |
+| Same, on held-out questions never used for tuning | 90%, level with the baseline (95%) within noise |
+| Out-of-scope questions declined instead of guessed † | **8 / 8** |
+| Answerable questions answered, with a correct page cited † | 24 / 25 answered, 23 / 24 cited correctly |
+| Financial calculations correct † | **4 / 4** |
+| Faithfulness: answers grounded in the retrieved text (RAGAS) † | **0.97** |
+
+† Measured at v1.3, before the reranker change described below.
 
 **Corpus:** athletic apparel & footwear: Nike (FY2025 10-K), Lululemon (FY2024 10-K), Under
 Armour (FY2025 10-K), Columbia Sportswear (FY2024 10-K) and Deckers Brands (FY2025 Annual
@@ -53,7 +56,7 @@ flowchart TB
         direction TB
         V[Vector search<br/>bge-small + Chroma] --> F[Reciprocal rank fusion]
         B[BM25 keyword search] --> F
-        F --> X[Cross-encoder reranker<br/>top 30 → top 5]
+        F --> X[Cross-encoder reranker<br/>best 150-word window<br/>top 30 → top 5]
     end
     A -->|draft answer| G{{Guardrails<br/>relevance floor · model check · citations}}
     G -->|pass| OK[Answer + page citations]
@@ -66,7 +69,8 @@ flowchart TB
    from the page numbers printed in a report.
 2. **Hybrid retrieval.** Vector search captures meaning; BM25 keyword search catches exact names
    and figures ("HOKA", "$4,689 million"). Their rankings are merged with reciprocal rank
-   fusion, and a cross-encoder reranker re-reads the top 30 candidates to pick the best 5.
+   fusion, and a cross-encoder reranker re-reads the top 30 candidates to pick the best 5,
+   scoring each chunk by its best-matching 150-word window.
 3. **Agent.** An LLM (OpenAI `gpt-5.6`) decides when to search, re-searches with different
    wording when results are weak, and calls a calculator for growth rates and margins instead
    of doing mental math. Each passage it sees is labelled with its report and fiscal-year end,
@@ -88,7 +92,9 @@ lookups, 7 "why" questions and 4 calculations. Each has a reference answer and o
 example `46.3 billion` and `51.4 billion`, or the table figures `46,309` and `51,362`. All
 design choices below were made on this set. `evals/heldout_questions.json` has 20 more
 questions (four per company, about facts the dev set never asks about) that were written
-afterwards and are only ever scored, never tuned on.
+afterwards and are only ever scored, never tuned on. Its answer key was audited once against
+the whole corpus, without looking at any retriever's output, to add other wordings of the
+same answer (for example a table row as well as the sentence that quotes it).
 
 **Evidence-level scoring.** A retrieved chunk counts only if its own text contains a complete
 fact set, so the metric measures whether the model was actually shown the answer. Supporting
@@ -97,35 +103,44 @@ they ever drift from the documents.
 
 ### Retrieval: before and after (no LLM, runs in CI)
 
-| Retriever | Hit@1 | Hit@5 | MRR | Precision@5 | sec/query (CPU) |
+Development set (25 questions):
+
+| Retriever | Hit@1 | Hit@5 (95% CI) | MRR | Precision@5 | sec/query (CPU) |
 |---|---|---|---|---|---|
-| Vector only (baseline) | 0.40 | 0.60 | 0.49 | 0.16 | 0.3 |
-| BM25 only | 0.24 | 0.56 | 0.40 | 0.16 | <0.01 |
-| Hybrid (RRF) | 0.36 | 0.64 | 0.47 | 0.18 | 0.04 |
-| **Hybrid + rerank (default)** | **0.48** | **0.68** | **0.57** | **0.20** | 3.4 |
-| Hybrid + rerank, company-scoped | 0.48 | 0.68 | 0.56 | 0.20 | 3.6 |
+| Vector only (baseline) | 0.40 | 0.60 (0.40–0.80) | 0.49 | 0.16 | 0.1 |
+| BM25 only | 0.24 | 0.56 (0.36–0.76) | 0.40 | 0.16 | <0.01 |
+| Hybrid (RRF) | 0.36 | 0.64 (0.44–0.80) | 0.47 | 0.18 | 0.05 |
+| Hybrid + rerank, whole chunks (v1.3) | 0.48 | 0.68 (0.48–0.84) | 0.57 | 0.20 | 3.9 |
+| **Hybrid + rerank, best window (default)** | **0.48** | **0.88 (0.76–1.00)** | **0.64** | **0.27** | 7.1 |
+| Hybrid + rerank, best window, company-scoped | 0.48 | 0.88 (0.76–1.00) | 0.63 | 0.27 | ≈7 |
 
 Hit@k: an answer chunk is in the top k. MRR: mean reciprocal rank of the first answer chunk.
-Precision@5: share of the top 5 chunks that contain the answer. With 25 questions each
-question is 4 points, so read small differences with care.
+Precision@5: share of the top 5 chunks that contain the answer. Intervals are 95% bootstrap
+intervals over the questions. Compared question by question with the vector baseline, the
+default pipeline gains +0.28 Hit@5 (95% CI +0.04 to +0.52); whole-chunk reranking gained
++0.08 (−0.12 to +0.28), which is not distinguishable from noise.
 
-**Held-out check.** The same pipelines on the 20 held-out questions, with nothing changed:
+Held-out set (20 questions, nothing tuned on them):
 
-| Retriever | Hit@1 | Hit@5 | MRR | Precision@5 |
+| Retriever | Hit@1 | Hit@5 (95% CI) | MRR | Precision@5 |
 |---|---|---|---|---|
-| Vector only | 0.65 | 0.90 | 0.73 | 0.24 |
-| BM25 only | 0.30 | 0.55 | 0.41 | 0.17 |
-| Hybrid (RRF) | 0.40 | 0.95 | 0.62 | 0.25 |
-| Hybrid + rerank (default) | 0.50 | 0.80 | 0.60 | 0.24 |
+| Vector only (baseline) | 0.80 | 0.95 (0.85–1.00) | 0.85 | 0.38 |
+| BM25 only | 0.35 | 0.60 (0.40–0.80) | 0.47 | 0.27 |
+| Hybrid (RRF) | 0.55 | 1.00 | 0.74 | 0.39 |
+| Hybrid + rerank, whole chunks (v1.3) | 0.65 | 0.90 (0.75–1.00) | 0.74 | 0.38 |
+| **Hybrid + rerank, best window (default)** | **0.75** | **0.90 (0.75–1.00)** | **0.82** | **0.39** |
 
-The held-out questions are easier (most answers sit in one sentence), so every score is higher.
-The ordering is not the same: the reranker, which won on the dev set, finds fewer answers here
-than hybrid or vector search alone. Across all 45 questions hybrid finds 35 and hybrid + rerank
-33, so the reranker's dev-set gain did not generalise.
+The held-out questions are easier: most answers sit in one sentence, and plain vector search
+already finds 19 of 20. Here the default pipeline is level with the baseline (−0.05 Hit@5, 95%
+CI −0.20 to +0.10) and ranks answers higher than whole-chunk reranking did (Hit@1 0.65 → 0.75).
+So the large dev-set gain is partly a product of choosing settings on the dev set; the
+defensible claim is that the default pipeline is clearly better on the harder questions and
+no worse on the easy ones. Across all 45 questions it finds 40, against 34 for vector search,
+36 for hybrid and 35 for whole-chunk reranking.
 
-### Answer quality: RAGAS (`gpt-5.6-terra` as generator and judge)
+### Answer quality: RAGAS (`gpt-5.6-terra` as generator and judge, measured at v1.3)
 
-| Metric | Vector baseline | Hybrid + rerank |
+| Metric | Vector baseline | Hybrid + rerank (whole chunks) |
 |---|---|---|
 | Faithfulness | 0.97 | 0.97 |
 | Answer relevancy | 0.85 | 0.84 |
@@ -136,7 +151,7 @@ Reranking ranks relevant passages higher (context precision +0.05), but end-to-e
 quality is statistically indistinguishable on 25 questions; each pipeline wins some questions
 the other loses. Both pipelines keep answers grounded in the retrieved text.
 
-### Agent and guardrails (`gpt-5.6-terra`)
+### Agent and guardrails (`gpt-5.6-terra`, measured at v1.3)
 
 | Check | Result |
 |---|---|
@@ -144,12 +159,18 @@ the other loses. Both pipelines keep answers grounded in the retrieved text.
 | Answers citing a supporting page | 23 / 24 |
 | Calculation questions correct (±0.2 percentage points) | 4 / 4 |
 | Out-of-scope questions declined | 8 / 8 |
-| Out-of-scope declined by the relevance floor alone | 6 / 8 (World Cup, iPhone, Puma, Skechers…) |
 | On-topic out-of-scope (Adidas revenue, Nike FY2030) | 2 / 2 declined by the model's judgement |
-| Answerable questions clearing the relevance floor | 25 / 25 (lowest score 3.47 vs floor 2.0) |
 
 The single decline (Deckers headcount) is a retrieval miss that the agent correctly refused to
 guess past.
+
+The relevance floor needs no LLM, so it is re-measured on every push with the current retriever:
+
+| Check | Result |
+|---|---|
+| Development questions clearing the floor | 25 / 25 (lowest score 5.35 vs floor 2.0) |
+| Held-out questions clearing the floor | 20 / 20 (lowest score 4.45) |
+| Out-of-scope declined by the floor alone | 6 / 8 (World Cup, iPhone, Puma, Skechers…; highest score 1.54) |
 
 ### What the evaluation taught me
 
@@ -161,18 +182,28 @@ guess past.
 - **A plausible fix that did not help.** Restricting search to the company named in the
   question changed nothing: the remaining misses are the right report, wrong passage.
 - **The reranker was chosen by measurement**, not reputation (see Design decisions).
+- **A held-out set changed the story.** On new questions the v1.3 reranker did not beat plain
+  hybrid search, and the paired interval for its dev-set gain included zero. The 60% → 68%
+  headline was within noise.
+- **The reranker was reading the wrong unit.** The cross-encoder was trained on short
+  passages, and a 300-word chunk buries the one sentence that answers the question. Scoring
+  each chunk by its best 150-word window lifted dev Hit@5 to 0.88 without touching the index.
+- **My own answer key was too narrow.** The first held-out key accepted one wording per fact
+  and scored valid passages as misses. Auditing it against the corpus moved every pipeline up
+  and narrowed the gap between reranking and plain search, so I now check the key before I
+  blame the retriever.
 
 ## Engineering
 
 | Area | What is in place |
 |---|---|
 | API | FastAPI: `POST /query` (agent), `POST /search` (retrieval only, no LLM), `GET /health`; optional API-key auth (`X-API-Key`, set `COPILOT_API_KEYS`), per-client rate limits (429 with `Retry-After`), LLM errors mapped to 502 |
-| Tests | 117 pytest tests; the LLM is replaced by a scripted fake, so the suite runs without a key |
+| Tests | 126 pytest tests; the LLM is replaced by a scripted fake, so the suite runs without a key |
 | Safety | AST-based calculator (no `eval`), capped expression size, rejects overflow and complex results; 90-second timeout on every OpenAI call and a 3-minute budget per question |
 | Observability | One JSON log line per question (model, tool calls, LLM calls, tokens, seconds, fallback); the same usage is returned by `/query` and summarised by the agent eval, with cost estimates when token prices are set in `.env` |
 | Reproducibility | Every report is verified against a SHA-256 checksum, so the evaluation always runs on the documents it was built from |
 | Docker | One image with reports, models and a pre-built index |
-| CI | GitHub Actions: lint, format and type checks (ruff, mypy) → tests → build index → **retrieval regression gate** (Hit@5 ≥ 0.64) → held-out retrieval report → **guardrail gate** → Docker build and smoke test; agent and RAGAS evals when an API key secret is configured |
+| CI | GitHub Actions: lint, format and type checks (ruff, mypy) → tests → build index → **retrieval regression gate** (Hit@5 ≥ 0.84) → held-out retrieval report → **guardrail gate** → Docker build and smoke test; agent and RAGAS evals when an API key secret is configured |
 
 ## Quick start
 
@@ -206,7 +237,7 @@ docker run -p 8000:8000 --env-file .env consulting-research-copilot
 Reproduce the evaluation:
 
 ```powershell
-python evals/run_retrieval_eval.py        # retrieval table (free, ~5 min on CPU)
+python evals/run_retrieval_eval.py        # retrieval table (free, ~10 min on CPU)
 python evals/run_retrieval_eval.py --set heldout   # the same on the held-out questions
 python evals/run_guardrail_eval.py        # relevance-floor check (free)
 python evals/run_agent_eval.py --final    # agent table (uses the OpenAI API)
@@ -228,7 +259,7 @@ copilot/
   generate.py     single-shot RAG answer with citations (Stage 1)
   tools.py        retrieve_documents and the safe calculator
   agent.py        tool-calling loop and fallback guardrails
-  evaluation.py   eval set, fact matching and evidence-level metrics
+  evaluation.py   question sets, fact matching, evidence-level metrics, bootstrap intervals
   api.py          FastAPI service
   cli.py          command-line interface
 evals/            question sets, page labeller, evaluation runners, results/
@@ -245,8 +276,9 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
   ("Nike annual report, page 38.") so a bare financial table still carries its company.
 - **`bge-small-en-v1.5` over `all-MiniLM-L6-v2` for embeddings.** MiniLM truncates at 256
   tokens and would ignore most of each 300-word passage; bge-small reads 512.
-- **Reranker chosen by measurement.** `ms-marco-MiniLM-L-6-v2` matched `bge-reranker-base` on
-  Hit@5, beat it on Hit@1 and MRR, and ran about 3.5× faster on CPU:
+- **Reranker chosen by measurement.** With whole-chunk scoring, `ms-marco-MiniLM-L-6-v2`
+  matched `bge-reranker-base` on Hit@5, beat it on Hit@1 and MRR, and ran about 3.5× faster
+  on CPU:
 
   | Reranker (candidates) | Hit@1 | Hit@5 | MRR | sec/query |
   |---|---|---|---|---|
@@ -255,8 +287,27 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
   | ms-marco-MiniLM-L-6-v2 (20) | 0.48 | 0.64 | 0.57 | 3.1 |
   | **ms-marco-MiniLM-L-6-v2 (30)** | **0.48** | **0.68** | **0.57** | 4.7 |
 
-- **Relevance floor set from data.** Every answerable question scores at least 3.47 and
-  unrelated questions at most 0.56, so the floor is 2.0. It applies only to reranker scores,
+- **The reranker scores a chunk by its best window (MaxP).** Each candidate is split into
+  150-word windows that overlap by half, and the chunk takes its highest window score. The
+  index, the citations and the text the LLM reads are unchanged. 150 words follows the
+  BERT-MaxP setup (Dai & Callan, 2019) rather than the best cell of my own grid, and every
+  window size I tried on the dev set landed on the same plateau:
+
+  | Window (30 candidates, dev set) | Hit@1 | Hit@5 | MRR |
+  |---|---|---|---|
+  | Whole chunk (300 words) | 0.48 | 0.68 | 0.57 |
+  | 96 words | 0.60 | 0.84 | 0.70 |
+  | 128 words | 0.44 | 0.88 | 0.63 |
+  | **150 words (default)** | **0.48** | **0.88** | **0.64** |
+  | 160 words | 0.48 | 0.88 | 0.64 |
+
+  The cost is time: about 7 seconds per search on a laptop CPU instead of 4. Using 20
+  candidates instead of 30 was faster but lost answers (0.76–0.80), and forcing the top 5 to
+  come from different pages made no consistent difference.
+- **Relevance floor set from data.** Every answerable dev question scores at least 5.35 and
+  unrelated or other-company questions at most 1.54, so the floor stays at 2.0. It sits near
+  the low end on purpose: a question that wrongly passes still meets the model's own check,
+  while one that is wrongly blocked is simply refused. It applies only to reranker scores,
   the scale it was calibrated on.
 - **OpenAI Responses API for the agent.** GPT-5.6 models reject function tools combined with
   reasoning on Chat Completions.
@@ -267,11 +318,14 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 
 ## Limitations and next steps
 
-- **8 of 25 dev questions still miss the top 5**, all within the right report (e.g. Under Armour
-  and Deckers headcount). Next experiments: smaller or section-aware chunks and query
-  rewriting, chosen on the dev set and checked on the held-out set.
-- **Small evaluation sets.** 25 + 20 questions means a few points of difference are within
-  noise, as the held-out check shows.
+- **5 of 45 questions still miss the top 5**, all within the right report. One is a wording
+  gap that query rewriting should fix (the question asks how many people Under Armour
+  "employs"; the report counts "teammates"). The others ask for figures that appear mostly
+  in financial tables.
+- **Small evaluation sets.** With 25 + 20 questions the intervals are wide, and the dev set
+  has now been used to choose several settings. More held-out questions, harder ones
+  especially, are the most valuable next step.
+- **Slower search.** Windowed reranking roughly doubles reranking time on CPU.
 - **Tables are flattened to text.** Structured table extraction (e.g. pdfplumber) would help
   numeric questions.
 - **Cross-company comparison** works through the agent (see [docs/examples.md](docs/examples.md))
