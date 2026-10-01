@@ -9,6 +9,10 @@ Reports, for the agent (Stage 3):
     python evals/run_agent_eval.py                    # dev set, gpt-5.6-luna
     python evals/run_agent_eval.py --final            # dev set, gpt-5.6-terra (final)
     python evals/run_agent_eval.py --final --set heldout
+    python evals/run_agent_eval.py --limit 2          # cost check: tokens and time for two questions
+
+Results are saved even if the run stops early (e.g. the API account runs out of
+credit), so the questions already paid for are not lost.
 """
 
 import argparse
@@ -16,6 +20,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -84,31 +89,45 @@ def usage_summary(usages: list[Usage]) -> dict[str, float | int | None]:
     }
 
 
+def summarise(rows: list[dict[str, Any]], usages: list[Usage]) -> dict[str, Any]:
+    """Agent metrics over the questions that were run."""
+    answerable = [r for r in rows if r["id"] != "oos"]
+    answered = [r for r in answerable if not r["fallback"]]
+    calcs = [r for r in answerable if "calc_correct" in r]
+    oos = [r for r in rows if r["id"] == "oos"]
+    return {
+        "questions": len(answerable),
+        "answer_rate": round(len(answered) / max(len(answerable), 1), 3),
+        "citation_hit_rate": round(sum(r["cited_expected_page"] for r in answered) / max(len(answered), 1), 3),
+        "calc_accuracy": round(sum(r["calc_correct"] for r in calcs) / len(calcs), 3) if calcs else None,
+        "out_of_scope_decline_rate": round(sum(r["fallback"] for r in oos) / len(oos), 3) if oos else None,
+        "usage": usage_summary(usages),
+    }
+
+
 def main() -> None:
-    """Run the agent on the evaluation and out-of-scope sets and save a summary."""
+    """Run the agent on a question set (the full dev set also runs the out-of-scope questions)."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--final", action="store_true", help=f"use {config.EVAL_MODEL}")
     parser.add_argument("--set", dest="question_set", default="dev", choices=QUESTION_SETS)
+    parser.add_argument("--limit", type=int, default=None, help="only the first N questions, no out-of-scope set")
     args = parser.parse_args()
     load_dotenv()
     agent = ResearchAgent(model=config.EVAL_MODEL if args.final else config.DEV_MODEL)
 
-    answered = cited_ok = calc_ok = 0
-    rows = []
+    questions = load_questions(QUESTION_SETS[args.question_set])[: args.limit]
+    # The out-of-scope questions run with the full dev set only, so other runs do not pay for them again.
+    run_oos = args.question_set == "dev" and args.limit is None
+    oos = json.loads(OUT_OF_SCOPE_PATH.read_text(encoding="utf-8")) if run_oos else []
+    rows: list[dict[str, Any]] = []
     usages: list[Usage] = []
-    questions = load_questions(QUESTION_SETS[args.question_set])
-    calc_ids = [q.id for q in questions if q.id in CALC_EXPECTED]
-    for q in questions:
-        r = agent.run(q.question)
-        usages.append(r.usage)
-        expected = {f"{q.source}, p. {p}" for p in q.pages}
-        hit = bool(expected & set(r.sources))
-        answered += not r.fallback_triggered
-        cited_ok += hit
-        if q.id in CALC_EXPECTED:
-            calc_ok += calc_correct(r.answer, CALC_EXPECTED[q.id])
-        rows.append(
-            {
+    stopped = None
+    try:
+        for q in questions:
+            r = agent.run(q.question)
+            usages.append(r.usage)
+            hit = bool({f"{q.source}, p. {p}" for p in q.pages} & set(r.sources))
+            row: dict[str, Any] = {
                 "id": q.id,
                 "answer": r.answer,
                 "sources": r.sources,
@@ -117,47 +136,45 @@ def main() -> None:
                 "reason": r.fallback_reason,
                 "cited_expected_page": hit,
             }
-        )
-        print(
-            f"{q.id:8} {'DECLINED' if r.fallback_triggered else 'answered':9} cited_ok={hit!s:5} tools={r.tool_calls}"
-        )
+            if q.id in CALC_EXPECTED:
+                row["calc_correct"] = calc_correct(r.answer, CALC_EXPECTED[q.id])
+            rows.append({**row, "usage": r.usage.as_dict()})
+            status = "DECLINED" if r.fallback_triggered else "answered"
+            print(f"{q.id:8} {status:9} cited_ok={hit!s:5} tools={r.tool_calls} tokens={r.usage.output_tokens}")
 
-    # The out-of-scope questions run with the dev set only, so a held-out run does not pay for them twice.
-    oos = json.loads(OUT_OF_SCOPE_PATH.read_text(encoding="utf-8")) if args.question_set == "dev" else []
-    declined = 0
-    for item in oos:
-        r = agent.run(item["question"])
-        usages.append(r.usage)
-        declined += r.fallback_triggered
-        rows.append(
-            {
-                "id": "oos",
-                "question": item["question"],
-                "answer": r.answer,
-                "fallback": r.fallback_triggered,
-                "reason": r.fallback_reason,
-                "tool_calls": r.tool_calls,
-            }
-        )
-        print(
-            f"oos      {'DECLINED' if r.fallback_triggered else 'ANSWERED':9} {item['question']}  ({r.fallback_reason})"
-        )
+        for item in oos:
+            r = agent.run(item["question"])
+            usages.append(r.usage)
+            rows.append(
+                {
+                    "id": "oos",
+                    "question": item["question"],
+                    "answer": r.answer,
+                    "fallback": r.fallback_triggered,
+                    "reason": r.fallback_reason,
+                    "tool_calls": r.tool_calls,
+                    "usage": r.usage.as_dict(),
+                }
+            )
+            status = "DECLINED" if r.fallback_triggered else "ANSWERED"
+            print(f"oos      {status:9} {item['question']}  ({r.fallback_reason})")
+    except Exception as exc:  # e.g. the account ran out of credit: keep the answers already paid for
+        stopped = f"{type(exc).__name__}: {exc}"
+        print(f"\nStopped early after {len(rows)} questions: {stopped}")
 
-    n = len(questions)
-    summary = {
-        "model": agent.model,
-        "question_set": args.question_set,
-        "answer_rate": round(answered / n, 3),
-        "citation_hit_rate": round(cited_ok / max(answered, 1), 3),
-        "calc_accuracy": round(calc_ok / max(len(calc_ids), 1), 3),
-        "out_of_scope_decline_rate": round(declined / len(oos), 3) if oos else None,
-        "usage": usage_summary(usages),
-    }
+    summary = {"model": agent.model, "question_set": args.question_set, **summarise(rows, usages)}
+    if stopped:
+        summary["stopped_early"] = stopped
     print("\n" + json.dumps(summary, indent=2))
-    suffix = "" if args.question_set == "dev" else f"_{args.question_set}"
+    suffix = ("" if args.question_set == "dev" else f"_{args.question_set}") + (
+        f"_first{args.limit}" if args.limit else ""
+    )
     out = config.ROOT / "evals" / "results" / f"agent_{'final' if args.final else 'dev'}{suffix}.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({**summary, "rows": rows}, indent=2), encoding="utf-8")
     print(f"Saved {out.relative_to(config.ROOT)}")
+    if stopped:
+        sys.exit(f"Incomplete run: {stopped}")
 
 
 if __name__ == "__main__":

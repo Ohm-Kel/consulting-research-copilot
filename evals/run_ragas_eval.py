@@ -1,9 +1,14 @@
 """Score end-to-end answers with RAGAS (LLM-judged). Needs OPENAI_API_KEY.
 
     python evals/run_ragas_eval.py --modes vector hybrid_rerank          # development run, gpt-5.6-luna
-    python evals/run_ragas_eval.py --modes vector hybrid_rerank --final  # final run, gpt-5.6-terra
+    python evals/run_ragas_eval.py --modes vector hybrid_rerank --final  # final run: gpt-5.6-terra answers
     python evals/run_ragas_eval.py --limit 3                             # quick smoke test
     python evals/run_ragas_eval.py --set heldout --final                 # held-out questions
+
+The judge defaults to the development model, so in a final run the answers are
+scored by a different model from the one that wrote them (a model tends to rate
+its own output highly). Each mean comes with a 95% bootstrap interval, and the
+modes are compared question by question with a paired interval.
 
 Metrics (0-1, higher is better):
     faithfulness       every claim in the answer is supported by the retrieved context
@@ -15,6 +20,7 @@ Metrics (0-1, higher is better):
 import argparse
 import asyncio
 import json
+import math
 import sys
 from pathlib import Path
 from typing import Any
@@ -25,7 +31,7 @@ from dotenv import load_dotenv  # noqa: E402
 from openai import AsyncOpenAI  # noqa: E402
 
 from copilot import config  # noqa: E402
-from copilot.evaluation import QUESTION_SETS, EvalQuestion, load_questions  # noqa: E402
+from copilot.evaluation import QUESTION_SETS, EvalQuestion, bootstrap_ci, load_questions  # noqa: E402
 from copilot.generate import answer_question, make_client  # noqa: E402
 from copilot.retrieval import RETRIEVER_MODES, build_retriever  # noqa: E402
 
@@ -90,31 +96,63 @@ async def score_one(metrics: dict, q: EvalQuestion, answer: str, contexts: list[
     return {name: float(r.value) for name, r in zip(METRIC_NAMES, results, strict=True)}
 
 
-async def run_mode(mode: str, questions: list[EvalQuestion], answer_model: str, metrics: dict) -> dict:
-    """Answer and score every question with one retrieval pipeline."""
+def summarise(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Mean and 95% bootstrap interval of each metric over the questions. A question a
+    metric could not score (NaN) is left out of that metric's mean."""
+    summary: dict[str, Any] = {}
+    for m in METRIC_NAMES:
+        values = [r[m] for r in rows if not math.isnan(r[m])]
+        low, high = bootstrap_ci(values)
+        summary[m] = round(sum(values) / len(values), 3) if values else None
+        summary[f"{m}_ci95"] = [round(low, 2), round(high, 2)]
+    return summary
+
+
+def paired_gain(rows: list[dict[str, Any]], base_rows: list[dict[str, Any]], metric: str) -> list[float]:
+    """Mean per-question difference in `metric` over `base_rows` (same questions),
+    with a paired 95% bootstrap interval: [mean, low, high]."""
+    base = {r["id"]: r[metric] for r in base_rows}
+    diffs = [r[metric] - base[r["id"]] for r in rows if not (math.isnan(r[metric]) or math.isnan(base[r["id"]]))]
+    low, high = bootstrap_ci(diffs)
+    return [round(sum(diffs) / len(diffs), 3) if diffs else 0.0, round(low, 3), round(high, 3)]
+
+
+async def run_mode(
+    mode: str, questions: list[EvalQuestion], answer_model: str, judge_model: str, metrics: dict
+) -> dict[str, Any]:
+    """Answer and score every question with one retrieval pipeline. If an API call
+    fails (e.g. the account runs out of credit), the questions scored so far are kept."""
     retriever = build_retriever(mode)
     client = make_client()
     rows: list[dict[str, Any]] = []
-    all_scores: list[dict[str, float]] = []
+    stopped = None
     for q in questions:
-        hits = retriever.search(q.question)
-        answer = answer_question(q.question, hits, client=client, model=answer_model)
-        scores = await score_one(metrics, q, answer.text, answer.contexts)
+        try:
+            hits = retriever.search(q.question)
+            answer = answer_question(q.question, hits, client=client, model=answer_model)
+            scores = await score_one(metrics, q, answer.text, answer.contexts)
+        except Exception as exc:
+            stopped = f"{type(exc).__name__}: {exc}"
+            print(f"  stopped early at {q.id}: {stopped}")
+            break
         rows.append({"id": q.id, "answer": answer.text, "sources": answer.sources, **scores})
-        all_scores.append(scores)
         print(f"  {q.id}: " + "  ".join(f"{m}={scores[m]:.2f}" for m in METRIC_NAMES))
-    means = {m: round(sum(s[m] for s in all_scores) / len(all_scores), 3) for m in METRIC_NAMES}
-    return {"mode": mode, "answer_model": answer_model, **means, "rows": rows}
+    summary = {"mode": mode, "answer_model": answer_model, "judge_model": judge_model, **summarise(rows)}
+    if stopped:
+        summary["stopped_early"] = stopped
+    return {**summary, "rows": rows}
 
 
-async def run_all(modes: list[str], questions: list[EvalQuestion], model: str) -> list[dict]:
+async def run_all(modes: list[str], questions: list[EvalQuestion], answer_model: str, judge_model: str) -> list[dict]:
     """One event loop for the whole run: the async OpenAI client used by the
     judge metrics is bound to the loop it was first used on."""
-    metrics = build_metrics(model)
+    metrics = build_metrics(judge_model)
     summaries = []
     for mode in modes:
-        print(f"\n== {mode} ({len(questions)} questions, model {model})")
-        summaries.append(await run_mode(mode, questions, model, metrics))
+        print(f"\n== {mode} ({len(questions)} questions, answers by {answer_model}, judged by {judge_model})")
+        summaries.append(await run_mode(mode, questions, answer_model, judge_model, metrics))
+        if "stopped_early" in summaries[-1]:
+            break
     return summaries
 
 
@@ -122,26 +160,45 @@ def main() -> None:
     """Run the RAGAS evaluation and save the results."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--modes", nargs="+", default=["vector", "hybrid_rerank"], choices=RETRIEVER_MODES)
-    parser.add_argument("--final", action="store_true", help=f"use {config.EVAL_MODEL} to answer and judge")
+    parser.add_argument("--final", action="store_true", help=f"answer with {config.EVAL_MODEL}")
+    parser.add_argument("--judge", default=config.DEV_MODEL, help="model that scores the answers (%(default)s)")
     parser.add_argument("--limit", type=int, default=None, help="only the first N questions")
     parser.add_argument("--set", dest="question_set", default="dev", choices=QUESTION_SETS)
     args = parser.parse_args()
 
     load_dotenv()
-    model = config.EVAL_MODEL if args.final else config.DEV_MODEL
+    answer_model = config.EVAL_MODEL if args.final else config.DEV_MODEL
+    if args.judge == answer_model:
+        print(f"Note: {answer_model} judges its own answers, so scores may be optimistic.")
     questions = load_questions(QUESTION_SETS[args.question_set])[: args.limit]
-    summaries = asyncio.run(run_all(args.modes, questions, model))
+    summaries = asyncio.run(run_all(args.modes, questions, answer_model, args.judge))
 
-    print("\n| Metric | " + " | ".join(s["mode"] for s in summaries) + " |")
+    def cell(s: dict[str, Any], m: str) -> str:
+        low, high = s[f"{m}_ci95"]
+        return "n/a" if s[m] is None else f"{s[m]:.2f} ({low:.2f}-{high:.2f})"
+
+    print("\n| Metric (95% CI) | " + " | ".join(s["mode"] for s in summaries) + " |")
     print("|---|" + "---|" * len(summaries))
     for m in METRIC_NAMES:
-        print(f"| {m} | " + " | ".join(f"{s[m]:.2f}" for s in summaries) + " |")
+        print(f"| {m} | " + " | ".join(cell(s, m) for s in summaries) + " |")
+    base = summaries[0]
+    for s in summaries[1:]:
+        print(f"\n{s['mode']} minus {base['mode']}, same questions (paired 95% bootstrap CI):")
+        for m in METRIC_NAMES:
+            gain = paired_gain(s["rows"], base["rows"], m)
+            s[f"{m}_gain_vs_{base['mode']}"] = gain
+            print(f"  {m:18} {gain[0]:+.3f}  [{gain[1]:+.3f}, {gain[2]:+.3f}]")
 
     RESULTS_DIR.mkdir(exist_ok=True)
-    suffix = "" if args.question_set == "dev" else f"_{args.question_set}"
+    suffix = ("" if args.question_set == "dev" else f"_{args.question_set}") + (
+        f"_first{args.limit}" if args.limit else ""
+    )
     out = RESULTS_DIR / f"ragas_{'final' if args.final else 'dev'}{suffix}.json"
     out.write_text(json.dumps(summaries, indent=2), encoding="utf-8")
     print(f"\nSaved {out.relative_to(config.ROOT)}")
+    stopped = [s["stopped_early"] for s in summaries if "stopped_early" in s]
+    if stopped:
+        sys.exit(f"Incomplete run: {stopped[0]}")
 
 
 if __name__ == "__main__":

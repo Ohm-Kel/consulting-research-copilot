@@ -2,7 +2,9 @@
 
 import asyncio
 import importlib.util
+import json
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -47,17 +49,63 @@ def test_ragas_runner_scores_all_modes_in_one_event_loop(monkeypatch: pytest.Mon
     StubMetric.loops.clear()
 
     questions = ragas.load_questions()[:3]
-    summaries = asyncio.run(ragas.run_all(["vector", "hybrid_rerank"], questions, "test-model"))
+    summaries = asyncio.run(ragas.run_all(["vector", "hybrid_rerank"], questions, "answer-model", "judge-model"))
 
     assert [s["mode"] for s in summaries] == ["vector", "hybrid_rerank"]
     assert summaries[0]["faithfulness"] == 0.9 and summaries[1]["context_recall"] == 0.6
+    assert summaries[0]["faithfulness_ci95"] == [0.9, 0.9]  # identical scores, no spread
+    assert (summaries[0]["answer_model"], summaries[0]["judge_model"]) == ("answer-model", "judge-model")
     assert len(summaries[0]["rows"]) == 3
     assert len(StubMetric.loops) == 1  # every judge call shared one loop
+
+
+def test_ragas_runner_keeps_scored_questions_when_the_api_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    ragas = load_script("run_ragas_eval")
+    monkeypatch.setattr(ragas, "build_metrics", lambda model: {name: StubMetric(0.5) for name in ragas.METRIC_NAMES})
+    monkeypatch.setattr(ragas, "make_client", lambda: None)
+    monkeypatch.setattr(
+        ragas, "build_retriever", lambda mode: SimpleNamespace(search=lambda q: [Hit(SAMPLE_CHUNKS[0], 1.0)])
+    )
+    calls: list[str] = []
+
+    def answer_then_fail(question: str, hits: list[Hit], client: object, model: str) -> Answer:
+        calls.append(question)
+        if len(calls) > 1:
+            raise RuntimeError("insufficient_quota")
+        return Answer("A [1].", ["x, p. 1"], ["ctx"])
+
+    monkeypatch.setattr(ragas, "answer_question", answer_then_fail)
+    summaries = asyncio.run(ragas.run_all(["vector", "hybrid_rerank"], ragas.load_questions()[:3], "a", "j"))
+
+    assert len(summaries) == 1  # the second mode never started
+    assert len(summaries[0]["rows"]) == 1 and "insufficient_quota" in summaries[0]["stopped_early"]
+
+
+def test_ragas_summary_skips_unscored_questions_and_pairs_by_id() -> None:
+    ragas = load_script("run_ragas_eval")
+    nan = float("nan")
+    rows = [
+        {"id": "a", "faithfulness": 1.0, "answer_relevancy": 0.8, "context_precision": 1.0, "context_recall": 1.0},
+        {"id": "b", "faithfulness": nan, "answer_relevancy": 0.6, "context_precision": 0.0, "context_recall": 0.5},
+    ]
+    summary = ragas.summarise(rows)
+    assert summary["faithfulness"] == 1.0  # the NaN is left out, not averaged in
+    assert summary["answer_relevancy"] == 0.7
+    base = [{**rows[1], "id": "b", "context_recall": 0.0}, {**rows[0], "id": "a", "context_recall": 0.5}]
+    assert ragas.paired_gain(rows, base, "context_recall")[0] == 0.5  # matched by id, not by position
 
 
 @pytest.mark.parametrize("name", ["run_retrieval_eval", "run_guardrail_eval", "run_agent_eval", "run_ragas_eval"])
 def test_eval_scripts_import(name: str) -> None:
     assert callable(load_script(name).main)
+
+
+def test_retrieval_eval_paired_gain_compares_the_same_questions() -> None:
+    retrieval_eval = load_script("run_retrieval_eval")
+    base = {"ranks": {"a": None, "b": 7, "c": 1, "d": 2}}
+    better = {"ranks": {"a": 3, "b": 2, "c": 1, "d": 2}}  # two more questions found in the top 5
+    mean, low, high = retrieval_eval.paired_difference(better, base, k=5)
+    assert mean == 0.5 and 0.0 <= low <= mean <= high <= 1.0
 
 
 def test_agent_eval_percentage_parser() -> None:
@@ -99,6 +147,50 @@ def test_reasoning_model_params_workaround() -> None:
 def test_agent_eval_calc_check_uses_direction(answer: str, expected: float, correct: bool) -> None:
     agent_eval = load_script("run_agent_eval")
     assert agent_eval.calc_correct(answer, expected) is correct
+
+
+def test_agent_eval_summary_counts_only_questions_that_ran() -> None:
+    agent_eval = load_script("run_agent_eval")
+    from copilot.agent import Usage
+
+    rows = [
+        {"id": "nike-05", "fallback": False, "cited_expected_page": True, "calc_correct": True},
+        {"id": "lulu-01", "fallback": True, "cited_expected_page": False},
+        {"id": "oos", "fallback": True},
+    ]
+    summary = agent_eval.summarise(rows, [Usage(), Usage(), Usage()])
+    assert (summary["questions"], summary["answer_rate"], summary["citation_hit_rate"]) == (2, 0.5, 1.0)
+    assert summary["calc_accuracy"] == 1.0 and summary["out_of_scope_decline_rate"] == 1.0
+
+
+def test_agent_eval_saves_partial_results_when_the_api_fails(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    agent_eval = load_script("run_agent_eval")
+    from copilot.agent import Usage
+
+    class FlakyAgent:
+        """Answers the first question, then fails like an account out of credit."""
+
+        def __init__(self, model: str) -> None:
+            self.model, self.calls = model, 0
+
+        def run(self, question: str) -> SimpleNamespace:
+            self.calls += 1
+            if self.calls > 1:
+                raise RuntimeError("insufficient_quota")
+            return SimpleNamespace(
+                answer="A [1].", sources=[], tool_calls={}, fallback_triggered=False, fallback_reason="", usage=Usage()
+            )
+
+    monkeypatch.setattr(agent_eval, "ResearchAgent", FlakyAgent)
+    monkeypatch.setattr(agent_eval, "load_dotenv", lambda: None)
+    monkeypatch.setattr(config, "ROOT", tmp_path)
+    monkeypatch.setattr(sys, "argv", ["run_agent_eval.py", "--set", "heldout"])
+    with pytest.raises(SystemExit, match="Incomplete run"):
+        agent_eval.main()
+
+    saved = json.loads((tmp_path / "evals" / "results" / "agent_dev_heldout.json").read_text(encoding="utf-8"))
+    assert saved["questions"] == 1 and len(saved["rows"]) == 1
+    assert "insufficient_quota" in saved["stopped_early"]
 
 
 def test_agent_eval_usage_summary() -> None:
