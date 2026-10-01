@@ -37,7 +37,7 @@ class StubMetric:
         return SimpleNamespace(value=self.value)
 
 
-def test_ragas_runner_scores_all_modes_in_one_event_loop(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ragas_runner_scores_all_modes_in_one_event_loop(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     ragas = load_script("run_ragas_eval")
     stub_metrics = {name: StubMetric(v) for name, v in zip(ragas.METRIC_NAMES, (0.9, 0.8, 0.7, 0.6), strict=True)}
     monkeypatch.setattr(ragas, "build_metrics", lambda model: stub_metrics)
@@ -49,8 +49,13 @@ def test_ragas_runner_scores_all_modes_in_one_event_loop(monkeypatch: pytest.Mon
     StubMetric.loops.clear()
 
     questions = ragas.load_questions()[:3]
-    summaries = asyncio.run(ragas.run_all(["vector", "hybrid_rerank"], questions, "answer-model", "judge-model"))
+    progress = tmp_path / "ragas.partial.json"
+    summaries = asyncio.run(
+        ragas.run_all(["vector", "hybrid_rerank"], questions, "answer-model", "judge-model", progress)
+    )
 
+    saved = json.loads(progress.read_text(encoding="utf-8"))  # written after every question, in case of a crash
+    assert [len(mode["rows"]) for mode in saved] == [3, 3]
     assert [s["mode"] for s in summaries] == ["vector", "hybrid_rerank"]
     assert summaries[0]["faithfulness"] == 0.9 and summaries[1]["context_recall"] == 0.6
     assert summaries[0]["faithfulness_ci95"] == [0.9, 0.9]  # identical scores, no spread
@@ -75,6 +80,7 @@ def test_ragas_runner_keeps_scored_questions_when_the_api_fails(monkeypatch: pyt
         return Answer("A [1].", ["x, p. 1"], ["ctx"])
 
     monkeypatch.setattr(ragas, "answer_question", answer_then_fail)
+    monkeypatch.setattr(ragas, "RETRY_PAUSE_SECONDS", 0)
     summaries = asyncio.run(ragas.run_all(["vector", "hybrid_rerank"], ragas.load_questions()[:3], "a", "j"))
 
     assert len(summaries) == 1  # the second mode never started
@@ -93,6 +99,18 @@ def test_ragas_summary_skips_unscored_questions_and_pairs_by_id() -> None:
     assert summary["answer_relevancy"] == 0.7
     base = [{**rows[1], "id": "b", "context_recall": 0.0}, {**rows[0], "id": "a", "context_recall": 0.5}]
     assert ragas.paired_gain(rows, base, "context_recall")[0] == 0.5  # matched by id, not by position
+
+
+def test_ragas_token_counter_adds_up_completions_and_ignores_errors() -> None:
+    ragas = load_script("run_ragas_eval")
+    counter = ragas.TokenCounter()
+    counter.add(json.dumps({"usage": {"prompt_tokens": 1200, "completion_tokens": 80}}).encode())
+    snapshot = counter.as_dict()
+    counter.add(json.dumps({"usage": {"prompt_tokens": 300, "completion_tokens": 20}}).encode())
+    counter.add(json.dumps({"error": {"code": "insufficient_quota"}}).encode())
+    counter.add(b"not json")
+    assert counter.as_dict() == {"calls": 2, "input_tokens": 1500, "output_tokens": 100}
+    assert counter.since(snapshot) == {"calls": 1, "input_tokens": 300, "output_tokens": 20}
 
 
 @pytest.mark.parametrize("name", ["run_retrieval_eval", "run_guardrail_eval", "run_agent_eval", "run_ragas_eval"])
@@ -182,6 +200,7 @@ def test_agent_eval_saves_partial_results_when_the_api_fails(monkeypatch: pytest
             )
 
     monkeypatch.setattr(agent_eval, "ResearchAgent", FlakyAgent)
+    monkeypatch.setattr(agent_eval, "RETRY_PAUSE_SECONDS", 0)
     monkeypatch.setattr(agent_eval, "load_dotenv", lambda: None)
     monkeypatch.setattr(config, "ROOT", tmp_path)
     monkeypatch.setattr(sys, "argv", ["run_agent_eval.py", "--set", "heldout"])

@@ -19,6 +19,7 @@ import argparse
 import json
 import re
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -27,10 +28,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from dotenv import load_dotenv  # noqa: E402
 
 from copilot import config  # noqa: E402
-from copilot.agent import ResearchAgent, Usage  # noqa: E402
+from copilot.agent import AgentResult, ResearchAgent, Usage  # noqa: E402
 from copilot.evaluation import QUESTION_SETS, load_questions  # noqa: E402
 
 OUT_OF_SCOPE_PATH = config.ROOT / "evals" / "out_of_scope.json"
+RETRY_PAUSE_SECONDS = 20.0
 # Expected percentage for each calculation question (verified with copilot.tools.calculate).
 CALC_EXPECTED = {
     "nike-05": -43.5,
@@ -89,6 +91,16 @@ def usage_summary(usages: list[Usage]) -> dict[str, float | int | None]:
     }
 
 
+def run_with_retry(agent: ResearchAgent, question: str) -> AgentResult:
+    """Run one question, retrying once after a pause, so a brief network drop does not end a paid run."""
+    try:
+        return agent.run(question)
+    except Exception as exc:
+        print(f"  failed ({type(exc).__name__}); retrying once in {RETRY_PAUSE_SECONDS:.0f} s")
+        time.sleep(RETRY_PAUSE_SECONDS)
+        return agent.run(question)
+
+
 def summarise(rows: list[dict[str, Any]], usages: list[Usage]) -> dict[str, Any]:
     """Agent metrics over the questions that were run."""
     answerable = [r for r in rows if r["id"] != "oos"]
@@ -124,7 +136,7 @@ def main() -> None:
     stopped = None
     try:
         for q in questions:
-            r = agent.run(q.question)
+            r = run_with_retry(agent, q.question)
             usages.append(r.usage)
             hit = bool({f"{q.source}, p. {p}" for p in q.pages} & set(r.sources))
             row: dict[str, Any] = {
@@ -143,7 +155,7 @@ def main() -> None:
             print(f"{q.id:8} {status:9} cited_ok={hit!s:5} tools={r.tool_calls} tokens={r.usage.output_tokens}")
 
         for item in oos:
-            r = agent.run(item["question"])
+            r = run_with_retry(agent, item["question"])
             usages.append(r.usage)
             rows.append(
                 {
