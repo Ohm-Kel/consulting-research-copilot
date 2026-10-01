@@ -62,6 +62,10 @@
       [
         "$18 billion",
         "$12.0 billion"
+      ],
+      [
+        "122.6 million shares",
+        "$12.0 billion"
       ]
     ],
     "pages": [
@@ -95,10 +99,14 @@
     "facts": [
       [
         "Total company-operated stores 767 711"
+      ],
+      [
+        "767 , 711 , and 655 company-operated stores"
       ]
     ],
     "pages": [
-      9
+      9,
+      54
     ]
   },
   {
@@ -111,10 +119,19 @@
     "facts": [
       [
         "Americas represented 75% of our total net revenue"
+      ],
+      [
+        "Americas $7,928,156 $7,631,647 74.9%"
+      ],
+      [
+        "Americas 7,928,156",
+        "$10,588,126"
       ]
     ],
     "pages": [
-      7
+      7,
+      33,
+      79
     ]
   },
   {
@@ -126,12 +143,17 @@
     "source": "Lululemon_FY2024_10K.pdf",
     "facts": [
       [
-        "acquired MIRROR",
-        "lululemon Studio"
+        "rebranded as lululemon Studio",
+        "discontinued selling its hardware"
+      ],
+      [
+        "cease selling the lululemon Studio Mirror"
       ]
     ],
     "pages": [
-      15
+      15,
+      33,
+      64
     ]
   },
   {
@@ -144,10 +166,19 @@
     "facts": [
       [
         "cash and cash equivalents totaled $501 million"
+      ],
+      [
+        "$501.4 million of cash and cash equivalents"
+      ],
+      [
+        "Cash and cash equivalents $501,361"
       ]
     ],
     "pages": [
-      24
+      24,
+      40,
+      51,
+      56
     ]
   },
   {
@@ -161,9 +192,13 @@
       [
         "2,601,991",
         "2,400,502"
+      ],
+      [
+        "Selling, general and administrative expenses increased 8.4%"
       ]
     ],
     "pages": [
+      33,
       35,
       37,
       52
@@ -197,12 +232,24 @@
       [
         "MapMyFitness",
         "sold during the second quarter of Fiscal 2025"
+      ],
+      [
+        "sale of the MapMyFitness"
+      ],
+      [
+        "Sale of MapMyFitness platform"
       ]
     ],
     "pages": [
       9,
+      33,
       38,
+      42,
+      55,
       61,
+      62,
+      78,
+      79,
       89
     ]
   },
@@ -233,10 +280,16 @@
       [
         "317.8 million",
         "184.0 million"
+      ],
+      [
+        "317,756",
+        "184,022"
       ]
     ],
     "pages": [
       33,
+      45,
+      46,
       62
     ]
   },
@@ -250,10 +303,14 @@
     "facts": [
       [
         "effective income tax rate 25.1% 22.9%"
+      ],
+      [
+        "Actual provision for income taxes 25.1% 22.9%"
       ]
     ],
     "pages": [
-      30
+      30,
+      59
     ]
   },
   {
@@ -303,9 +360,13 @@
       [
         "1,798,903",
         "1,424,089"
+      ],
+      [
+        "International net sales increased 26.3% to $1,798,903"
       ]
     ],
     "pages": [
+      38,
       43,
       101
     ]
@@ -319,12 +380,27 @@
     "source": "Deckers_FY2025_AR.pdf",
     "facts": [
       [
-        "sale of our Sanuk brand",
-        "August 15, 2024"
+        "sale of our Sanuk brand"
+      ],
+      [
+        "sale of the Sanuk brand"
+      ],
+      [
+        "purchased the Sanuk brand"
+      ],
+      [
+        "Sanuk Brand Sale Date"
       ]
     ],
     "pages": [
-      10
+      10,
+      25,
+      38,
+      40,
+      43,
+      44,
+      71,
+      83
     ]
   },
   {
@@ -337,9 +413,13 @@
     "facts": [
       [
         "split into six shares"
+      ],
+      [
+        "six-for-one forward stock split"
       ]
     ],
     "pages": [
+      9,
       72
     ]
   }
