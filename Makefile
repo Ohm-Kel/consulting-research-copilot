@@ -34,8 +34,10 @@ eval: ## Run the free retrieval and guardrail evaluations
 	$(PYTHON) evals/run_guardrail_eval.py
 
 eval-llm: ## Run the agent and RAGAS evaluations (uses the OpenAI API)
-	$(PYTHON) evals/run_agent_eval.py --final
+	$(PYTHON) evals/run_agent_eval.py
+	$(PYTHON) evals/run_agent_eval.py --set heldout
 	$(PYTHON) evals/run_ragas_eval.py --final
+	$(PYTHON) evals/run_ragas_eval.py --final --set heldout --modes hybrid_rerank
 
 serve: ## Start the API on http://localhost:8000
 	$(PYTHON) -m uvicorn copilot.api:app --port 8000

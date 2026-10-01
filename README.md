@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Ohm-Kel/consulting-research-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Ohm-Kel/consulting-research-copilot/actions/workflows/ci.yml)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
-![Tests](https://img.shields.io/badge/tests-126%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-127%20passing-brightgreen)
 ![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)
 
 An AI research assistant for the desk research a consulting case team does in the first days of
@@ -33,12 +33,10 @@ in [Evaluation](#evaluation)).
 |---|---|
 | Answer passage in the top 5 search results, development questions | **88%**, up from 60% for the vector-search baseline |
 | Same, on held-out questions never used for tuning | 90%, level with the baseline (95%) within noise |
-| Out-of-scope questions declined instead of guessed † | **8 / 8** |
-| Answerable questions answered, with a correct page cited † | 24 / 25 answered, 23 / 24 cited correctly |
-| Financial calculations correct † | **4 / 4** |
-| Faithfulness: answers grounded in the retrieved text (RAGAS) † | **0.97** |
-
-† Measured at v1.3, before the reranker change described below.
+| Out-of-scope questions declined instead of guessed | **8 / 8** |
+| Answerable questions answered by the agent | **45 / 45**, with a supporting page cited for 44 |
+| Financial calculations correct | **9 / 9** |
+| Faithfulness: answers grounded in the retrieved text (RAGAS, independent judge) | **0.91** development, **0.93** held-out |
 
 **Corpus:** athletic apparel & footwear: Nike (FY2025 10-K), Lululemon (FY2024 10-K), Under
 Armour (FY2025 10-K), Columbia Sportswear (FY2024 10-K) and Deckers Brands (FY2025 Annual
@@ -138,31 +136,46 @@ defensible claim is that the default pipeline is clearly better on the harder qu
 no worse on the easy ones. Across all 45 questions it finds 40, against 34 for vector search,
 36 for hybrid and 35 for whole-chunk reranking.
 
-### Answer quality: RAGAS (`gpt-5.6-terra` as generator and judge, measured at v1.3)
+### Answer quality: RAGAS (`gpt-5.6-terra` answers, `gpt-5.6-luna` judges)
 
-| Metric | Vector baseline | Hybrid + rerank (whole chunks) |
+RAGAS scores single-shot answers written from the top 5 passages, without the agent. The
+judge is a different model from the one that writes the answers, because a model tends to
+rate its own output highly.
+
+| Metric (95% CI) | Vector baseline, dev | Default pipeline, dev | Default pipeline, held-out |
+|---|---|---|---|
+| Faithfulness | 0.94 (0.90–0.98) | 0.91 (0.85–0.96) | 0.93 (0.86–0.99) |
+| Answer relevancy | 0.85 (0.74–0.93) | 0.84 (0.73–0.92) | 0.92 (0.89–0.94) |
+| Context precision | 0.61 (0.46–0.75) | 0.76 (0.63–0.87) | 0.80 (0.66–0.92) |
+| Context recall | 0.73 (0.57–0.89) | 0.90 (0.78–1.00) | 0.90 (0.75–1.00) |
+
+Compared question by question on the dev set, the default pipeline gains +0.15 context
+precision (95% CI +0.02 to +0.30) and +0.17 context recall (−0.01 to +0.36): the judge agrees
+with the evidence-level metric that better passages are being retrieved. Faithfulness and
+answer relevancy do not change beyond noise (−0.03 and −0.01). When the evidence is missing,
+the answer says so instead of guessing, which is what scores zero on answer relevancy for the
+remaining misses. At v1.3 `gpt-5.6-terra` judged its own answers and gave faithfulness 0.97;
+the independent judge is stricter. The vector-baseline scores were recovered from the run log
+after a crash, so `evals/results/ragas_final.json` holds its scores but not its answers.
+
+### Agent and guardrails (`gpt-5.6-luna`, the model the app uses by default)
+
+| Check | Development (25) | Held-out (20) |
 |---|---|---|
-| Faithfulness | 0.97 | 0.97 |
-| Answer relevancy | 0.85 | 0.84 |
-| Context precision | 0.68 | 0.73 |
-| Context recall | 0.80 | 0.75 |
+| Answerable questions answered (not declined) | 25 / 25 | 20 / 20 |
+| Answers citing a supporting page | 24 / 25 | 20 / 20 |
+| Calculation questions correct (±0.2 percentage points) | 4 / 4 | 5 / 5 |
+| Out-of-scope questions declined | 8 / 8 | not run |
 
-Reranking ranks relevant passages higher (context precision +0.05), but end-to-end answer
-quality is statistically indistinguishable on 25 questions; each pipeline wins some questions
-the other loses. Both pipelines keep answers grounded in the retrieved text.
-
-### Agent and guardrails (`gpt-5.6-terra`, measured at v1.3)
-
-| Check | Result |
-|---|---|
-| Answerable questions answered (not declined) | 24 / 25 |
-| Answers citing a supporting page | 23 / 24 |
-| Calculation questions correct (±0.2 percentage points) | 4 / 4 |
-| Out-of-scope questions declined | 8 / 8 |
-| On-topic out-of-scope (Adidas revenue, Nike FY2030) | 2 / 2 declined by the model's judgement |
-
-The single decline (Deckers headcount) is a retrieval miss that the agent correctly refused to
-guess past.
+The one answer without an expected citation (Under Armour revenue by region) is correct: it
+cites the detailed regional table on pages 38–39, where the answer key lists only the summary
+on page 33. Of the eight out-of-scope questions, the relevance floor stopped two before the
+model answered and the model's own check declined the other six, including the two on-topic
+ones (Adidas revenue, Nike fiscal 2030). The agent writes its own search queries and can
+search again, which is why it answers questions whose evidence the retrieval table above
+counts as missed. All 53 questions cost $0.07 in API usage and took about 12 seconds each on
+a laptop CPU. At v1.3, with `gpt-5.6-terra` and whole-chunk reranking, the agent answered
+24 / 25 and cited a supporting page for 23 of those.
 
 The relevance floor needs no LLM, so it is re-measured on every push with the current retriever:
 
@@ -192,15 +205,17 @@ The relevance floor needs no LLM, so it is re-measured on every push with the cu
   and scored valid passages as misses. Auditing it against the corpus moved every pipeline up
   and narrowed the gap between reranking and plain search, so I now check the key before I
   blame the retriever.
+- **A model marking its own work is generous.** Faithfulness was 0.97 when the same model
+  wrote and judged the answers, and 0.91–0.94 with a separate judge.
 
 ## Engineering
 
 | Area | What is in place |
 |---|---|
 | API | FastAPI: `POST /query` (agent), `POST /search` (retrieval only, no LLM), `GET /health`; optional API-key auth (`X-API-Key`, set `COPILOT_API_KEYS`), per-client rate limits (429 with `Retry-After`), LLM errors mapped to 502 |
-| Tests | 126 pytest tests; the LLM is replaced by a scripted fake, so the suite runs without a key |
+| Tests | 127 pytest tests; the LLM is replaced by a scripted fake, so the suite runs without a key |
 | Safety | AST-based calculator (no `eval`), capped expression size, rejects overflow and complex results; 90-second timeout on every OpenAI call and a 3-minute budget per question |
-| Observability | One JSON log line per question (model, tool calls, LLM calls, tokens, seconds, fallback); the same usage is returned by `/query` and summarised by the agent eval, with cost estimates when token prices are set in `.env` |
+| Observability | One JSON log line per question (model, tool calls, LLM calls, tokens, seconds, fallback); the same usage is returned by `/query` and summarised by the agent eval, with cost estimates when token prices are set in `.env`; the RAGAS runner counts answer and judge tokens separately, and both paid runners retry a failed question once and save progress as they go |
 | Reproducibility | Every report is verified against a SHA-256 checksum, so the evaluation always runs on the documents it was built from |
 | Docker | One image with reports, models and a pre-built index |
 | CI | GitHub Actions: lint, format and type checks (ruff, mypy) → tests → build index → **retrieval regression gate** (Hit@5 ≥ 0.84) → held-out retrieval report → **guardrail gate** → Docker build and smoke test; agent and RAGAS evals when an API key secret is configured |
@@ -240,8 +255,10 @@ Reproduce the evaluation:
 python evals/run_retrieval_eval.py        # retrieval table (free, ~10 min on CPU)
 python evals/run_retrieval_eval.py --set heldout   # the same on the held-out questions
 python evals/run_guardrail_eval.py        # relevance-floor check (free)
-python evals/run_agent_eval.py --final    # agent table (uses the OpenAI API)
-python evals/run_ragas_eval.py --final    # RAGAS table (uses the OpenAI API)
+python evals/run_agent_eval.py                 # agent table, dev set (OpenAI API, about $0.05)
+python evals/run_agent_eval.py --set heldout   # agent table, held-out set (about $0.03)
+python evals/run_ragas_eval.py --final         # RAGAS, dev set, both pipelines (about $0.60)
+python evals/run_ragas_eval.py --final --set heldout --modes hybrid_rerank   # about $0.22
 ```
 
 With `make` available (Linux, macOS, WSL), the same steps are shortcuts: `make install`,
@@ -313,8 +330,9 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
   reasoning on Chat Completions.
 - **10-K print editions for Lululemon and Under Armour.** Their designed annual reports embed
   fonts without a text mapping, so text extraction produced gibberish.
-- **Models:** `gpt-5.6-luna` for development and `gpt-5.6-terra` for final evaluation runs;
-  embeddings and reranking run locally for free. The whole evaluation cost under $5 in API usage.
+- **Models:** `gpt-5.6-luna` is the app's default and runs the agent evaluation;
+  `gpt-5.6-terra` writes the answers that RAGAS scores, with luna as the judge. Embeddings and reranking run locally for free. The v1.4 evaluation runs cost about $0.90 in
+  API usage, and the whole project under $5.
 
 ## Limitations and next steps
 
@@ -344,6 +362,7 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 | v1.1 | OpenAI provider, evidence-level metric, full LLM-judged results |
 | v1.2 | MIT licence, packaging, linting, docstrings, clearer CLI errors, README polish |
 | v1.3 | Fiscal-year labels, stricter citation guardrail, timeouts, checksummed data, CI hardening |
+| v1.4 | Held-out question set, confidence intervals, windowed reranker scoring, independent RAGAS judge, API auth and rate limits, usage tracking, type checking |
 
 ## License
 

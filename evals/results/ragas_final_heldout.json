@@ -1,0 +1,271 @@
+[
+  {
+    "mode": "hybrid_rerank",
+    "answer_model": "gpt-5.6-terra",
+    "judge_model": "gpt-5.6-luna",
+    "faithfulness": 0.931,
+    "faithfulness_ci95": [
+      0.86,
+      0.99
+    ],
+    "answer_relevancy": 0.916,
+    "answer_relevancy_ci95": [
+      0.89,
+      0.94
+    ],
+    "context_precision": 0.799,
+    "context_precision_ci95": [
+      0.66,
+      0.92
+    ],
+    "context_recall": 0.9,
+    "context_recall_ci95": [
+      0.75,
+      1.0
+    ],
+    "usage": {
+      "answers": {
+        "calls": 20,
+        "input_tokens": 45820,
+        "output_tokens": 1923
+      },
+      "judge": {
+        "calls": 220,
+        "input_tokens": 336565,
+        "output_tokens": 32979
+      }
+    },
+    "rows": [
+      {
+        "id": "nike-h1",
+        "answer": "Nike had approximately **77,800 employees worldwide** as of **May 31, 2025** (the end of fiscal 2025), including retail and part-time employees. [1]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 9"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9066235531096721,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      },
+      {
+        "id": "nike-h2",
+        "answer": "Nike\u2019s effective tax rate rose to **17.1% in fiscal 2025** (year ended May 31, 2025) from **14.9% in fiscal 2024**, an increase of **220 basis points**. The increase was primarily driven by changes in earnings mix, lower benefits from stock-based compensation, and non-recurring one-time tax benefits recognized in fiscal 2024\u2014especially temporary IRS relief relating to U.S. foreign tax credit regulations. [1]\n\nThese factors were partly offset by a **$133 million** one-time, non-cash deferred income tax benefit recognized in the third quarter of fiscal 2025, related to pre-transition foreign-currency losses under U.S. tax regulations. [2]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 39",
+          "Nike_FY2025_10K.pdf, p. 76"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9343504989541019,
+        "context_precision": 0.8333333332916666,
+        "context_recall": 1.0
+      },
+      {
+        "id": "nike-h3",
+        "answer": "Converse revenues declined 18% on a currency-neutral basis in Nike fiscal 2025 (ended May 31, 2025), driven by declines across all territories. Unit sales fell 12%, and lower average selling price (ASP) reduced revenues by approximately 6 percentage points; the lower ASP primarily reflected higher direct-to-consumer discounts. [1]  \n\nBy channel, wholesale revenue decreased 20% on a currency-neutral basis, owing to declines in Western Europe and Asia that were only partly offset by North America growth. Direct-to-consumer revenue declined 17% on a currency-neutral basis, reflecting reduced traffic in all territories and lower ASP from higher discounts. [1]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 46"
+        ],
+        "faithfulness": 0.9090909090909091,
+        "answer_relevancy": 0.8389482091083625,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      },
+      {
+        "id": "nike-h4",
+        "answer": "Nike had used approximately **66.7%** of its $18 billion share repurchase program as of May 31, 2025: approximately **$12.0 billion** repurchased out of **$18 billion** authorized. [1][2]",
+        "sources": [
+          "Nike_FY2025_10K.pdf, p. 29",
+          "Nike_FY2025_10K.pdf, p. 49"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9925795012220764,
+        "context_precision": 0.7555555555303703,
+        "context_recall": 1.0
+      },
+      {
+        "id": "lulu-h1",
+        "answer": "Lululemon employed approximately **39,000 people worldwide** as of February 2, 2025\u2014the end of fiscal 2024. [1]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 12"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9077625023806845,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      },
+      {
+        "id": "lulu-h2",
+        "answer": "Lululemon\u2019s percentage growth in the number of company-operated stores is not provided in the excerpts. The company added **56 net new company-operated stores** in fiscal 2024 (ended February 2, 2025), while square footage increased **14%**; this is not necessarily the same as store-count growth. [1]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 30"
+        ],
+        "faithfulness": 0.8,
+        "answer_relevancy": 0.9469793829282418,
+        "context_precision": 0.0,
+        "context_recall": 0.0
+      },
+      {
+        "id": "lulu-h3",
+        "answer": "Americas accounted for **74.9%** of Lululemon\u2019s total net revenue in FY2024 (fiscal year ended February 2, 2025): **$7,928,156 thousand** of **$10,588,126 thousand**. [1]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 33"
+        ],
+        "faithfulness": 0.5,
+        "answer_relevancy": 0.8973938365351696,
+        "context_precision": 0.8333333332916666,
+        "context_recall": 1.0
+      },
+      {
+        "id": "lulu-h4",
+        "answer": "Lululemon acquired MIRROR in July 2020 and rebranded it as lululemon Studio. It subsequently shifted strategy, discontinued the hardware and its app-only subscription, and incurred substantial related impairments. [1]\n\n- In 2022, Lululemon shifted lululemon Studio toward digital app-based services; it later decided in the third quarter of 2023 to stop selling the Studio Mirror hardware and ceased sales of the hardware and new digital-content subscriptions in December 2023. It also stopped producing its own digital fitness content and contracted Peloton as the exclusive content provider for existing subscribers. [2]\n- The strategy shift generated a **$362.5 million** goodwill impairment in fiscal 2022, related to the lululemon Studio reporting unit, plus a **$40.6 million** impairment of MIRROR-brand and customer-relationship intangible assets. [3]\n- Lululemon recorded further intangible-asset impairment charges of **$17.0 million** in fiscal 2023, following **$40.6 million** in fiscal 2022; both related to intangible assets recognized in the MIRROR acquisition. [2]\n- Lululemon\u2019s FY2024 ended **February 2, 2025**; the company states that it had discontinued both the hardware and the digital app-only subscription in 2023. [1]",
+        "sources": [
+          "Lululemon_FY2024_10K.pdf, p. 15",
+          "Lululemon_FY2024_10K.pdf, p. 64",
+          "Lululemon_FY2024_10K.pdf, p. 65"
+        ],
+        "faithfulness": 0.9090909090909091,
+        "answer_relevancy": 0.8605753406126316,
+        "context_precision": 0.94999999997625,
+        "context_recall": 1.0
+      },
+      {
+        "id": "ua-h1",
+        "answer": "Under Armour held **$501.4 million** of cash and cash equivalents at the end of fiscal 2025 (March 31, 2025). [1] The consolidated balance sheet reports the precise amount as **$501,361 thousand**. [2]",
+        "sources": [
+          "UnderArmour_FY2025_10K.pdf, p. 40",
+          "UnderArmour_FY2025_10K.pdf, p. 51"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9999999999998526,
+        "context_precision": 0.9999999999666667,
+        "context_recall": 1.0
+      },
+      {
+        "id": "ua-h2",
+        "answer": "Under Armour\u2019s selling, general and administrative expenses increased by **8.4%** in Fiscal 2025 (year ended March 31, 2025), rising by **$201.5 million** to **$2,601,991 thousand**, from **$2,400,502 thousand** in Fiscal 2024. [1][2]",
+        "sources": [
+          "UnderArmour_FY2025_10K.pdf, p. 37",
+          "UnderArmour_FY2025_10K.pdf, p. 35"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9266102023413317,
+        "context_precision": 0.9166666666361111,
+        "context_recall": 1.0
+      },
+      {
+        "id": "ua-h3",
+        "answer": "Under Armour\u2019s operating cash flow fell by **$413.3 million**, from **$353.970 million in Fiscal 2024** to an outflow of **$(59.319) million in Fiscal 2025** (fiscal year ended March 31, 2025). The primary driver was a **$455.5 million decrease in net income before non-cash items**, partly offset by a **$42.2 million increase from changes in working capital**. [1]\n\nThe working-capital impact reflected outflows from inventories (**$205.5 million**), other non-current assets (**$76.7 million**), and accrued expenses and other liabilities (**$44.4 million**), partly offset by inflows from accounts payable (**$139.4 million**), accounts receivable (**$83.9 million**), income taxes payable/receivable (**$75.2 million**), prepaid expenses and other current assets (**$42.2 million**), and customer refund liabilities (**$28.2 million**). [1]",
+        "sources": [
+          "UnderArmour_FY2025_10K.pdf, p. 42"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.916181449889348,
+        "context_precision": 0.5833333333041666,
+        "context_recall": 1.0
+      },
+      {
+        "id": "ua-h4",
+        "answer": "Under Armour sold the MapMyFitness digital platform during the second quarter of Fiscal 2025 (fiscal year ended March 31, 2025). [1][2] Its operating results had been reported within Corporate Other prior to the sale, and the company received proceeds from the sale. [2][3]",
+        "sources": [
+          "UnderArmour_FY2025_10K.pdf, p. 61",
+          "UnderArmour_FY2025_10K.pdf, p. 38",
+          "UnderArmour_FY2025_10K.pdf, p. 42"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.89171218496186,
+        "context_precision": 0.99999999998,
+        "context_recall": 1.0
+      },
+      {
+        "id": "colm-h1",
+        "answer": "Columbia Sportswear had approximately **9,780 employees** as of **December 31, 2024** (its FY2024 year-end). [1]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 7"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9641326950923914,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0
+      },
+      {
+        "id": "colm-h2",
+        "answer": "The excerpts do not provide Columbia Sportswear\u2019s total share repurchases for 2023, so the percentage increase from 2023 to 2024 cannot be calculated.  \n\nThey report 1,045,570 shares repurchased during the quarter ended December 31, 2024, at an aggregate average price of $83.10 per share. [1]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 24"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8935609655047857,
+        "context_precision": 0.0,
+        "context_recall": 0.0
+      },
+      {
+        "id": "colm-h3",
+        "answer": "Columbia Sportswear\u2019s effective income tax rate was **25.1% in fiscal 2024** (year ended December 31, 2024), compared with **22.9% in fiscal 2023**\u2014an increase of **2.2 percentage points**. [1][2]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 30",
+          "Columbia_FY2024_10K.pdf, p. 59"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9824899450005522,
+        "context_precision": 0.8333333332916666,
+        "context_recall": 1.0
+      },
+      {
+        "id": "colm-h4",
+        "answer": "Columbia Sportswear had **over 1,850 U.S. wholesale customers** as of FY2024 (fiscal year ended December 31, 2024). Its **five largest U.S. wholesale customers accounted for approximately 20% of U.S. net sales**, with **no individual customer accounting for 10% or more**. [1]",
+        "sources": [
+          "Columbia_FY2024_10K.pdf, p. 6"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8583941947009809,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0
+      },
+      {
+        "id": "deck-h1",
+        "answer": "Deckers\u2019 ten largest global customers accounted for **23.7% of net sales** in fiscal year 2025 (year ended March 31, 2025). [1] This equates to approximately **$1.18 billion**, based on total fiscal 2025 net sales of **$4,985,612**. [2]",
+        "sources": [
+          "Deckers_FY2025_AR.pdf, p. 101",
+          "Deckers_FY2025_AR.pdf, p. 38"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9313194842901895,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0
+      },
+      {
+        "id": "deck-h2",
+        "answer": "Deckers\u2019 international net sales grew **26.3%** in fiscal year 2025 (year ended March 31, 2025), reaching **$1,798,903**. [1]",
+        "sources": [
+          "Deckers_FY2025_AR.pdf, p. 38"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.9790349978449923,
+        "context_precision": 0.7499999999625,
+        "context_recall": 1.0
+      },
+      {
+        "id": "deck-h3",
+        "answer": "Deckers sold the Sanuk brand and certain related assets; the sale was completed on August 15, 2024, during fiscal year 2025 (ended March 31, 2025). [1] The divestiture was not classified as discontinued operations, and Sanuk\u2019s results remained in the Other brands segment through the sale date. [1]",
+        "sources": [
+          "Deckers_FY2025_AR.pdf, p. 71"
+        ],
+        "faithfulness": 1.0,
+        "answer_relevancy": 0.8593237106518163,
+        "context_precision": 0.999999999975,
+        "context_recall": 1.0
+      },
+      {
+        "id": "deck-h4",
+        "answer": "Deckers effected a **six-for-one forward stock split** of its common stock and preferred stock on **September 13, 2024**, during fiscal year 2025 (ended March 31, 2025). Each share outstanding on the September 6, 2024 record date was automatically split into six shares; trading on a post-split basis began September 17, 2024. [1]",
+        "sources": [
+          "Deckers_FY2025_AR.pdf, p. 72"
+        ],
+        "faithfulness": 0.5,
+        "answer_relevancy": 0.8389911945591694,
+        "context_precision": 0.5333333333155555,
+        "context_recall": 1.0
+      }
+    ]
+  }
+]
