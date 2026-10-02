@@ -15,6 +15,9 @@ numpy==2.5.3
 python-dotenv==1.2.3
 
 # Retrieval
+# chromadb is used in-process only (PersistentClient); its HTTP server is never started.
+# The open advisories for 1.5.9 (CVE-2026-45829/45830/45831/45833) all need that server,
+# and no patched release exists yet. Upgrade when one does.
 chromadb==1.5.9
 rank-bm25==0.2.2
 
