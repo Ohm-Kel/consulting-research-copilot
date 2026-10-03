@@ -230,7 +230,7 @@ class CompanyScopedRetriever:
         return self.inner.search(query, k, companies or detect_companies(query) or None)
 
 
-RETRIEVER_MODES = ("vector", "bm25", "hybrid", "hybrid_rerank_whole", "hybrid_rerank", "hybrid_rerank_company")
+RETRIEVER_MODES = config.RETRIEVER_MODES
 
 
 def build_retriever(mode: str = config.RETRIEVER_MODE, chroma_dir: Path = config.CHROMA_DIR) -> Retriever:

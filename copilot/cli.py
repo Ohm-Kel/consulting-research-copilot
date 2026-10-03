@@ -86,7 +86,7 @@ def main() -> None:
         p.add_argument(
             "--retriever",
             default=config.RETRIEVER_MODE,
-            choices=["vector", "bm25", "hybrid", "hybrid_rerank", "hybrid_rerank_company"],
+            choices=config.RETRIEVER_MODES,
         )
         p.set_defaults(func=func)
     p = sub.add_parser("agent", help="tool-calling agent with calculator and fallback guardrail")

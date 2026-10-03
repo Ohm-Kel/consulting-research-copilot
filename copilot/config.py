@@ -28,7 +28,7 @@ OVERLAP_WORDS = 50
 
 # Retrieval
 TOP_K = 5
-# vector | bm25 | hybrid | hybrid_rerank_whole | hybrid_rerank | hybrid_rerank_company
+RETRIEVER_MODES = ("vector", "bm25", "hybrid", "hybrid_rerank_whole", "hybrid_rerank", "hybrid_rerank_company")
 RETRIEVER_MODE = os.getenv("COPILOT_RETRIEVER", "hybrid_rerank")
 # Measured on the eval set (see README): the MiniLM cross-encoder over 30 candidates
 # matched BAAI/bge-reranker-base (20) on Hit@5, beat it on Hit@1 and MRR, and ran ~3.5x faster on CPU.
