@@ -1,0 +1,336 @@
+[
+  {
+    "id": "nike-x1",
+    "company": "Nike",
+    "type": "lookup",
+    "question": "What was the gross margin of Nike's Greater China business in fiscal 2025, and how much did it change from fiscal 2024?",
+    "expected_answer": "Greater China gross margin was 46.0% in fiscal 2025, down 420 basis points from 50.2% in fiscal 2024.",
+    "source": "Nike_FY2025_10K.pdf",
+    "facts": [
+      [
+        "gross margin 46.0% 50.2% -420 bps"
+      ]
+    ],
+    "pages": [
+      43
+    ]
+  },
+  {
+    "id": "nike-x2",
+    "company": "Nike",
+    "type": "calculation",
+    "question": "What share of Nike's North America revenues came through NIKE Direct in fiscal 2025?",
+    "expected_answer": "NIKE Direct sales were $9,088 million of $19,572 million in North America revenues, about 46.4%.",
+    "source": "Nike_FY2025_10K.pdf",
+    "facts": [
+      [
+        "sales through nike direct 9,088",
+        "total revenues $19,572"
+      ]
+    ],
+    "pages": [
+      41
+    ]
+  },
+  {
+    "id": "nike-x3",
+    "company": "Nike",
+    "type": "explanation",
+    "question": "Why did Nike's revenues in Europe, the Middle East and Africa fall in fiscal 2025?",
+    "expected_answer": "EMEA revenues decreased 10% on a currency-neutral basis due to lower revenues in Men's, the Jordan Brand, Kids' and Women's. Wholesale revenues fell 6%, and NIKE Direct revenues fell 16% as digital sales declined 30%, partly offset by 5% higher store sales.",
+    "source": "Nike_FY2025_10K.pdf",
+    "facts": [
+      [
+        "emea revenues decreased 10% on a currency-neutral basis",
+        "digital sales of 30%"
+      ]
+    ],
+    "pages": [
+      42
+    ]
+  },
+  {
+    "id": "nike-x4",
+    "company": "Nike",
+    "type": "lookup",
+    "question": "How much cash did Nike return to shareholders in fiscal 2025, and what were its inventories at the end of the year?",
+    "expected_answer": "Nike returned $5.3 billion to shareholders through share repurchases and dividends, and inventories were $7.5 billion as of May 31, 2025, flat with the prior year.",
+    "source": "Nike_FY2025_10K.pdf",
+    "facts": [
+      [
+        "inventories as of may 31, 2025 were $7.5 billion",
+        "returned $5.3 billion to our shareholders"
+      ]
+    ],
+    "pages": [
+      32
+    ]
+  },
+  {
+    "id": "lulu-x1",
+    "company": "Lululemon",
+    "type": "lookup",
+    "question": "How did Lululemon's sales per square foot change in 2024?",
+    "expected_answer": "Sales per square foot fell to $1,574 in 2024 from $1,609 in 2023.",
+    "source": "Lululemon_FY2024_10K.pdf",
+    "facts": [
+      [
+        "sales per square foot was $1,574 and $1,609"
+      ]
+    ],
+    "pages": [
+      8
+    ]
+  },
+  {
+    "id": "lulu-x2",
+    "company": "Lululemon",
+    "type": "calculation",
+    "question": "What share of Lululemon's 2024 net revenue came from men's products?",
+    "expected_answer": "Men's product revenue was $2,558,380 thousand of $10,588,126 thousand in total net revenue, about 24.2%.",
+    "source": "Lululemon_FY2024_10K.pdf",
+    "facts": [
+      [
+        "men's product 2,558,380",
+        "10,588,126"
+      ]
+    ],
+    "pages": [
+      79
+    ]
+  },
+  {
+    "id": "lulu-x3",
+    "company": "Lululemon",
+    "type": "lookup",
+    "question": "How large was Lululemon's inventory at the end of fiscal 2024, and how does it expect inventory to grow in 2025?",
+    "expected_answer": "Inventory was $1.4 billion as of February 2, 2025, up 9% from a year earlier. Lululemon expects inventories to keep growing in 2025, faster than net revenue.",
+    "source": "Lululemon_FY2024_10K.pdf",
+    "facts": [
+      [
+        "inventory balance as of february 2, 2025 was $1.4 billion, an increase of 9%",
+        "growth rate will exceed net revenue growth in 2025"
+      ]
+    ],
+    "pages": [
+      41
+    ]
+  },
+  {
+    "id": "lulu-x4",
+    "company": "Lululemon",
+    "type": "calculation",
+    "question": "By what percentage did Lululemon's diluted earnings per share grow in 2024?",
+    "expected_answer": "Diluted earnings per share rose from $12.20 in 2023 to $14.64 in 2024, an increase of about 20.0%.",
+    "source": "Lululemon_FY2024_10K.pdf",
+    "facts": [
+      [
+        "diluted earnings per share were $14.64 for 2024 compared to $12.20"
+      ]
+    ],
+    "pages": [
+      32
+    ]
+  },
+  {
+    "id": "ua-x1",
+    "company": "Under Armour",
+    "type": "lookup",
+    "question": "How did Under Armour's wholesale and direct-to-consumer revenues change in fiscal 2025?",
+    "expected_answer": "Wholesale revenue decreased 8.1% and direct-to-consumer revenue decreased 10.5%, within a 9.4% decline in total net revenues.",
+    "source": "UnderArmour_FY2025_10K.pdf",
+    "facts": [
+      [
+        "wholesale revenue decreased 8.1% and direct-to-consumer revenue decreased 10.5%"
+      ]
+    ],
+    "pages": [
+      33
+    ]
+  },
+  {
+    "id": "ua-x2",
+    "company": "Under Armour",
+    "type": "calculation",
+    "question": "What share of Under Armour's fiscal 2025 total net revenues came from footwear?",
+    "expected_answer": "Footwear revenue was $1,206,202 thousand of $5,164,310 thousand in total net revenues, about 23.4%.",
+    "source": "UnderArmour_FY2025_10K.pdf",
+    "facts": [
+      [
+        "footwear 1,206,202",
+        "total net revenues $5,164,310"
+      ]
+    ],
+    "pages": [
+      35,
+      77
+    ]
+  },
+  {
+    "id": "ua-x3",
+    "company": "Under Armour",
+    "type": "lookup",
+    "question": "How much did Under Armour pay to settle the consolidated securities class action, and how was the payment funded?",
+    "expected_answer": "Under Armour paid $434 million to the members of the class, funded with balance sheet cash together with $63 million of insurance proceeds.",
+    "source": "UnderArmour_FY2025_10K.pdf",
+    "facts": [
+      [
+        "paid $434 million to the members of the class",
+        "$63 million of insurance proceeds"
+      ]
+    ],
+    "pages": [
+      72
+    ]
+  },
+  {
+    "id": "ua-x4",
+    "company": "Under Armour",
+    "type": "lookup",
+    "question": "What was Under Armour's inventory balance at March 31, 2025, and how did it compare with a year earlier?",
+    "expected_answer": "Inventories were $945,836 thousand at March 31, 2025, against $958,495 thousand a year earlier, a decrease of about 1.3%.",
+    "source": "UnderArmour_FY2025_10K.pdf",
+    "facts": [
+      [
+        "inventories 945,836 958,495"
+      ]
+    ],
+    "pages": [
+      51
+    ]
+  },
+  {
+    "id": "colm-x1",
+    "company": "Columbia Sportswear",
+    "type": "explanation",
+    "question": "Why did Columbia Sportswear's gross margin expand in 2024?",
+    "expected_answer": "Gross margin rose 60 basis points to 50.2% from 49.6%, mainly because of favorable inbound freight costs and a favorable region and channel sales mix, partly offset by lower channel profitability.",
+    "source": "Columbia_FY2024_10K.pdf",
+    "facts": [
+      [
+        "gross margin 50.2% 49.6% 60 bps",
+        "favorable inbound freight costs"
+      ]
+    ],
+    "pages": [
+      29
+    ]
+  },
+  {
+    "id": "colm-x2",
+    "company": "Columbia Sportswear",
+    "type": "lookup",
+    "question": "How much did Columbia Sportswear's Profit Improvement Program save in 2024?",
+    "expected_answer": "About $90 million in realized cost savings, net of about $3 million to $4 million of severance and other costs.",
+    "source": "Columbia_FY2024_10K.pdf",
+    "facts": [
+      [
+        "profit improvement program delivered approximately $90 million in realized cost savings"
+      ]
+    ],
+    "pages": [
+      26
+    ]
+  },
+  {
+    "id": "colm-x3",
+    "company": "Columbia Sportswear",
+    "type": "lookup",
+    "question": "What happened to Columbia Sportswear's inventories in 2024, and what does the company expect that to mean for its gross margin in 2025?",
+    "expected_answer": "Inventories ended 2024 down 7%. With cleaner inventory in the market, the company expects gross margin to expand in 2025.",
+    "source": "Columbia_FY2024_10K.pdf",
+    "facts": [
+      [
+        "inventories were down 7% for the year",
+        "support expansion of the company's gross margin in 2025"
+      ]
+    ],
+    "pages": [
+      26
+    ]
+  },
+  {
+    "id": "colm-x4",
+    "company": "Columbia Sportswear",
+    "type": "calculation",
+    "question": "By what percentage did Columbia Sportswear's SOREL brand net sales fall in 2024?",
+    "expected_answer": "SOREL net sales fell from $336,688 thousand in 2023 to $238,266 thousand in 2024, a decline of about 29.2%.",
+    "source": "Columbia_FY2024_10K.pdf",
+    "facts": [
+      [
+        "sorel 238,266",
+        "336,688"
+      ]
+    ],
+    "pages": [
+      29
+    ]
+  },
+  {
+    "id": "deck-x1",
+    "company": "Deckers Brands",
+    "type": "lookup",
+    "question": "What were Deckers' operating margin and diluted earnings per share in fiscal 2025?",
+    "expected_answer": "Operating margin increased 200 basis points to 23.6%, and diluted earnings per share increased 30.2% to $6.33.",
+    "source": "Deckers_FY2025_AR.pdf",
+    "facts": [
+      [
+        "increased 200 basis points to 23.6%",
+        "diluted earnings per share increased 30.2% to $6.33"
+      ]
+    ],
+    "pages": [
+      38
+    ]
+  },
+  {
+    "id": "deck-x2",
+    "company": "Deckers Brands",
+    "type": "lookup",
+    "question": "How did Deckers' wholesale and direct-to-consumer channels grow in fiscal 2025?",
+    "expected_answer": "Wholesale channel net sales increased 17.4% to $2,855,865 thousand, and DTC channel net sales increased 14.8% to $2,129,747 thousand.",
+    "source": "Deckers_FY2025_AR.pdf",
+    "facts": [
+      [
+        "wholesale channel net sales increased 17.4%",
+        "dtc channel net sales increased 14.8%"
+      ]
+    ],
+    "pages": [
+      38
+    ]
+  },
+  {
+    "id": "deck-x3",
+    "company": "Deckers Brands",
+    "type": "calculation",
+    "question": "By what percentage did Deckers' inventories change between March 31, 2024 and March 31, 2025?",
+    "expected_answer": "Inventories rose from $474,311 thousand to $495,226 thousand, an increase of about 4.4%.",
+    "source": "Deckers_FY2025_AR.pdf",
+    "facts": [
+      [
+        "inventories 495,226 474,311"
+      ]
+    ],
+    "pages": [
+      66
+    ]
+  },
+  {
+    "id": "deck-x4",
+    "company": "Deckers Brands",
+    "type": "lookup",
+    "question": "How many shares did Deckers repurchase after fiscal 2025 ended, through May 9, 2025, and at what average price?",
+    "expected_answer": "Deckers repurchased 765,321 shares at a weighted average price of $109.75 per share, for about $84.0 million.",
+    "source": "Deckers_FY2025_AR.pdf",
+    "facts": [
+      [
+        "through may 9, 2025, we repurchased 765,321 shares",
+        "$109.75 per share"
+      ]
+    ],
+    "pages": [
+      37
+    ]
+  }
+]

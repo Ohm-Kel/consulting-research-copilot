@@ -41,6 +41,12 @@ CALC_EXPECTED = {
     "ua-h2": 8.4,
     "colm-h2": 72.7,
     "deck-h2": 26.3,
+    "nike-x2": 46.4,
+    "lulu-x2": 24.2,
+    "lulu-x4": 20.0,
+    "ua-x2": 23.4,
+    "colm-x4": -29.2,
+    "deck-x3": 4.4,
 }
 
 

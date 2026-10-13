@@ -8,10 +8,14 @@ This needs no LLM and runs in CI. The `pages` field (pages containing a fact set
 is derived from the facts by evals/label_pages.py and used to check citations.
 LLM-judged answer metrics (RAGAS) live in evals/run_ragas_eval.py.
 
-There are two question sets. "dev" (25 questions) was used to choose the retrieval
+There are three question sets. "dev" (25 questions) was used to choose the retrieval
 settings; "heldout" (20 questions about facts the dev set never asks about) was
 written afterwards and is only scored, never tuned on, so it shows how well those
-choices generalise. With sets this small, results carry bootstrap confidence intervals.
+choices generalise. "hard" (20 more held-out questions, written for v1.6 before any
+v1.6 change was measured) targets the known weak spots: figures that sit in tables,
+answers that need two facts, and wording that differs from the report's. Like
+"heldout", it is never tuned on. With sets this small, results carry bootstrap
+confidence intervals.
 """
 
 import json
@@ -26,7 +30,8 @@ from copilot.retrieval import Hit
 
 QUESTIONS_PATH = config.ROOT / "evals" / "questions.json"
 HELDOUT_PATH = config.ROOT / "evals" / "heldout_questions.json"
-QUESTION_SETS = {"dev": QUESTIONS_PATH, "heldout": HELDOUT_PATH}
+HARD_PATH = config.ROOT / "evals" / "hard_questions.json"
+QUESTION_SETS = {"dev": QUESTIONS_PATH, "heldout": HELDOUT_PATH, "hard": HARD_PATH}
 
 
 @dataclass(frozen=True)
