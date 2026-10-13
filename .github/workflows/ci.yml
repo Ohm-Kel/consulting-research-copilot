@@ -89,10 +89,9 @@ jobs:
           name: eval-results
           path: evals/results/
 
+  # Runs on every branch and PR, in parallel with the tests, so a broken image is caught before merge.
   docker:
     runs-on: ubuntu-latest
-    needs: test-and-eval
-    if: github.ref == 'refs/heads/main'
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
