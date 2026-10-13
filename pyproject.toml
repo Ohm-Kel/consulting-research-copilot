@@ -43,6 +43,9 @@ copilot = "copilot.cli:main"
 package-dir = { "" = "src" }
 packages = ["copilot"]
 
+[tool.setuptools.package-data]
+copilot = ["static/*.html"]  # the demo page served at /
+
 [tool.setuptools.dynamic]
 version = { attr = "copilot.__version__" }
 

@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consulting Research Copilot</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #fafaf9; --fg: #1c1917; --muted: #57534e; --line: #e7e5e4;
+      --card: #ffffff; --accent: #1d4ed8; --accent-fg: #ffffff; --note: #92400e;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0c0a09; --fg: #f5f5f4; --muted: #a8a29e; --line: #292524;
+        --card: #1c1917; --accent: #60a5fa; --accent-fg: #0c0a09; --note: #fbbf24;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--fg);
+           font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 760px; margin: 0 auto; padding: 40px 16px 64px; }
+    h1 { font-size: 1.6rem; margin: 0 0 4px; }
+    h2 { font-size: 1rem; margin: 16px 0 4px; }
+    .lede, .meta, footer { color: var(--muted); }
+    label { display: block; font-weight: 600; margin: 20px 0 6px; }
+    textarea, input { width: 100%; font: inherit; color: inherit; background: var(--card);
+                      border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+    textarea:focus, input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .examples { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .examples span { color: var(--muted); font-size: 0.9rem; }
+    button { font: inherit; border-radius: 8px; border: 1px solid var(--line); background: var(--card);
+             color: inherit; padding: 8px 14px; cursor: pointer; }
+    button.example { font-size: 0.85rem; padding: 4px 10px; border-radius: 999px; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+    button:disabled { opacity: 0.6; cursor: progress; }
+    details { margin-top: 12px; color: var(--muted); }
+    details label { font-weight: 400; margin-top: 8px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    #status { min-height: 1.55em; color: var(--muted); margin: 16px 0 8px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+            padding: 4px 16px; margin: 0 0 12px; overflow-wrap: anywhere; }
+    .note { color: var(--note); font-weight: 600; }
+    .citation { font-weight: 600; }
+    .passage { white-space: pre-line; }
+    ol { padding-left: 1.4em; }
+    footer { margin-top: 40px; font-size: 0.9rem; }
+    footer a { color: var(--accent); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Consulting Research Copilot</h1>
+  <p class="lede">Ask a business question about the annual reports of Nike, Lululemon, Under Armour,
+    Columbia Sportswear and Deckers Brands. Answers cite the report page they come from, and the
+    agent declines when the reports do not support an answer.</p>
+
+  <form id="ask">
+    <label for="question">Question</label>
+    <textarea id="question" rows="3" minlength="3" maxlength="500" required
+              placeholder="How did Nike's gross margin change in fiscal 2025, and what drove it?"></textarea>
+    <div class="examples">
+      <span>Try:</span>
+      <button type="button" class="example">How did Nike's gross margin change in fiscal 2025, and what drove it?</button>
+      <button type="button" class="example">How fast did HOKA grow in fiscal 2025?</button>
+      <button type="button" class="example">Which had the higher operating margin in 2024, Lululemon or Columbia Sportswear?</button>
+    </div>
+    <details>
+      <summary>API key</summary>
+      <label for="key">X-API-Key, only if this server requires one</label>
+      <input id="key" type="password" autocomplete="off">
+    </details>
+    <div class="actions">
+      <button type="submit" class="primary" data-endpoint="query">Ask the agent</button>
+      <button type="submit" data-endpoint="search">Search passages (no LLM)</button>
+    </div>
+  </form>
+
+  <p id="status" role="status" aria-live="polite"></p>
+  <section id="result" aria-live="polite"></section>
+
+  <footer>
+    <span id="limits"></span>
+    <a href="/docs">API docs</a> ·
+    <a href="https://github.com/Ohm-Kel/consulting-research-copilot">Source code and evaluation</a>
+  </footer>
+</main>
+
+<script>
+  const form = document.getElementById("ask");
+  const question = document.getElementById("question");
+  const key = document.getElementById("key");
+  const statusLine = document.getElementById("status");
+  const result = document.getElementById("result");
+
+  // Everything from the server is inserted as text, never as HTML.
+  function el(tag, text, className) {
+    const node = document.createElement(tag);
+    if (text !== undefined) node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  }
+
+  // The agent writes **bold** markdown; render those spans without innerHTML.
+  function paragraph(line) {
+    const p = el("p");
+    for (const part of line.split(/(\*\*[^*]+\*\*)/)) {
+      if (part.length > 4 && part.startsWith("**") && part.endsWith("**")) p.append(el("strong", part.slice(2, -2)));
+      else p.append(document.createTextNode(part));
+    }
+    return p;
+  }
+
+  function showAnswer(body) {
+    const card = el("article", undefined, "card");
+    if (body.fallback_triggered) {
+      card.append(el("p", "Declined: " + (body.fallback_reason || "the reports do not support an answer."), "note"));
+    }
+    body.answer.split(/\n+/).filter(Boolean).forEach((line) => card.append(paragraph(line)));
+    if (body.sources.length) {
+      card.append(el("h2", "Sources"));
+      const list = el("ol");
+      body.sources.forEach((source) => list.append(el("li", source)));
+      card.append(list);
+    }
+    const tools = Object.entries(body.tool_calls).map(([name, n]) => name + " ×" + n).join(", ") || "none";
+    const cost = body.usage.cost_usd == null ? "" : ", about $" + body.usage.cost_usd.toFixed(4);
+    card.append(el("p", "Tool calls: " + tools + ". " + body.usage.llm_calls + " LLM calls, "
+      + body.usage.seconds + " s" + cost + ".", "meta"));
+    result.append(card);
+  }
+
+  function showPassages(passages) {
+    if (!passages.length) {
+      result.append(el("p", "No passages found.", "note"));
+      return;
+    }
+    passages.forEach((passage, i) => {
+      const card = el("article", undefined, "card");
+      const head = el("p", (i + 1) + ". " + passage.citation, "citation");
+      head.append(el("span", "  relevance " + passage.score.toFixed(2), "meta"));
+      card.append(head);
+      const text = passage.text.length > 600 ? passage.text.slice(0, 600) + "…" : passage.text;
+      card.append(el("p", text, "passage"));
+      result.append(card);
+    });
+  }
+
+  document.querySelectorAll("button.example").forEach((button) => {
+    button.addEventListener("click", () => {
+      question.value = button.textContent;
+      question.focus();
+    });
+  });
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const endpoint = (event.submitter && event.submitter.dataset.endpoint) || "query";
+    const text = question.value.trim();
+    if (text.length < 3) {
+      statusLine.textContent = "Type a question of at least three characters.";
+      return;
+    }
+    const buttons = form.querySelectorAll("button");
+    buttons.forEach((button) => { button.disabled = true; });
+    result.replaceChildren();
+    statusLine.textContent = endpoint === "query"
+      ? "The agent is searching the reports. This takes about 15 seconds…"
+      : "Searching…";
+    const headers = { "content-type": "application/json" };
+    if (key.value) headers["X-API-Key"] = key.value;
+    const started = performance.now();
+    try {
+      const response = await fetch("/" + endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(endpoint === "search" ? { question: text, k: 5 } : { question: text }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        statusLine.textContent = typeof body.detail === "string"
+          ? body.detail
+          : "The request failed (HTTP " + response.status + ").";
+        return;
+      }
+      statusLine.textContent = "Done in " + ((performance.now() - started) / 1000).toFixed(1) + " s.";
+      if (endpoint === "query") showAnswer(body);
+      else showPassages(body);
+    } catch (error) {
+      statusLine.textContent = "Could not reach the server: " + error.message;
+    } finally {
+      buttons.forEach((button) => { button.disabled = false; });
+    }
+  });
+
+  fetch("/health").then((response) => response.json()).then((health) => {
+    const notes = [];
+    if (!health.llm_available) notes.push("Agent answers are off on this server (no OpenAI key); search still works.");
+    if (health.query_daily_limit) notes.push("Agent answers are limited to " + health.query_daily_limit + " a day.");
+    if (notes.length) document.getElementById("limits").textContent = notes.join(" ") + " ";
+  }).catch(() => {});
+</script>
+</body>
+</html>

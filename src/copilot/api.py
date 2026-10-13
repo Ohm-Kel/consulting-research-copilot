@@ -1,6 +1,7 @@
 """FastAPI service.
 
 uvicorn copilot.api:app --port 8000
+GET  /                             -> demo page for trying both endpoints in a browser
 POST /query   {"question": "..."}  -> agent answer with citations (needs OPENAI_API_KEY)
 POST /search  {"question": "..."}  -> retrieved passages only (no key needed)
 GET  /health
@@ -21,11 +22,12 @@ from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
+from importlib.resources import files
 
 import openai
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 from copilot import __version__, config
@@ -172,6 +174,12 @@ def within_daily_limit() -> None:
 
 
 @lru_cache(maxsize=1)
+def demo_page() -> str:
+    """The demo page's HTML, read once from the package."""
+    return files("copilot").joinpath("static", "index.html").read_text(encoding="utf-8")
+
+
+@lru_cache(maxsize=1)
 def get_retriever() -> Retriever:
     """Build the retriever once and share it across requests."""
     return build_retriever()
@@ -211,6 +219,12 @@ app = FastAPI(title="Consulting Research Copilot", version=__version__, lifespan
 async def llm_error(_: Request, exc: openai.APIError) -> JSONResponse:
     """Upstream OpenAI failures (rate limits, auth, outages) become a clear 502."""
     return JSONResponse(status_code=502, content={"detail": f"OpenAI API error: {type(exc).__name__}"})
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def index() -> str:
+    """Serve the demo page."""
+    return demo_page()
 
 
 @app.get("/health")

@@ -145,6 +145,13 @@ def test_rate_limiter_window_expires(monkeypatch: pytest.MonkeyPatch) -> None:
     assert limiter.seconds_until_allowed("c") == 0
 
 
+def test_demo_page_is_served_but_not_in_the_api_schema(client: TestClient) -> None:
+    response = client.get("/")
+    assert response.status_code == 200 and response.headers["content-type"].startswith("text/html")
+    assert "Consulting Research Copilot" in response.text and 'data-endpoint="search"' in response.text
+    assert "/" not in client.get("/openapi.json").json()["paths"]
+
+
 def test_daily_limit_blocks_query_but_not_search(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(api.query_daily_limit, "per_day", 2)
     answer = AgentResult("An answer [1].", ["Nike_FY2025_10K.pdf, p. 38"])
