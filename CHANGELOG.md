@@ -7,6 +7,8 @@ such as `v1.4` and are kept as published.
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-13
+
 ### Added
 
 - Test coverage is measured in CI and the build fails below 93% (94% when the gate was added).
@@ -135,7 +137,8 @@ such as `v1.4` and are kept as published.
 - RAG pipeline over five annual reports with page-level citations and a CLI.
 - Foundation scripts in `stage0/`.
 
-[Unreleased]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.4...HEAD
+[Unreleased]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.4...v1.5.0
 [1.4]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.3...v1.4
 [1.3]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.2...v1.3
 [1.2]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.1...v1.2
