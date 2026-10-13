@@ -11,7 +11,27 @@ license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Semanu Kwaku Sebuava" }]
 keywords = ["rag", "retrieval", "llm", "agents", "evaluation", "fastapi"]
-dynamic = ["version", "dependencies"]
+dynamic = ["version"]
+# Exact pins; uv.lock pins every transitive dependency too. Update with `uv lock --upgrade-package <name>`.
+dependencies = [
+    # LLM client (pinned to the version the ragas install resolves to)
+    "openai==1.109.1",
+    # Embeddings, reranking and PDF parsing
+    "sentence-transformers==6.1.0",
+    "torch==2.14.0",  # CPU-only build on Linux, see [tool.uv.sources]
+    "pypdf==6.19.0",
+    "fonttools==4.66.0",  # lets pypdf decode the embedded fonts in some annual reports
+    "numpy==2.5.3",
+    "python-dotenv==1.2.3",
+    # Retrieval. chromadb is used in-process only (PersistentClient); its HTTP server is never
+    # started. The open advisories for 1.5.9 (CVE-2026-45829/45830/45831/45833) all need that
+    # server, and no patched release exists yet. Upgrade when one does.
+    "chromadb==1.5.9",
+    "rank-bm25==0.2.2",
+    # API
+    "fastapi==0.141.1",
+    "uvicorn==0.53.0",
+]
 
 [project.urls]
 Repository = "https://github.com/Ohm-Kel/consulting-research-copilot"
@@ -24,7 +44,34 @@ packages = ["copilot"]
 
 [tool.setuptools.dynamic]
 version = { attr = "copilot.__version__" }
-dependencies = { file = ["requirements.txt"] }
+
+[dependency-groups]
+# Installed by `uv sync`; left out of the Docker image with `--no-dev`.
+dev = [
+    # Testing and code quality
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
+    "httpx==0.28.1",
+    "ruff==0.16.9",
+    "mypy==2.3.1",
+    # LLM-judged evaluation. CVE-2026-6587 affects ragas's multi-modal faithfulness metric,
+    # which this project does not use; no patched release exists yet.
+    "ragas==0.4.3",
+    "langchain-community==0.3.31",  # ragas 0.4.3 imports a module that langchain-community removed in 0.4
+]
+
+[tool.uv]
+# Lock for the platforms the project runs on: Windows and macOS laptops, Linux for CI and Docker.
+environments = ["sys_platform == 'win32'", "sys_platform == 'darwin'", "sys_platform == 'linux'"]
+
+# The default Linux torch wheel pulls several GB of CUDA libraries; the app runs on CPU.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

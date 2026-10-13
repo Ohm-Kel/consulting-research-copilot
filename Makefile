@@ -1,4 +1,5 @@
-PYTHON ?= python
+# uv run uses the project's .venv and keeps it in step with uv.lock.
+PYTHON ?= uv run python
 IMAGE ?= consulting-research-copilot
 
 .DEFAULT_GOAL := help
@@ -7,8 +8,8 @@ IMAGE ?= consulting-research-copilot
 help: ## Show available targets
 	@grep -E "^[a-z-]+:.*## " Makefile | sed -E "s/:.*## /\t/"
 
-install: ## Install runtime and development dependencies
-	$(PYTHON) -m pip install -r requirements-dev.txt
+install: ## Install the locked runtime and development dependencies
+	uv sync
 
 data: ## Download the five annual reports into data/
 	$(PYTHON) scripts/download_data.py

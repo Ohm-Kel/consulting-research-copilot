@@ -231,39 +231,38 @@ The relevance floor needs no LLM, so CI re-measures it on every push with the cu
 | Tests | 127 pytest tests. The LLM is replaced by a scripted fake, so the suite runs without an API key |
 | Safety | Calculator built on Python's AST (no `eval`), with a size cap and checks for overflow and complex results. A 90-second timeout on every OpenAI call and a 3-minute budget per question |
 | Observability | One JSON log line per question: model, tool calls, LLM calls, tokens, time, estimated cost and any fallback reason. `/query` returns the same usage. The paid evaluation runners count tokens, retry a failed question once and save progress as they go |
-| Reproducibility | Every report is checked against a SHA-256 checksum. The index stores the settings it was built with and refuses to load if the configuration has changed |
-| Security | API keys only through `.env`, which is never committed. GitHub secret scanning with push protection. Dependency alerts reviewed: the open chromadb and ragas advisories need components this project does not use (notes in [`requirements.txt`](requirements.txt)) |
+| Reproducibility | `uv.lock` pins every dependency, including transitive ones, for local runs, CI and Docker. Every report is checked against a SHA-256 checksum. The index stores the settings it was built with and refuses to load if the configuration has changed |
+| Security | API keys only through `.env`, which is never committed. GitHub secret scanning with push protection. Dependency alerts reviewed: the open chromadb and ragas advisories need components this project does not use (notes in [`pyproject.toml`](pyproject.toml)) |
 | Docker | One image containing the reports, the models and a pre-built index |
 | CI | GitHub Actions: lint, format and type checks (ruff, mypy) → tests → build index → **retrieval regression gate** (Hit@5 ≥ 0.84) → held-out retrieval report → **guardrail gate** → Docker build and smoke test |
 
 ## Quick start
 
-Requires Python 3.12. Commands are shown for Windows PowerShell; on macOS or Linux use
-`source .venv/bin/activate` and `cp`.
+Requires [uv](https://docs.astral.sh/uv/getting-started/installation/), which also installs
+Python 3.12 if it is missing. The commands are the same in Windows PowerShell, macOS and Linux.
 
 ```powershell
 git clone https://github.com/Ohm-Kel/consulting-research-copilot.git
 cd consulting-research-copilot
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
-copy .env.example .env               # add your OPENAI_API_KEY
-python scripts/download_data.py      # the five reports into data/
-python -m copilot.cli ingest         # build the index (a few minutes on CPU)
-python -m pytest                     # no API key needed
+uv sync                                   # .venv with the exact versions in uv.lock
+uv run python scripts/download_data.py    # the five reports into data/
+uv run copilot ingest                     # build the index (a few minutes on CPU)
 ```
+
+Run the tests with `uv run pytest` (no API key needed). The agent needs an OpenAI key: copy
+`.env.example` to `.env` (`copy` in PowerShell, `cp` elsewhere) and set `OPENAI_API_KEY`.
 
 Ask questions from the command line:
 
 ```powershell
-python -m copilot.cli search "How fast did HOKA grow?"     # retrieval only, no API key needed
-python -m copilot.cli agent "How much did Nike's net income fall in fiscal 2025?"
+uv run copilot search "How fast did HOKA grow?"     # retrieval only, no API key needed
+uv run copilot agent "How much did Nike's net income fall in fiscal 2025?"
 ```
 
 Or run the API (interactive docs at http://localhost:8000/docs):
 
 ```powershell
-uvicorn copilot.api:app --port 8000
+uv run uvicorn copilot.api:app --port 8000
 ```
 
 and call it from a second terminal:
@@ -286,13 +285,13 @@ docker run -p 8000:8000 --env-file .env consulting-research-copilot
 ### Reproduce the evaluation
 
 ```powershell
-python evals/run_retrieval_eval.py                 # retrieval, development set (free, about 10 min on CPU)
-python evals/run_retrieval_eval.py --set heldout   # retrieval, held-out set (free)
-python evals/run_guardrail_eval.py                 # relevance-floor check (free)
-python evals/run_agent_eval.py                     # agent, development set (OpenAI API, about $0.05)
-python evals/run_agent_eval.py --set heldout       # agent, held-out set (about $0.03)
-python evals/run_ragas_eval.py --final             # RAGAS, development set, both pipelines (about $0.60)
-python evals/run_ragas_eval.py --final --set heldout --modes hybrid_rerank   # about $0.22
+uv run python evals/run_retrieval_eval.py                 # retrieval, development set (free, about 10 min on CPU)
+uv run python evals/run_retrieval_eval.py --set heldout   # retrieval, held-out set (free)
+uv run python evals/run_guardrail_eval.py                 # relevance-floor check (free)
+uv run python evals/run_agent_eval.py                     # agent, development set (OpenAI API, about $0.05)
+uv run python evals/run_agent_eval.py --set heldout       # agent, held-out set (about $0.03)
+uv run python evals/run_ragas_eval.py --final             # RAGAS, development set, both pipelines (about $0.60)
+uv run python evals/run_ragas_eval.py --final --set heldout --modes hybrid_rerank   # about $0.22
 ```
 
 With `make` (Linux, macOS, WSL) the same steps are shortcuts: `make install`, `make data`,

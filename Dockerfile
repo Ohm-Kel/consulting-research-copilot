@@ -3,19 +3,27 @@
 #   docker run -p 8000:8000 --env-file .env consulting-research-copilot
 FROM python:3.12-slim
 
+# uv installs the exact versions in uv.lock, including CPU-only torch (see pyproject.toml).
+COPY --from=ghcr.io/astral-sh/uv:0.12.13 /uv /bin/uv
+
 ENV PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    HF_HOME=/app/.cache/huggingface
+    HF_HOME=/app/.cache/huggingface \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_NO_CACHE=1 \
+    UV_PYTHON_DOWNLOADS=never \
+    PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
 
-# CPU-only torch first: the default Linux wheel pulls several GB of CUDA libraries.
-RUN pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/cpu
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# Dependencies get their own layer, so a code change does not reinstall them.
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked --no-dev --no-install-project
 
+COPY README.md LICENSE ./
 COPY copilot/ copilot/
 COPY scripts/ scripts/
+RUN uv sync --locked --no-dev
 
 # Download the five reports, the embedding and reranker models, and build the index at build time.
 RUN python scripts/download_data.py \
