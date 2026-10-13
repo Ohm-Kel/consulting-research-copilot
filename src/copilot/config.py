@@ -30,7 +30,21 @@ OVERLAP_WORDS = 50
 
 # Retrieval
 TOP_K = 5
-RETRIEVER_MODES = ("vector", "bm25", "hybrid", "hybrid_rerank_whole", "hybrid_rerank", "hybrid_rerank_company")
+RETRIEVER_MODES = (
+    "vector",
+    "bm25",
+    "hybrid",
+    "hybrid_rerank_whole",
+    "hybrid_rerank",
+    "hybrid_rerank_company",
+    "hybrid_rerank_expanded",
+)
+# Query expansion (mode hybrid_rerank_expanded, BM25 side only): words a question may use for
+# what a report calls something else. Only development-set misses may add to this list (Under
+# Armour counts "teammates", not "employees"); the held-out sets are never used to extend it.
+SYNONYM_GROUPS: tuple[frozenset[str], ...] = (
+    frozenset({"employ", "employs", "employed", "employee", "employees", "workforce", "headcount", "teammates"}),
+)
 RETRIEVER_MODE = os.getenv("COPILOT_RETRIEVER", "hybrid_rerank")
 # Measured on the eval set (see README): the MiniLM cross-encoder over 30 candidates
 # matched BAAI/bge-reranker-base (20) on Hit@5, beat it on Hit@1 and MRR, and ran ~3.5x faster on CPU.
