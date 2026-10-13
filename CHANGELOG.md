@@ -24,6 +24,9 @@ such as `v1.4` and are kept as published.
 - The package moved to `src/copilot/`, and the evaluation scripts import the installed package
   instead of adding the repository to `sys.path`.
 - The Docker image is built and smoke-tested on every branch and pull request, not only on `main`.
+- README follows a standard section order (demo, problem and solution, features, architecture,
+  tech stack, getting started with an environment-variable table, usage, evaluation, roadmap,
+  contributors), and the stale hard-coded test-count badge is gone.
 - README restructured for readers skimming the repo; the CLI help lists every retriever mode.
 - CI actions updated to their Node 24 versions.
 

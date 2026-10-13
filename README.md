@@ -2,13 +2,13 @@
 
 [![CI](https://github.com/Ohm-Kel/consulting-research-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Ohm-Kel/consulting-research-copilot/actions/workflows/ci.yml)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
-![Tests](https://img.shields.io/badge/tests-127%20passing-brightgreen)
 ![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)
 
-A question-answering assistant for the desk research a consulting team does in the first days of
-a project. Ask a business question about five companies' annual reports: it finds the relevant
-passages and tables, works out figures with a calculator tool, and answers with **page-level
-citations**. When the reports do not support an answer, it **declines instead of guessing**.
+Question answering over five companies' annual reports, with page-level citations, a
+calculator-equipped agent that declines when the reports are silent, and an evaluation that CI
+re-runs on every change.
+
+## Demo
 
 ```
 Q: How did Nike's gross margin change in fiscal 2025, and what did management say caused it?
@@ -24,29 +24,51 @@ Sources: [1] Nike_FY2025_10K.pdf, p. 38  [2] Nike_FY2025_10K.pdf, p. 35
 
 *Real output from `gpt-5.6-terra`, checked against the 10-K. More in [docs/examples.md](docs/examples.md).*
 
-## Results at a glance
+## Problem and solution
 
-|  | Development set (25 questions) | Held-out set (20 questions) |
-|---|---|---|
-| Answer passage in the top 5 search results | **88%** (vector-search baseline 60%) | **90%** (vector-search baseline 95%) |
-| Questions answered by the agent | **25 / 25** | **20 / 20** |
-| Answers citing a page that supports them | 24 / 25 | 20 / 20 |
-| Calculations correct | **4 / 4** | **5 / 5** |
-| Answers grounded in the retrieved text (RAGAS faithfulness) | 0.91 | 0.93 |
-| Out-of-scope questions declined instead of guessed | **8 / 8** | not run |
+**Problem.** In the first days of a project, a consulting case team does desk research: reading
+hundreds of pages of annual reports to answer questions such as how margins moved and what
+management said drove the change. A general chatbot answers fluently, but it cites nothing, and
+it guesses when the documents are silent.
 
-The development questions were used to choose the design. The held-out questions were written
-afterwards and are only ever scored, never tuned on. Retrieval improved clearly on the harder
-development questions and stayed level on the easier held-out ones; [Evaluation](#evaluation)
-explains why, with confidence intervals. Every number above comes from a file in
-[`evals/results/`](evals/results), and the ones that need no LLM are re-measured by CI on every
-push.
+**Solution.** Ask a business question about five companies' annual reports: the copilot finds
+the relevant passages and tables, works out figures with a calculator tool, and answers with
+**page-level citations**. When the reports do not support an answer, it **declines instead of
+guessing**.
 
-**Corpus:** athletic apparel and footwear. Nike (FY2025 10-K), Lululemon (FY2024 10-K), Under
-Armour (FY2025 10-K), Columbia Sportswear (FY2024 10-K) and Deckers Brands (FY2025 Annual
-Report): about 500 pages, split into 1,228 page-level chunks.
+On the 25 development questions, the answer passage reaches the top 5 search results for 88%
+(vector-search baseline 60%); on 20 held-out questions it is level with the baseline at 90%.
+The agent answered all 45, got 9 of 9 calculations right and declined 8 of 8 out-of-scope
+questions. [Evaluation results](#evaluation-results) has the details and confidence intervals.
 
-## How it works
+## Features
+
+- **Page-level citations.** Every answer cites the report and PDF page it came from.
+- **Hybrid retrieval.** BM25 keyword search and vector search, merged with reciprocal rank
+  fusion and reranked by a cross-encoder that scores each passage by its best 150-word window.
+- **Tool-calling agent.** Searches again with new wording when results are weak, and uses a
+  safe calculator for growth rates, shares and CAGR instead of mental arithmetic.
+- **Guardrails.** Declines when no passage clears a relevance floor set from measured scores,
+  when the model judges the evidence insufficient, or when an answer cites nothing relevant.
+- **Evidence-level evaluation.** A development set and a never-tuned held-out set, scored on
+  whether the retrieved text contains the answer, with bootstrap confidence intervals.
+- **Service.** FastAPI with API-key auth, rate limits and usage tracking, a Docker image with the
+  index built in, and CI that fails the build if retrieval quality drops.
+
+### Engineering details
+
+| Area | What is in place |
+|---|---|
+| API | FastAPI: `POST /query` (agent), `POST /search` (retrieval only, no LLM), `GET /health`. Optional API-key auth (`X-API-Key`), per-client rate limits (429 with `Retry-After`), LLM errors returned as 502 |
+| Tests | 127 pytest tests with 94% line coverage; CI fails below 93%. The LLM is replaced by a scripted fake, so the suite runs without an API key |
+| Safety | Calculator built on Python's AST (no `eval`), with a size cap and checks for overflow and complex results. A 90-second timeout on every OpenAI call and a 3-minute budget per question |
+| Observability | One JSON log line per question: model, tool calls, LLM calls, tokens, time, estimated cost and any fallback reason. `/query` returns the same usage. The paid evaluation runners count tokens, retry a failed question once and save progress as they go |
+| Reproducibility | `uv.lock` pins every dependency, including transitive ones, for local runs, CI and Docker. Every report is checked against a SHA-256 checksum. The index stores the settings it was built with and refuses to load if the configuration has changed |
+| Security | API keys only through `.env`, which is never committed. GitHub secret scanning with push protection. Dependency alerts reviewed: the open chromadb and ragas advisories need components this project does not use (notes in [`pyproject.toml`](pyproject.toml)) |
+| Docker | One image containing the reports, the models and a pre-built index |
+| CI | GitHub Actions: lint, format and type checks (Ruff, mypy) → tests with a coverage gate → build index → **retrieval regression gate** (Hit@5 ≥ 0.84) → held-out retrieval report → **guardrail gate** → Docker build and smoke test, on every push and pull request |
+
+## Architecture
 
 ```mermaid
 flowchart TB
@@ -84,7 +106,144 @@ flowchart TB
 5. **Service.** A FastAPI endpoint, a Docker image, and a CI pipeline that re-runs the
    evaluation on every push and fails the build if retrieval quality drops.
 
-## Evaluation
+### Design decisions
+
+Each decision is recorded with its context, the options measured and its trade-offs in
+[`docs/adr/`](docs/adr/README.md):
+
+- [Page-level chunks with a company header](docs/adr/0001-page-level-chunks-with-company-header.md)
+- [Local `bge-small-en-v1.5` embeddings](docs/adr/0002-local-bge-small-embeddings.md)
+- [Hybrid BM25 + vector retrieval with rank fusion](docs/adr/0003-hybrid-retrieval-with-rank-fusion.md)
+- [`ms-marco-MiniLM-L-6-v2` reranker, chosen by measurement](docs/adr/0004-minilm-cross-encoder-reranker.md)
+- [Evidence-level retrieval metric and a held-out set](docs/adr/0005-evidence-level-retrieval-metric.md)
+- [Rerank each chunk by its best 150-word window](docs/adr/0006-rerank-by-best-window.md)
+- [Relevance floor set from measured scores](docs/adr/0007-relevance-floor-from-measured-scores.md)
+- [OpenAI Responses API and a plain-Python agent loop](docs/adr/0008-openai-responses-api-plain-agent-loop.md)
+- [10-K print editions for two reports](docs/adr/0009-10k-print-editions.md)
+- [uv and a lockfile](docs/adr/0010-uv-and-a-lockfile.md) · [`src/` layout](docs/adr/0011-src-layout.md)
+
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| Language | Python 3.12 |
+| LLM | OpenAI `gpt-5.6-luna` (app, agent evaluation, RAGAS judge), `gpt-5.6-terra` (final RAGAS answers), via the Responses API |
+| Embeddings | `BAAI/bge-small-en-v1.5` with sentence-transformers, run locally |
+| Vector store | Chroma, in-process |
+| Keyword search | `rank_bm25` |
+| Reranker | `cross-encoder/ms-marco-MiniLM-L-6-v2` |
+| PDF parsing | pypdf |
+| Evaluation | Own evidence-level retrieval metric with bootstrap intervals; RAGAS for answer quality |
+| API | FastAPI and uvicorn |
+| Tooling | uv, Ruff, mypy, pytest with pytest-cov, pre-commit |
+| Delivery | Docker, GitHub Actions |
+
+## Getting started
+
+### Prerequisites
+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/). It installs Python 3.12 if it
+  is missing.
+- About 2 GB of disk for the dependencies, models and index. Everything runs on a laptop CPU.
+- An [OpenAI API key](https://platform.openai.com/api-keys), only for the agent and the
+  LLM-judged evaluations.
+
+### Installation
+
+The commands are the same in Windows PowerShell, macOS and Linux.
+
+```powershell
+git clone https://github.com/Ohm-Kel/consulting-research-copilot.git
+cd consulting-research-copilot
+uv sync                                   # .venv with the exact versions in uv.lock
+uv run python scripts/download_data.py    # the five reports into data/
+uv run copilot ingest                     # build the index (a few minutes on CPU)
+```
+
+### Environment variables
+
+Copy `.env.example` to `.env` (`copy` in PowerShell, `cp` elsewhere). Only the agent needs a key.
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `OPENAI_API_KEY` | The agent, `copilot ask` and the LLM-judged evaluations | none |
+| `OPENAI_MODEL` / `OPENAI_EVAL_MODEL` | App and final-evaluation models | `gpt-5.6-luna` / `gpt-5.6-terra` |
+| `COPILOT_API_KEYS` | Comma-separated keys that `/query` and `/search` require in `X-API-Key` | open (local use) |
+| `COPILOT_QUERY_RATE_LIMIT` / `COPILOT_SEARCH_RATE_LIMIT` | Requests per minute per client | 10 / 60 |
+| `COPILOT_PRICE_INPUT_PER_MTOK` / `COPILOT_PRICE_OUTPUT_PER_MTOK` | Token prices for cost estimates | unset |
+
+Every other setting, with its default and the measurement behind it, is in
+[`src/copilot/config.py`](src/copilot/config.py).
+
+### Running locally
+
+Start the API (interactive docs at http://localhost:8000/docs):
+
+```powershell
+uv run uvicorn copilot.api:app --port 8000
+```
+
+With Docker:
+
+```bash
+docker build -t consulting-research-copilot .
+docker run -p 8000:8000 --env-file .env consulting-research-copilot
+```
+
+### Running tests
+
+```powershell
+uv run pytest --cov                  # no API key needed; fails below 93% coverage
+uv run pre-commit run --all-files    # Ruff lint and format, mypy
+```
+
+With `make` (Linux, macOS, WSL) the same steps are shortcuts: `make install`, `make data`,
+`make index`, `make test`, `make lint`, `make eval`, `make eval-llm`, `make serve` and
+`make docker-build`. Run `make` on its own to list them.
+
+## Usage examples
+
+Ask questions from the command line:
+
+```powershell
+uv run copilot search "How fast did HOKA grow?"     # retrieval only, no API key needed
+uv run copilot agent "How much did Nike's net income fall in fiscal 2025?"
+```
+
+Call the API from a second terminal:
+
+```powershell
+Invoke-RestMethod -Method Post http://localhost:8000/query -ContentType "application/json" `
+  -Body '{"question": "How much did Nike spend on demand creation in fiscal 2025?"}'
+```
+
+On macOS or Linux: `curl -X POST localhost:8000/query -H "content-type: application/json" -d '{"question": "..."}'`.
+`/search` takes the same body plus an optional `"k"` and needs no API key.
+
+More real questions and answers, including cross-company comparisons, are in
+[docs/examples.md](docs/examples.md).
+
+## Evaluation results
+
+|  | Development set (25 questions) | Held-out set (20 questions) |
+|---|---|---|
+| Answer passage in the top 5 search results | **88%** (vector-search baseline 60%) | **90%** (vector-search baseline 95%) |
+| Questions answered by the agent | **25 / 25** | **20 / 20** |
+| Answers citing a page that supports them | 24 / 25 | 20 / 20 |
+| Calculations correct | **4 / 4** | **5 / 5** |
+| Answers grounded in the retrieved text (RAGAS faithfulness) | 0.91 | 0.93 |
+| Out-of-scope questions declined instead of guessed | **8 / 8** | not run |
+
+The development questions were used to choose the design. The held-out questions were written
+afterwards and are only ever scored, never tuned on. Retrieval improved clearly on the harder
+development questions and stayed level on the easier held-out ones; the sections below
+explain why, with confidence intervals. Every number above comes from a file in
+[`evals/results/`](evals/results), and the ones that need no LLM are re-measured by CI on every
+push.
+
+**Corpus:** athletic apparel and footwear. Nike (FY2025 10-K), Lululemon (FY2024 10-K), Under
+Armour (FY2025 10-K), Columbia Sportswear (FY2024 10-K) and Deckers Brands (FY2025 Annual
+Report): about 500 pages, split into 1,228 page-level chunks.
 
 Every design decision was measured before it was kept. The evaluation needs no LLM for its
 core metric, so it runs in CI, and every result carries a confidence interval because the
@@ -223,65 +382,6 @@ The relevance floor needs no LLM, so CI re-measures it on every push with the cu
 - **A model marking its own work is generous.** Faithfulness was 0.97 when the same model wrote
   and judged the answers, and 0.91–0.94 with a separate judge.
 
-## Engineering
-
-| Area | What is in place |
-|---|---|
-| API | FastAPI: `POST /query` (agent), `POST /search` (retrieval only, no LLM), `GET /health`. Optional API-key auth (`X-API-Key`), per-client rate limits (429 with `Retry-After`), LLM errors returned as 502 |
-| Tests | 127 pytest tests. The LLM is replaced by a scripted fake, so the suite runs without an API key |
-| Safety | Calculator built on Python's AST (no `eval`), with a size cap and checks for overflow and complex results. A 90-second timeout on every OpenAI call and a 3-minute budget per question |
-| Observability | One JSON log line per question: model, tool calls, LLM calls, tokens, time, estimated cost and any fallback reason. `/query` returns the same usage. The paid evaluation runners count tokens, retry a failed question once and save progress as they go |
-| Reproducibility | `uv.lock` pins every dependency, including transitive ones, for local runs, CI and Docker. Every report is checked against a SHA-256 checksum. The index stores the settings it was built with and refuses to load if the configuration has changed |
-| Security | API keys only through `.env`, which is never committed. GitHub secret scanning with push protection. Dependency alerts reviewed: the open chromadb and ragas advisories need components this project does not use (notes in [`pyproject.toml`](pyproject.toml)) |
-| Docker | One image containing the reports, the models and a pre-built index |
-| CI | GitHub Actions: lint, format and type checks (ruff, mypy) → tests → build index → **retrieval regression gate** (Hit@5 ≥ 0.84) → held-out retrieval report → **guardrail gate** → Docker build and smoke test |
-
-## Quick start
-
-Requires [uv](https://docs.astral.sh/uv/getting-started/installation/), which also installs
-Python 3.12 if it is missing. The commands are the same in Windows PowerShell, macOS and Linux.
-
-```powershell
-git clone https://github.com/Ohm-Kel/consulting-research-copilot.git
-cd consulting-research-copilot
-uv sync                                   # .venv with the exact versions in uv.lock
-uv run python scripts/download_data.py    # the five reports into data/
-uv run copilot ingest                     # build the index (a few minutes on CPU)
-```
-
-Run the tests with `uv run pytest` (no API key needed). The agent needs an OpenAI key: copy
-`.env.example` to `.env` (`copy` in PowerShell, `cp` elsewhere) and set `OPENAI_API_KEY`.
-
-Ask questions from the command line:
-
-```powershell
-uv run copilot search "How fast did HOKA grow?"     # retrieval only, no API key needed
-uv run copilot agent "How much did Nike's net income fall in fiscal 2025?"
-```
-
-Or run the API (interactive docs at http://localhost:8000/docs):
-
-```powershell
-uv run uvicorn copilot.api:app --port 8000
-```
-
-and call it from a second terminal:
-
-```powershell
-Invoke-RestMethod -Method Post http://localhost:8000/query -ContentType "application/json" `
-  -Body '{"question": "How much did Nike spend on demand creation in fiscal 2025?"}'
-```
-
-On macOS or Linux: `curl -X POST localhost:8000/query -H "content-type: application/json" -d '{"question": "..."}'`.
-`/search` takes the same body plus an optional `"k"` and needs no API key.
-
-With Docker:
-
-```bash
-docker build -t consulting-research-copilot .
-docker run -p 8000:8000 --env-file .env consulting-research-copilot
-```
-
 ### Reproduce the evaluation
 
 ```powershell
@@ -293,10 +393,6 @@ uv run python evals/run_agent_eval.py --set heldout       # agent, held-out set 
 uv run python evals/run_ragas_eval.py --final             # RAGAS, development set, both pipelines (about $0.60)
 uv run python evals/run_ragas_eval.py --final --set heldout --modes hybrid_rerank   # about $0.22
 ```
-
-With `make` (Linux, macOS, WSL) the same steps are shortcuts: `make install`, `make data`,
-`make index`, `make test`, `make lint`, `make eval`, `make eval-llm`, `make serve` and
-`make docker-build`. Run `make` on its own to list them.
 
 ## Project structure
 
@@ -316,59 +412,15 @@ evals/            question sets, page labeller, evaluation runners and results/
 scripts/          report download and example generation
 stage0/           first learning scripts: API call, embeddings, cosine similarity, chunking
 tests/            pytest suite
-pyproject.toml    project metadata and tool settings
+docs/             architecture decision records (adr/) and example answers
+pyproject.toml    dependencies, project metadata and tool settings
+uv.lock           exact versions of every dependency
 Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 ```
 
-## Design decisions
+## Roadmap
 
-- **Page-level chunks with a company header.** Each chunk is embedded with a short header
-  ("Nike annual report, page 38.") so a bare financial table still carries its company.
-- **`bge-small-en-v1.5` rather than `all-MiniLM-L6-v2` for embeddings.** MiniLM truncates at 256
-  tokens and would ignore most of each 300-word passage; bge-small reads 512.
-- **Reranker model chosen by measurement.** Scoring whole chunks, `ms-marco-MiniLM-L-6-v2`
-  matched `bge-reranker-base` on Hit@5, beat it on Hit@1 and MRR, and ran about 3.5× faster on
-  CPU:
-
-  | Reranker (candidates) | Hit@1 | Hit@5 | MRR | sec/query |
-  |---|---|---|---|---|
-  | bge-reranker-base (20) | 0.36 | 0.68 | 0.50 | 16.2 |
-  | bge-reranker-base (10) | 0.40 | 0.64 | 0.49 | 9.7 |
-  | ms-marco-MiniLM-L-6-v2 (20) | 0.48 | 0.64 | 0.57 | 3.1 |
-  | **ms-marco-MiniLM-L-6-v2 (30)** | **0.48** | **0.68** | **0.57** | 4.7 |
-
-- **The reranker scores a chunk by its best window (MaxP).** Each candidate is split into
-  150-word windows that overlap by half, and the chunk takes its highest window score. The
-  index, the citations and the text the LLM reads are unchanged. The 150-word size follows the
-  BERT-MaxP setup (Dai & Callan, 2019) rather than the best cell of my own grid, and every size
-  I tried on the development set landed on the same plateau:
-
-  | Window (30 candidates, dev set) | Hit@1 | Hit@5 | MRR |
-  |---|---|---|---|
-  | Whole chunk (300 words) | 0.48 | 0.68 | 0.57 |
-  | 96 words | 0.60 | 0.84 | 0.70 |
-  | 128 words | 0.44 | 0.88 | 0.63 |
-  | **150 words (default)** | **0.48** | **0.88** | **0.64** |
-  | 160 words | 0.48 | 0.88 | 0.64 |
-
-  The cost is time: about 7 seconds per search on a laptop CPU instead of 4. Using 20
-  candidates instead of 30 was faster but lost answers (0.76–0.80), and forcing the top 5 to
-  come from different pages made no consistent difference.
-- **Relevance floor set from data.** Every answerable development question scores at least 5.35
-  and unrelated or other-company questions at most 1.54, so the floor is 2.0. It sits near the
-  low end on purpose: a question that wrongly passes still meets the model's own check, while
-  one that is wrongly blocked is simply refused. It applies only to reranker scores, the scale
-  it was calibrated on.
-- **OpenAI Responses API for the agent.** GPT-5.6 models reject function tools combined with
-  reasoning on Chat Completions.
-- **10-K print editions for Lululemon and Under Armour.** Their designed annual reports embed
-  fonts without a text mapping, so text extraction produced gibberish.
-- **Models.** `gpt-5.6-luna` is the app's default and runs the agent evaluation;
-  `gpt-5.6-terra` writes the answers that RAGAS scores, with luna as the judge. Embeddings and
-  reranking run locally for free. The v1.4 evaluation runs cost about $0.90 in API usage, and
-  the whole project under $5.
-
-## Limitations and next steps
+### Known limitations
 
 - **5 of 45 questions still miss the top 5**, all within the right report. One is a wording gap
   that query rewriting should fix: the question asks how many people Under Armour "employs",
@@ -383,7 +435,18 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 - **Cross-company comparison** works through the agent (see [docs/examples.md](docs/examples.md))
   but is not yet part of the evaluation.
 
-## Release history
+### Next steps
+
+1. **Query expansion** for wording gaps such as "employs" against "teammates", measured on both
+   question sets.
+2. **Table-aware extraction** so figures in financial tables stay attached to their row and
+   column labels.
+3. **A cross-company comparison set** that scores questions needing evidence from two reports.
+4. **More held-out questions**, especially harder multi-fact ones, to narrow the intervals.
+5. **A hosted demo** built from the same Dockerfile, with `/query` protected by API keys and a
+   spending limit.
+
+### Release history
 
 | Tag | Content |
 |---|---|
@@ -397,6 +460,15 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 | v1.2 | MIT licence, packaging, linting, docstrings, clearer CLI errors |
 | v1.3 | Fiscal-year labels, stricter citation guardrail, timeouts, checksummed data, CI hardening |
 | v1.4 | Held-out question set, confidence intervals, windowed reranker scoring, independent RAGAS judge, API auth and rate limits, usage tracking, type checking |
+
+Details for every release are in [CHANGELOG.md](CHANGELOG.md).
+
+## Contributors and roles
+
+- **Semanu Kwaku Sebuava** ([@Ohm-Kel](https://github.com/Ohm-Kel)): design, implementation,
+  evaluation and deployment.
+
+Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
