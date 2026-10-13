@@ -6,6 +6,8 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+.coverage
+htmlcov/
 
 # Data and generated indexes (rebuild with scripts/download_data.py and ingest)
 data/

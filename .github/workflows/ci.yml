@@ -58,8 +58,11 @@ jobs:
       - name: Download reports
         run: python scripts/download_data.py
 
-      - name: Unit tests (LLM is mocked)
-        run: python -m pytest -q
+      - name: Unit tests with coverage gate (LLM is mocked)
+        # The floor (fail_under) and the measured package are set in pyproject.toml.
+        run: |
+          python -m pytest -q --cov
+          python -m coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build index
         run: python -m copilot.cli ingest

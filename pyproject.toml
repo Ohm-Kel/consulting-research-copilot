@@ -30,6 +30,13 @@ dependencies = { file = ["requirements.txt"] }
 testpaths = ["tests"]
 filterwarnings = ["ignore::DeprecationWarning"]
 
+[tool.coverage.run]
+source = ["copilot"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 93  # coverage was 94% when this gate was added; one point of slack
+
 [tool.mypy]
 python_version = "3.12"
 files = ["copilot", "evals", "scripts"]
