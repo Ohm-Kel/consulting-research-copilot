@@ -1,0 +1,441 @@
+{
+  "model": "gpt-5.6-luna",
+  "question_set": "hard",
+  "questions": 20,
+  "answer_rate": 1.0,
+  "citation_hit_rate": 1.0,
+  "calc_accuracy": 1.0,
+  "out_of_scope_decline_rate": null,
+  "usage": {
+    "questions": 20,
+    "llm_calls": 53,
+    "input_tokens": 116110,
+    "output_tokens": 3847,
+    "mean_seconds_per_question": 14.68,
+    "total_cost_usd": 0.0278
+  },
+  "rows": [
+    {
+      "id": "nike-x1",
+      "answer": "Nike\u2019s Greater China gross margin was **46.0% in fiscal 2025** (year ended May 31, 2025), down **420 basis points** from **50.2% in fiscal 2024**. [1]",
+      "sources": [
+        "Nike_FY2025_10K.pdf, p. 43"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 2,
+        "input_tokens": 3505,
+        "output_tokens": 173,
+        "seconds": 23.75,
+        "cost_usd": 0.000909
+      }
+    },
+    {
+      "id": "nike-x2",
+      "answer": "NIKE Direct accounted for **46.4%** of Nike\u2019s North America revenues in fiscal 2025, calculated as **$9,088 million \u00f7 $19,572 million**. [1]",
+      "sources": [
+        "Nike_FY2025_10K.pdf, p. 41"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1,
+        "calculate": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "calc_correct": true,
+      "usage": {
+        "llm_calls": 3,
+        "input_tokens": 6285,
+        "output_tokens": 136,
+        "seconds": 12.67,
+        "cost_usd": 0.00142
+      }
+    },
+    {
+      "id": "nike-x3",
+      "answer": "Nike\u2019s Europe, Middle East and Africa (EMEA) revenue fell **10% to $12.257 billion in fiscal 2025 from $13.607 billion in fiscal 2024**, and the decline was also **10% excluding currency changes**, so foreign exchange was not the primary cause. [1]\n\nThe decrease reflected lower demand across **Men\u2019s, the Jordan Brand, Kids\u2019 and Women\u2019s**. By channel, wholesale revenue declined **6%**, while NIKE Direct revenue fell **16%**, driven by a **30% decline in digital sales** that was only partly offset by **5% growth in store sales**. [1] Product revenue also weakened: footwear declined **10%** and apparel **9%** on a currency-neutral basis, reflecting lower unit sales and lower average selling prices caused mainly by channel/product mix changes and higher discounts. [1]",
+      "sources": [
+        "Nike_FY2025_10K.pdf, p. 42"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 2
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 3,
+        "input_tokens": 8302,
+        "output_tokens": 319,
+        "seconds": 20.78,
+        "cost_usd": 0.002043
+      }
+    },
+    {
+      "id": "nike-x4",
+      "answer": "Nike returned **$5.3 billion to shareholders in fiscal 2025** through share repurchases and dividends. Its inventories were **$7.5 billion as of May 31, 2025**, unchanged from the prior year. [1]",
+      "sources": [
+        "Nike_FY2025_10K.pdf, p. 32"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 2,
+        "input_tokens": 3387,
+        "output_tokens": 107,
+        "seconds": 9.33,
+        "cost_usd": 0.000806
+      }
+    },
+    {
+      "id": "lulu-x1",
+      "answer": "Lululemon\u2019s sales per square foot **decreased by $35, from $1,609 in fiscal 2023 to $1,574 in fiscal 2024**\u2014a **2.2% decline**. Fiscal 2024 ended February 2, 2025. [1]",
+      "sources": [
+        "Lululemon_FY2024_10K.pdf, p. 8"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 2,
+        "calculate": 2
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 5,
+        "input_tokens": 18168,
+        "output_tokens": 247,
+        "seconds": 24.34,
+        "cost_usd": 0.00393
+      }
+    },
+    {
+      "id": "lulu-x2",
+      "answer": "Men\u2019s products accounted for **24% of Lululemon\u2019s 2024 net revenue**. The reported amounts were **$2.558 billion in men\u2019s product revenue** out of **$10.588 billion total net revenue**, equivalent to **24.16%** before rounding. [1][2]",
+      "sources": [
+        "Lululemon_FY2024_10K.pdf, p. 6",
+        "Lululemon_FY2024_10K.pdf, p. 79"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1,
+        "calculate": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "calc_correct": true,
+      "usage": {
+        "llm_calls": 3,
+        "input_tokens": 6532,
+        "output_tokens": 226,
+        "seconds": 14.33,
+        "cost_usd": 0.001578
+      }
+    },
+    {
+      "id": "lulu-x3",
+      "answer": "Lululemon\u2019s inventory was **$1.442 billion** at the end of fiscal 2024 (**February 2, 2025**), comprising inventories at cost of $1.526 billion less provisions and reserves. [1]\n\nIt had increased **9%** from $1.324 billion at the end of fiscal 2023, and Lululemon expects inventory to continue growing in fiscal 2025, with the growth rate **exceeding net revenue growth**. [2][1]",
+      "sources": [
+        "Lululemon_FY2024_10K.pdf, p. 61",
+        "Lululemon_FY2024_10K.pdf, p. 41"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 2,
+        "input_tokens": 3172,
+        "output_tokens": 337,
+        "seconds": 12.2,
+        "cost_usd": 0.001039
+      }
+    },
+    {
+      "id": "lulu-x4",
+      "answer": "Lululemon\u2019s diluted earnings per share grew **20.0%** in fiscal 2024, from **$12.20 in 2023** to **$14.64 in 2024**. [1][2]",
+      "sources": [
+        "Lululemon_FY2024_10K.pdf, p. 32",
+        "Lululemon_FY2024_10K.pdf, p. 75"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1,
+        "calculate": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "calc_correct": true,
+      "usage": {
+        "llm_calls": 3,
+        "input_tokens": 6656,
+        "output_tokens": 173,
+        "seconds": 12.8,
+        "cost_usd": 0.001539
+      }
+    },
+    {
+      "id": "ua-x1",
+      "answer": "In Under Armour\u2019s fiscal 2025, ended March 31, 2025:\n\n- **Wholesale revenue** fell **8.1%**, from **$3.243 billion in fiscal 2024 to $2.979 billion**\u2014a decrease of **$264.3 million**. [1]\n- **Direct-to-consumer revenue** fell **10.5%**, from **$2.335 billion to $2.090 billion**\u2014a decrease of **$245.5 million**. [1]\n\nThe declines reflected lower wholesale demand and reduced discounting and promotional activity in the direct-to-consumer channel, particularly e-commerce. [2]",
+      "sources": [
+        "UnderArmour_FY2025_10K.pdf, p. 36",
+        "UnderArmour_FY2025_10K.pdf, p. 33"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 2,
+        "input_tokens": 3531,
+        "output_tokens": 235,
+        "seconds": 11.66,
+        "cost_usd": 0.000988
+      }
+    },
+    {
+      "id": "ua-x2",
+      "answer": "Footwear accounted for **23.4%** of Under Armour\u2019s fiscal 2025 total net revenues (**$1.206 billion \u00f7 $5.164 billion**). Under Armour\u2019s fiscal year ended **March 31, 2025**. [1]",
+      "sources": [
+        "UnderArmour_FY2025_10K.pdf, p. 77"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1,
+        "calculate": 2
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "calc_correct": true,
+      "usage": {
+        "llm_calls": 4,
+        "input_tokens": 9274,
+        "output_tokens": 213,
+        "seconds": 15.19,
+        "cost_usd": 0.00211
+      }
+    },
+    {
+      "id": "ua-x3",
+      "answer": "Under Armour paid **$434 million** to settle the consolidated securities class action. The payment was funded with **balance-sheet cash and $63 million of insurance proceeds**. [1]",
+      "sources": [
+        "UnderArmour_FY2025_10K.pdf, p. 72"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 2,
+        "input_tokens": 2647,
+        "output_tokens": 86,
+        "seconds": 10.8,
+        "cost_usd": 0.000633
+      }
+    },
+    {
+      "id": "ua-x4",
+      "answer": "Under Armour\u2019s inventory balance was **$945.836 million as of March 31, 2025**, compared with **$958.495 million as of March 31, 2024**. It therefore **decreased by $12.659 million, or approximately 1.3%**, year over year. [1]",
+      "sources": [
+        "UnderArmour_FY2025_10K.pdf, p. 51"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1,
+        "calculate": 2
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 4,
+        "input_tokens": 10039,
+        "output_tokens": 186,
+        "seconds": 15.42,
+        "cost_usd": 0.002231
+      }
+    },
+    {
+      "id": "colm-x1",
+      "answer": "Columbia Sportswear\u2019s gross margin expanded by **60 basis points, from 49.6% in 2023 to 50.2% in 2024** (fiscal year ended December 31, 2024). The main drivers were:\n\n- **Favorable inbound freight costs**\n- **Favorable regional and channel sales mix**\n\nThese benefits were partly offset by **lower channel profitability due to increased clearance and promotional activity**. [1]",
+      "sources": [
+        "Columbia_FY2024_10K.pdf, p. 29"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 2,
+        "input_tokens": 3020,
+        "output_tokens": 146,
+        "seconds": 16.84,
+        "cost_usd": 0.000779
+      }
+    },
+    {
+      "id": "colm-x2",
+      "answer": "Columbia Sportswear\u2019s Profit Improvement Program delivered approximately **$90 million in realized cost savings in fiscal 2024**, net of approximately **$3 million\u2013$4 million in severance and other costs**. [1]",
+      "sources": [
+        "Columbia_FY2024_10K.pdf, p. 26"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 2,
+        "input_tokens": 2843,
+        "output_tokens": 95,
+        "seconds": 10.28,
+        "cost_usd": 0.000683
+      }
+    },
+    {
+      "id": "colm-x3",
+      "answer": "Columbia Sportswear\u2019s inventory decreased **7% in 2024**, falling to **$690.5 million at December 31, 2024**, from **$746.3 million a year earlier**. The decline reflected lower inventory purchases and the use of outlet stores and temporary clearance locations to sell excess merchandise. [1][2]\n\nThe company expects healthier inventories\u2014both its own and those of wholesale partners\u2014to support **gross-margin expansion in 2025**, partly by reducing the need for clearance activity and promotions. [1]",
+      "sources": [
+        "Columbia_FY2024_10K.pdf, p. 26",
+        "Columbia_FY2024_10K.pdf, p. 34"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 2,
+        "input_tokens": 2980,
+        "output_tokens": 237,
+        "seconds": 15.25,
+        "cost_usd": 0.00088
+      }
+    },
+    {
+      "id": "colm-x4",
+      "answer": "Columbia Sportswear\u2019s SOREL brand net sales fell **29.2%** in 2024, from **$336.688 million in 2023 to $238.266 million in 2024**\u2014reported as a **29% decrease**. [1]",
+      "sources": [
+        "Columbia_FY2024_10K.pdf, p. 29"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1,
+        "calculate": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "calc_correct": true,
+      "usage": {
+        "llm_calls": 3,
+        "input_tokens": 6495,
+        "output_tokens": 189,
+        "seconds": 14.38,
+        "cost_usd": 0.001526
+      }
+    },
+    {
+      "id": "deck-x1",
+      "answer": "In fiscal 2025, **Deckers\u2019 operating margin was 23.6%**, and **diluted earnings per share were $6.33**. The fiscal year ended **March 31, 2025**. [1][2]",
+      "sources": [
+        "Deckers_FY2025_AR.pdf, p. 38",
+        "Deckers_FY2025_AR.pdf, p. 42"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 2,
+        "input_tokens": 4195,
+        "output_tokens": 104,
+        "seconds": 12.22,
+        "cost_usd": 0.000964
+      }
+    },
+    {
+      "id": "deck-x2",
+      "answer": "In fiscal 2025, ended March 31, 2025, Deckers\u2019 **wholesale channel** grew **17.4%**, increasing from **$2,432,307 thousand** to **$2,855,865 thousand**\u2014a **$423,558 thousand** increase. Its **direct-to-consumer (DTC) channel** grew **14.8%**, from **$1,855,456 thousand** to **$2,129,747 thousand**\u2014up **$274,291 thousand**. Thus, wholesale grew faster than DTC in both percentage and absolute dollar terms. [1][2]",
+      "sources": [
+        "Deckers_FY2025_AR.pdf, p. 42",
+        "Deckers_FY2025_AR.pdf, p. 38"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 2,
+        "input_tokens": 3959,
+        "output_tokens": 374,
+        "seconds": 15.47,
+        "cost_usd": 0.001241
+      }
+    },
+    {
+      "id": "deck-x3",
+      "answer": "Deckers\u2019 inventories increased by **4.4%**, from **$474.311 million on March 31, 2024** to **$495.226 million on March 31, 2025**. [1]",
+      "sources": [
+        "Deckers_FY2025_AR.pdf, p. 66"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1,
+        "calculate": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "calc_correct": true,
+      "usage": {
+        "llm_calls": 3,
+        "input_tokens": 7771,
+        "output_tokens": 147,
+        "seconds": 12.5,
+        "cost_usd": 0.001731
+      }
+    },
+    {
+      "id": "deck-x4",
+      "answer": "Deckers repurchased **765,321 shares** after fiscal 2025 ended (March 31, 2025) through **May 9, 2025**, at a **weighted-average price of $109.75 per share**. [1][2]",
+      "sources": [
+        "Deckers_FY2025_AR.pdf, p. 97",
+        "Deckers_FY2025_AR.pdf, p. 37"
+      ],
+      "tool_calls": {
+        "retrieve_documents": 1
+      },
+      "fallback": false,
+      "reason": null,
+      "cited_expected_page": true,
+      "usage": {
+        "llm_calls": 2,
+        "input_tokens": 3349,
+        "output_tokens": 117,
+        "seconds": 13.39,
+        "cost_usd": 0.00081
+      }
+    }
+  ]
+}

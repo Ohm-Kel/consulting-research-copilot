@@ -7,6 +7,14 @@ such as `v1.4` and are kept as published.
 
 ## [Unreleased]
 
+### Added
+
+- A harder held-out set of 20 questions (`evals/hard_questions.json`): table figures, two-fact
+  answers and different wording. The default pipeline finds 90% in the top 5 (vector baseline
+  80%), level with plain hybrid search but with a lower Hit@1 (0.35 against 0.55). The agent
+  answered all 20, cited a supporting page for each and got 6 of 6 calculations right. CI
+  reports the set without gating on it.
+
 ## [1.5.0] - 2026-10-13
 
 ### Added

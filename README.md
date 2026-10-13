@@ -37,8 +37,9 @@ the relevant passages and tables, works out figures with a calculator tool, and 
 guessing**.
 
 On the 25 development questions, the answer passage reaches the top 5 search results for 88%
-(vector-search baseline 60%); on 20 held-out questions it is level with the baseline at 90%.
-The agent answered all 45, got 9 of 9 calculations right and declined 8 of 8 out-of-scope
+(vector-search baseline 60%). On two never-tuned held-out sets it finds 90% of 20 questions
+(baseline 95%) and 90% of 20 harder ones (baseline 80%). The agent answered all 65, cited a
+supporting page for 64, got 15 of 15 calculations right and declined 8 of 8 out-of-scope
 questions. [Evaluation results](#evaluation-results) has the details and confidence intervals.
 
 ## Features
@@ -50,7 +51,7 @@ questions. [Evaluation results](#evaluation-results) has the details and confide
   safe calculator for growth rates, shares and CAGR instead of mental arithmetic.
 - **Guardrails.** Declines when no passage clears a relevance floor set from measured scores,
   when the model judges the evidence insufficient, or when an answer cites nothing relevant.
-- **Evidence-level evaluation.** A development set and a never-tuned held-out set, scored on
+- **Evidence-level evaluation.** A development set and two never-tuned held-out sets, scored on
   whether the retrieved text contains the answer, with bootstrap confidence intervals.
 - **Service.** FastAPI with API-key auth, rate limits and usage tracking, a Docker image with the
   index built in, and CI that fails the build if retrieval quality drops.
@@ -225,19 +226,19 @@ More real questions and answers, including cross-company comparisons, are in
 
 ## Evaluation results
 
-|  | Development set (25 questions) | Held-out set (20 questions) |
-|---|---|---|
-| Answer passage in the top 5 search results | **88%** (vector-search baseline 60%) | **90%** (vector-search baseline 95%) |
-| Questions answered by the agent | **25 / 25** | **20 / 20** |
-| Answers citing a page that supports them | 24 / 25 | 20 / 20 |
-| Calculations correct | **4 / 4** | **5 / 5** |
-| Answers grounded in the retrieved text (RAGAS faithfulness) | 0.91 | 0.93 |
-| Out-of-scope questions declined instead of guessed | **8 / 8** | not run |
+|  | Development set (25) | Held-out set (20) | Harder held-out set (20) |
+|---|---|---|---|
+| Answer passage in the top 5 search results | **88%** (vector-search baseline 60%) | **90%** (vector-search baseline 95%) | **90%** (vector-search baseline 80%) |
+| Questions answered by the agent | **25 / 25** | **20 / 20** | **20 / 20** |
+| Answers citing a page that supports them | 24 / 25 | 20 / 20 | 20 / 20 |
+| Calculations correct | **4 / 4** | **5 / 5** | **6 / 6** |
+| Answers grounded in the retrieved text (RAGAS faithfulness) | 0.91 | 0.93 | not run |
+| Out-of-scope questions declined instead of guessed | **8 / 8** | not run | not run |
 
-The development questions were used to choose the design. The held-out questions were written
+The development questions were used to choose the design. The two held-out sets were written
 afterwards and are only ever scored, never tuned on. Retrieval improved clearly on the harder
-development questions and stayed level on the easier held-out ones; the sections below
-explain why, with confidence intervals. Every number above comes from a file in
+development questions and stayed level on the held-out ones; the sections below explain why,
+with confidence intervals. Every number above comes from a file in
 [`evals/results/`](evals/results), and the ones that need no LLM are re-measured by CI on every
 push.
 
@@ -258,6 +259,13 @@ question sets are small.
   the design was fixed and never tuned on. Its answer key was audited once against the whole
   corpus, without looking at any retriever's output, so that other wordings of the same answer
   also count (a table row as well as the sentence that quotes it).
+- **Harder held-out set** ([`evals/hard_questions.json`](evals/hard_questions.json)): 20 more
+  questions, four per company, added for v1.6 and aimed at the known weak spots: 7 need a figure
+  from a table, 13 need two facts from the same passage, and one avoids the report's wording
+  ("Europe, the Middle East and Africa" for "EMEA"). They were written from the raw page text,
+  with a plain text search and before any retriever was run on them, and they are never tuned
+  on. The vector baseline finds 80%, between the development set (60%) and the first held-out
+  set (95%).
 - **Evidence-level scoring.** Each question lists one or more *fact sets*: short strings copied
   from the report that together answer it, such as `46.3 billion` and `51.4 billion`. A
   retrieved chunk counts only if its own text contains a complete fact set, so the metric
@@ -292,10 +300,20 @@ Held-out set (20 questions):
 | Hybrid + rerank, whole chunks (v1.3) | 0.65 | 0.90 (0.75–1.00) | 0.74 | 0.38 |
 | **Hybrid + rerank, best window (default)** | **0.75** | **0.90 (0.75–1.00)** | **0.82** | **0.39** |
 
+Harder held-out set (20 questions):
+
+| Retriever | Hit@1 | Hit@5 (95% CI) | MRR | Precision@5 |
+|---|---|---|---|---|
+| Vector only (baseline) | 0.50 | 0.80 (0.60–0.95) | 0.63 | 0.18 |
+| BM25 only | 0.30 | 0.70 (0.50–0.90) | 0.47 | 0.15 |
+| Hybrid (RRF) | 0.55 | 0.90 (0.75–1.00) | 0.72 | 0.19 |
+| Hybrid + rerank, whole chunks (v1.3) | 0.40 | 0.95 (0.85–1.00) | 0.62 | 0.20 |
+| **Hybrid + rerank, best window (default)** | **0.35** | **0.90 (0.75–1.00)** | **0.60** | **0.20** |
+
 *Hit@k: an answer chunk is in the top k. MRR: mean reciprocal rank of the first answer chunk.
 Precision@5: share of the top 5 chunks that contain the answer.*
 
-What the two tables say together:
+What the three tables say together:
 
 - **On the development set the gain is real.** Question by question, the default pipeline beats
   the vector baseline by +0.28 Hit@5 (95% CI +0.04 to +0.52). The earlier whole-chunk reranker
@@ -304,10 +322,18 @@ What the two tables say together:
   in a single sentence, and vector search alone finds 19 of 20. The default pipeline is within
   noise of the baseline (−0.05 Hit@5, 95% CI −0.20 to +0.10) and ranks answers higher than the
   whole-chunk reranker did (Hit@1 0.65 → 0.75).
-- **The honest claim** is that the default pipeline is clearly better on hard questions and no
-  worse on easy ones. Part of the development-set gain comes from choosing settings on that set.
-  Across all 45 questions it finds 40, against 34 for vector search, 36 for hybrid search and 35
-  for whole-chunk reranking.
+- **On the harder held-out set, reranking adds nothing over hybrid search.** Both find 18 of 20
+  (+0.10 Hit@5 over the vector baseline, 95% CI −0.10 to +0.30), but the reranker moves the
+  answer down a place or two on several questions, so Hit@1 falls from 0.55 to 0.35 and MRR from
+  0.72 to 0.60. Most of those are table questions: on the 7 that need a table figure, the
+  default pipeline ranks the evidence lower than hybrid search on 4 and higher on 2. The
+  cross-encoder was trained on prose, so it may rate number-dense chunks too low. With 7
+  questions that is a lead to test on the development set, not a finding.
+- **The honest claim** is that the default pipeline is clearly better on the hard development
+  questions and no worse at finding answers elsewhere, but on new questions it does not rank
+  them better than plain hybrid search. Part of the development-set gain comes from choosing
+  settings on that set. Across all 65 questions it finds 58, against 50 for vector search and
+  54 each for hybrid search and whole-chunk reranking.
 
 ### Answer quality (RAGAS)
 
@@ -336,12 +362,12 @@ judge matters, because a model tends to rate its own output highly.
 
 `gpt-5.6-luna`, the model the app uses by default:
 
-| Check | Development (25) | Held-out (20) |
-|---|---|---|
-| Answerable questions answered (not declined) | 25 / 25 | 20 / 20 |
-| Answers citing a supporting page | 24 / 25 | 20 / 20 |
-| Calculation questions correct (±0.2 percentage points) | 4 / 4 | 5 / 5 |
-| Out-of-scope questions declined | 8 / 8 | not run |
+| Check | Development (25) | Held-out (20) | Harder held-out (20) |
+|---|---|---|---|
+| Answerable questions answered (not declined) | 25 / 25 | 20 / 20 | 20 / 20 |
+| Answers citing a supporting page | 24 / 25 | 20 / 20 | 20 / 20 |
+| Calculation questions correct (±0.2 percentage points) | 4 / 4 | 5 / 5 | 6 / 6 |
+| Out-of-scope questions declined | 8 / 8 | not run | not run |
 
 - The one answer without an expected citation (Under Armour revenue by region) is correct. It
   cites the detailed regional table on pages 38–39, while the answer key lists only the summary
@@ -351,7 +377,11 @@ judge matters, because a model tends to rate its own output highly.
   (Adidas revenue, Nike fiscal 2030).
 - The agent writes its own search queries and can search again, so it answers some questions
   whose evidence the retrieval tables count as missed.
-- All 53 questions cost $0.07 in API usage, at about 12 seconds each on a laptop CPU.
+- On the harder set the agent also answered the two questions whose evidence the retriever
+  ranked below the top 5 (Under Armour's inventory and Deckers' channel growth), by searching
+  again; both answers match the key.
+- The first 53 questions cost $0.07 in API usage, at about 12 seconds each on a laptop CPU; the
+  20 harder ones cost $0.03 (116,110 input and 3,847 output tokens).
 
 The relevance floor needs no LLM, so CI re-measures it on every push with the current retriever:
 
@@ -426,9 +456,8 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
   that query rewriting should fix: the question asks how many people Under Armour "employs",
   and the report counts "teammates". The others ask for figures that sit mostly in financial
   tables.
-- **Small evaluation sets.** With 25 + 20 questions the intervals are wide, and the development
-  set has now been used to choose several settings. More held-out questions, especially harder
-  ones, are the most valuable next step.
+- **Small evaluation sets.** With 25 + 20 + 20 questions the intervals are still wide, and the
+  development set has now been used to choose several settings.
 - **Tables are flattened to text.** Structured table extraction (for example with pdfplumber)
   would help numeric questions.
 - **Slower search.** Windowed reranking roughly doubles reranking time on CPU.
@@ -442,7 +471,8 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 2. **Table-aware extraction** so figures in financial tables stay attached to their row and
    column labels.
 3. **A cross-company comparison set** that scores questions needing evidence from two reports.
-4. **More held-out questions**, especially harder multi-fact ones, to narrow the intervals.
+4. **Test whether the reranker undervalues table chunks** on the development set, the lead from
+   the harder held-out set, before changing anything.
 5. **A hosted demo** built from the same Dockerfile, with `/query` protected by API keys and a
    spending limit.
 
