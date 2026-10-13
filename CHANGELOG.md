@@ -14,6 +14,11 @@ such as `v1.4` and are kept as published.
   80%), level with plain hybrid search but with a lower Hit@1 (0.35 against 0.55). The agent
   answered all 20, cited a supporting page for each and got 6 of 6 calculations right. CI
   reports the set without gating on it.
+- A demo page at `/` for trying search and the agent in a browser. It needs no build step, loads
+  nothing from other sites, and inserts every server response as text, never as HTML.
+- `COPILOT_QUERY_DAILY_LIMIT` caps the total `/query` requests per UTC day, so a public
+  deployment cannot spend more than a set amount on the LLM. Over the cap, `/query` returns 429
+  with `Retry-After` and `/search` keeps working. `/health` reports the limit.
 
 ## [1.5.0] - 2026-10-13
 
