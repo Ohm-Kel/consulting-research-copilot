@@ -20,16 +20,13 @@ import json
 import re
 import sys
 import time
-from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from dotenv import load_dotenv
 
-from dotenv import load_dotenv  # noqa: E402
-
-from copilot import config  # noqa: E402
-from copilot.agent import AgentResult, ResearchAgent, Usage  # noqa: E402
-from copilot.evaluation import QUESTION_SETS, load_questions  # noqa: E402
+from copilot import config
+from copilot.agent import AgentResult, ResearchAgent, Usage
+from copilot.evaluation import QUESTION_SETS, load_questions
 
 OUT_OF_SCOPE_PATH = config.ROOT / "evals" / "out_of_scope.json"
 RETRY_PAUSE_SECONDS = 20.0

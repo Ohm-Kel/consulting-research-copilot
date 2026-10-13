@@ -13,13 +13,10 @@ the floor by design: the model-judgement guardrail handles them.
 import argparse
 import json
 import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from copilot import config  # noqa: E402
-from copilot.evaluation import QUESTION_SETS, load_questions  # noqa: E402
-from copilot.retrieval import build_retriever  # noqa: E402
+from copilot import config
+from copilot.evaluation import QUESTION_SETS, load_questions
+from copilot.retrieval import build_retriever
 
 OUT_OF_SCOPE_PATH = config.ROOT / "evals" / "out_of_scope.json"
 

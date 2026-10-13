@@ -5,7 +5,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-ROOT = Path(__file__).resolve().parent.parent
+# Repository root (src/copilot/config.py -> two levels up). The package runs from a checkout:
+# an editable install locally, in CI and in the Docker image.
+ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(ROOT / ".env")  # OPENAI_API_KEY and model overrides; real env vars take precedence
 DATA_DIR = Path(os.getenv("COPILOT_DATA_DIR", ROOT / "data"))
 CHROMA_DIR = Path(os.getenv("COPILOT_CHROMA_DIR", ROOT / "chroma_db"))

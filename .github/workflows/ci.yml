@@ -45,7 +45,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.cache/huggingface
-          key: hf-${{ hashFiles('copilot/config.py') }}
+          key: hf-${{ hashFiles('src/copilot/config.py') }}
 
       - name: Cache reports
         uses: actions/cache@v6

@@ -6,15 +6,11 @@ Needs OPENAI_API_KEY.
 """
 
 import argparse
-import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from dotenv import load_dotenv
 
-from dotenv import load_dotenv  # noqa: E402
-
-from copilot import config  # noqa: E402
-from copilot.agent import ResearchAgent  # noqa: E402
+from copilot import config
+from copilot.agent import ResearchAgent
 
 QUERIES = [
     "How did Nike's gross margin change in fiscal 2025, and what did management say caused it?",

@@ -301,7 +301,7 @@ With `make` (Linux, macOS, WSL) the same steps are shortcuts: `make install`, `m
 ## Project structure
 
 ```
-copilot/
+src/copilot/
   config.py       all settings: models, chunk sizes, thresholds
   ingest.py       PDF → page-level chunks → Chroma
   embeddings.py   local sentence-transformers embeddings

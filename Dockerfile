@@ -21,7 +21,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-dev --no-install-project
 
 COPY README.md LICENSE ./
-COPY copilot/ copilot/
+COPY src/ src/
 COPY scripts/ scripts/
 RUN uv sync --locked --no-dev
 
