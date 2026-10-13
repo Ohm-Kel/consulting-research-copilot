@@ -2,6 +2,7 @@
 
 import os
 from collections.abc import Iterator
+from datetime import UTC, datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -33,6 +34,7 @@ def client(monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     monkeypatch.setattr(config, "API_KEYS", [])  # open API unless a test configures keys
     api.query_limiter.reset()
     api.search_limiter.reset()
+    api.query_daily_limit.reset()
     app.dependency_overrides[get_retriever] = StubRetriever
     with TestClient(app) as c:
         yield c
@@ -141,3 +143,29 @@ def test_rate_limiter_window_expires(monkeypatch: pytest.MonkeyPatch) -> None:
     assert limiter.seconds_until_allowed("c") == 60
     clock[0] += 60  # a minute later the first request has left the window
     assert limiter.seconds_until_allowed("c") == 0
+
+
+def test_daily_limit_blocks_query_but_not_search(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(api.query_daily_limit, "per_day", 2)
+    answer = AgentResult("An answer [1].", ["Nike_FY2025_10K.pdf, p. 38"])
+    app.dependency_overrides[get_agent] = lambda: StubAgent(answer)
+    body = {"question": "Nike revenue?"}
+    assert [client.post("/query", json=body).status_code for _ in range(2)] == [200, 200]
+    blocked = client.post("/query", json=body)
+    assert blocked.status_code == 429 and "Daily question limit" in blocked.json()["detail"]
+    assert 0 < int(blocked.headers["Retry-After"]) <= 24 * 3600
+    assert client.post("/search", json={"question": "margin", "k": 1}).status_code == 200
+    assert client.get("/health").json()["query_daily_limit"] == 2
+
+
+def test_daily_limit_resets_at_midnight_utc() -> None:
+    limit = api.DailyLimit(per_day=1)
+    evening = datetime(2026, 10, 13, 23, 0, tzinfo=UTC)
+    assert limit.seconds_until_allowed(evening) == 0
+    assert limit.seconds_until_allowed(evening) == 3600  # one hour to midnight
+    assert limit.seconds_until_allowed(datetime(2026, 10, 14, 0, 0, 1, tzinfo=UTC)) == 0
+
+
+def test_daily_limit_of_zero_means_no_limit() -> None:
+    limit = api.DailyLimit(per_day=0)
+    assert all(limit.seconds_until_allowed() == 0 for _ in range(1000))

@@ -59,6 +59,9 @@ API_KEYS = [key.strip() for key in os.getenv("COPILOT_API_KEYS", "").split(",") 
 # Requests per minute per client. /query calls the paid LLM, so its limit is lower.
 QUERY_RATE_LIMIT = int(os.getenv("COPILOT_QUERY_RATE_LIMIT", "10"))
 SEARCH_RATE_LIMIT = int(os.getenv("COPILOT_SEARCH_RATE_LIMIT", "60"))
+# Total /query requests allowed per UTC day across all clients, to cap LLM spend on a public
+# deployment (about $0.0014 per question with gpt-5.6-luna). 0 means no daily limit.
+QUERY_DAILY_LIMIT = int(os.getenv("COPILOT_QUERY_DAILY_LIMIT") or 0)  # empty, as in .env.example, means 0
 
 # Agent and guardrails (Stage 3)
 MAX_AGENT_TURNS = 6
