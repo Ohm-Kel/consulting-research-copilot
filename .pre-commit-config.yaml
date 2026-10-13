@@ -1,0 +1,33 @@
+# Checks that run before every commit. Set up once per clone: uv run pre-commit install
+# Run on everything by hand: uv run pre-commit run --all-files
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-added-large-files
+        exclude: ^uv\.lock$
+
+  # Ruff and mypy run from the project environment, so they use the versions pinned in uv.lock
+  # (the same ones CI runs). --locked also stops a commit whose uv.lock is out of date.
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run --locked ruff check --fix
+        language: system
+        types_or: [python, pyi]
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --locked ruff format
+        language: system
+        types_or: [python, pyi]
+      - id: mypy
+        name: mypy
+        entry: uv run --locked mypy
+        language: system
+        types: [python]
+        pass_filenames: false  # check the whole project as configured in pyproject.toml
