@@ -29,16 +29,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v7
+      # Python 3.12 comes from .python-version; the activated .venv puts `python` on PATH for later steps.
+      - uses: astral-sh/setup-uv@v10.2.0
         with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: requirements*.txt
+          version: "0.12.13"
+          activate-environment: true
 
-      - name: Install dependencies (CPU-only torch)
-        run: |
-          pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/cpu
-          pip install -r requirements-dev.txt
+      - name: Install the locked dependencies (CPU-only torch on Linux)
+        run: uv sync --locked
 
       - name: Lint, format and type check
         run: make lint
