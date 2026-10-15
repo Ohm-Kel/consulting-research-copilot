@@ -26,16 +26,14 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import httpx
+from dotenv import load_dotenv
+from openai import AsyncOpenAI, OpenAI
 
-import httpx  # noqa: E402
-from dotenv import load_dotenv  # noqa: E402
-from openai import AsyncOpenAI, OpenAI  # noqa: E402
-
-from copilot import config  # noqa: E402
-from copilot.evaluation import QUESTION_SETS, EvalQuestion, bootstrap_ci, load_questions  # noqa: E402
-from copilot.generate import answer_question  # noqa: E402
-from copilot.retrieval import RETRIEVER_MODES, build_retriever  # noqa: E402
+from copilot import config
+from copilot.evaluation import QUESTION_SETS, EvalQuestion, bootstrap_ci, load_questions
+from copilot.generate import answer_question
+from copilot.retrieval import RETRIEVER_MODES, build_retriever
 
 RESULTS_DIR = config.ROOT / "evals" / "results"
 METRIC_NAMES = ("faithfulness", "answer_relevancy", "context_precision", "context_recall")

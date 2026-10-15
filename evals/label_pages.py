@@ -10,11 +10,9 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from copilot import config  # noqa: E402
-from copilot.evaluation import QUESTION_SETS, load_questions, supports  # noqa: E402
-from copilot.ingest import chunk_document, read_pdf_pages  # noqa: E402
+from copilot import config
+from copilot.evaluation import QUESTION_SETS, load_questions, supports
+from copilot.ingest import chunk_document, read_pdf_pages
 
 
 def derive(path: Path) -> tuple[dict[str, list[int]], dict[str, int]]:

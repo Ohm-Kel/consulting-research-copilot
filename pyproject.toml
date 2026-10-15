@@ -40,6 +40,7 @@ Repository = "https://github.com/Ohm-Kel/consulting-research-copilot"
 copilot = "copilot.cli:main"
 
 [tool.setuptools]
+package-dir = { "" = "src" }
 packages = ["copilot"]
 
 [tool.setuptools.dynamic]
@@ -86,7 +87,7 @@ fail_under = 93  # coverage was 94% when this gate was added; one point of slack
 
 [tool.mypy]
 python_version = "3.12"
-files = ["copilot", "evals", "scripts"]
+files = ["src", "evals", "scripts"]
 ignore_missing_imports = true  # several ML libraries ship without type stubs
 
 [tool.ruff]

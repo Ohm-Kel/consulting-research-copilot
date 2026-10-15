@@ -9,12 +9,9 @@ import argparse
 import json
 import sys
 import time
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from copilot import config  # noqa: E402
-from copilot.evaluation import (  # noqa: E402
+from copilot import config
+from copilot.evaluation import (
     QUESTION_SETS,
     EvalQuestion,
     bootstrap_ci,
@@ -22,7 +19,7 @@ from copilot.evaluation import (  # noqa: E402
     load_questions,
     retrieval_metrics,
 )
-from copilot.retrieval import RETRIEVER_MODES, build_retriever  # noqa: E402
+from copilot.retrieval import RETRIEVER_MODES, build_retriever
 
 RESULTS_DIR = config.ROOT / "evals" / "results"
 
