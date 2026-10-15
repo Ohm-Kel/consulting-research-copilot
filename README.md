@@ -66,7 +66,7 @@ questions. [Evaluation results](#evaluation-results) has the details and confide
 | Tests | 127 pytest tests with 94% line coverage; CI fails below 93%. The LLM is replaced by a scripted fake, so the suite runs without an API key |
 | Safety | Calculator built on Python's AST (no `eval`), with a size cap and checks for overflow and complex results. A 90-second timeout on every OpenAI call and a 3-minute budget per question |
 | Observability | One JSON log line per question: model, tool calls, LLM calls, tokens, time, estimated cost and any fallback reason. `/query` returns the same usage. The paid evaluation runners count tokens, retry a failed question once and save progress as they go |
-| Reproducibility | `uv.lock` pins every dependency, including transitive ones, for local runs, CI and Docker. Every report is checked against a SHA-256 checksum. The index stores the settings it was built with and refuses to load if the configuration has changed |
+| Reproducibility | `uv.lock` pins every dependency, including transitive ones, for local runs, CI and Docker. Every report is checked against a SHA-256 checksum, and comes from a byte-identical copy in the [reports-v1 release](https://github.com/Ohm-Kel/consulting-research-copilot/releases/tag/reports-v1) if its original host refuses the download. The index stores the settings it was built with and refuses to load if the configuration has changed |
 | Security | API keys only through `.env`, which is never committed. GitHub secret scanning with push protection. Dependency alerts reviewed: the open chromadb and ragas advisories need components this project does not use (notes in [`pyproject.toml`](pyproject.toml)) |
 | Docker | One image containing the reports, the models and a pre-built index |
 | CI | GitHub Actions: lint, format and type checks (Ruff, mypy) → tests with a coverage gate → build index → **retrieval regression gate** (Hit@5 ≥ 0.84) → held-out retrieval report → **guardrail gate** → Docker build and smoke test, on every push and pull request |
@@ -124,6 +124,7 @@ Each decision is recorded with its context, the options measured and its trade-o
 - [OpenAI Responses API and a plain-Python agent loop](docs/adr/0008-openai-responses-api-plain-agent-loop.md)
 - [10-K print editions for two reports](docs/adr/0009-10k-print-editions.md)
 - [uv and a lockfile](docs/adr/0010-uv-and-a-lockfile.md) · [`src/` layout](docs/adr/0011-src-layout.md)
+- [Query expansion stays optional](docs/adr/0012-query-expansion-stays-optional.md)
 
 ## Tech stack
 
@@ -293,6 +294,7 @@ Development set (25 questions):
 | Hybrid + rerank, whole chunks (v1.3) | 0.48 | 0.68 (0.48–0.84) | 0.57 | 0.20 | 3.9 |
 | **Hybrid + rerank, best window (default)** | **0.48** | **0.88 (0.76–1.00)** | **0.64** | **0.27** | 7.1 |
 | Hybrid + rerank, best window, company-scoped | 0.48 | 0.88 (0.76–1.00) | 0.63 | 0.27 | ≈7 |
+| Hybrid + rerank, best window, query expansion (optional) | 0.52 | 0.92 (0.80–1.00) | 0.68 | 0.28 | ≈7 |
 
 Held-out set (20 questions):
 
@@ -303,6 +305,7 @@ Held-out set (20 questions):
 | Hybrid (RRF) | 0.55 | 1.00 | 0.74 | 0.39 |
 | Hybrid + rerank, whole chunks (v1.3) | 0.65 | 0.90 (0.75–1.00) | 0.74 | 0.38 |
 | **Hybrid + rerank, best window (default)** | **0.75** | **0.90 (0.75–1.00)** | **0.82** | **0.39** |
+| Hybrid + rerank, best window, query expansion (optional) | 0.75 | 0.90 (0.75–1.00) | 0.82 | 0.39 |
 
 Harder held-out set (20 questions):
 
@@ -313,6 +316,7 @@ Harder held-out set (20 questions):
 | Hybrid (RRF) | 0.55 | 0.90 (0.75–1.00) | 0.72 | 0.19 |
 | Hybrid + rerank, whole chunks (v1.3) | 0.40 | 0.95 (0.85–1.00) | 0.62 | 0.20 |
 | **Hybrid + rerank, best window (default)** | **0.35** | **0.90 (0.75–1.00)** | **0.60** | **0.20** |
+| Hybrid + rerank, best window, query expansion (optional) | 0.35 | 0.90 (0.75–1.00) | 0.60 | 0.20 |
 
 *Hit@k: an answer chunk is in the top k. MRR: mean reciprocal rank of the first answer chunk.
 Precision@5: share of the top 5 chunks that contain the answer.*
@@ -331,8 +335,17 @@ What the three tables say together:
   answer down a place or two on several questions, so Hit@1 falls from 0.55 to 0.35 and MRR from
   0.72 to 0.60. Most of those are table questions: on the 7 that need a table figure, the
   default pipeline ranks the evidence lower than hybrid search on 4 and higher on 2. The
-  cross-encoder was trained on prose, so it may rate number-dense chunks too low. With 7
-  questions that is a lead to test on the development set, not a finding.
+  cross-encoder was trained on prose, so it might rate number-dense chunks too low. **Checked on
+  the development set, the idea does not hold**: there, reranking moves number-dense evidence up
+  on 7 of 9 questions and down on 1 ([`evals/rank_by_density.py`](evals/rank_by_density.py)).
+  So the reranker stays as it is, and the harder-set drop in Hit@1 is not explained.
+- **Query expansion fixes the one wording gap and changes nothing else.** One synonym group
+  ("employ", "employees", "workforce", "teammates" and their forms) is added to the keyword side
+  of the query. On the development set it finds the Under Armour headcount question (+0.04
+  Hit@5, 95% CI +0.00 to +0.12), which is the question that shaped the list, so the gain is by
+  construction. Both held-out sets are unchanged. It is available as the
+  `hybrid_rerank_expanded` mode but is not the default
+  ([ADR 0012](docs/adr/0012-query-expansion-stays-optional.md)).
 - **The honest claim** is that the default pipeline is clearly better on the hard development
   questions and no worse at finding answers elsewhere, but on new questions it does not rank
   them better than plain hybrid search. Part of the development-set gain comes from choosing
@@ -456,10 +469,10 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 
 ### Known limitations
 
-- **5 of 45 questions still miss the top 5**, all within the right report. One is a wording gap
-  that query rewriting should fix: the question asks how many people Under Armour "employs",
-  and the report counts "teammates". The others ask for figures that sit mostly in financial
-  tables.
+- **7 of 65 questions still miss the top 5**, all within the right report. One is a wording gap:
+  the question asks how many people Under Armour "employs", and the report counts "teammates";
+  the optional query-expansion mode fixes it. Most of the rest are figures in financial tables
+  or in dense lists of highlights.
 - **Small evaluation sets.** With 25 + 20 + 20 questions the intervals are still wide, and the
   development set has now been used to choose several settings.
 - **Tables are flattened to text.** Structured table extraction (for example with pdfplumber)
@@ -470,15 +483,11 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 
 ### Next steps
 
-1. **Query expansion** for wording gaps such as "employs" against "teammates", measured on both
-   question sets.
-2. **Table-aware extraction** so figures in financial tables stay attached to their row and
+1. **Table-aware extraction** so figures in financial tables stay attached to their row and
    column labels.
-3. **A cross-company comparison set** that scores questions needing evidence from two reports.
-4. **Test whether the reranker undervalues table chunks** on the development set, the lead from
-   the harder held-out set, before changing anything.
-5. **A hosted demo** built from the same Dockerfile, with `/query` protected by API keys and a
-   spending limit.
+2. **A cross-company comparison set** that scores questions needing evidence from two reports.
+3. **A hosted demo** built from the same Dockerfile, with the daily `/query` limit switched on.
+4. **More questions** to narrow the intervals, and to explain the lower Hit@1 on the harder set.
 
 ### Release history
 

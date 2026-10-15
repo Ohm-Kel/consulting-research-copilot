@@ -19,6 +19,18 @@ such as `v1.4` and are kept as published.
 - `COPILOT_QUERY_DAILY_LIMIT` caps the total `/query` requests per UTC day, so a public
   deployment cannot spend more than a set amount on the LLM. Over the cap, `/query` returns 429
   with `Retry-After` and `/search` keeps working. `/health` reports the limit.
+- The `hybrid_rerank_expanded` retriever mode adds synonyms from `config.SYNONYM_GROUPS` to the
+  keyword side of the query. Development Hit@5 0.88 → 0.92 (the one question that shaped the
+  list); both held-out sets unchanged. Not the default (ADR 0012).
+- `evals/rank_by_density.py` compares reranked and hybrid ranks by how number-dense the
+  evidence is. On the development set reranking moves number-dense evidence up on 7 of 9
+  questions, so the harder-set hint that it demotes tables does not hold.
+
+### Fixed
+
+- Report downloads fall back to byte-identical copies in the `reports-v1` release when an
+  original host refuses. stocklight.com began returning 403 to GitHub's CI runners, which
+  broke every Docker build. The SHA-256 check still decides which file is accepted.
 
 ## [1.5.0] - 2026-10-13
 

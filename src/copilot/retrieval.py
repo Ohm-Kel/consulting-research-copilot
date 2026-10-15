@@ -87,11 +87,19 @@ def tokenize(text: str) -> list[str]:
     return re.findall(r"[a-z0-9]+(?:[.%][a-z0-9]+)*", text.lower().replace(",", ""))
 
 
+def expand_terms(terms: list[str]) -> list[str]:
+    """Append the synonyms of any term that belongs to a group in config.SYNONYM_GROUPS."""
+    present = set(terms)
+    extra = {word for group in config.SYNONYM_GROUPS if group & present for word in group} - present
+    return terms + sorted(extra)
+
+
 class BM25Retriever:
     """Keyword retrieval with BM25 over the same chunks stored in Chroma.
     Strong where embeddings are weak: exact names, figures and jargon."""
 
-    def __init__(self, chroma_dir: Path = config.CHROMA_DIR) -> None:
+    def __init__(self, chroma_dir: Path = config.CHROMA_DIR, expand: bool = False) -> None:
+        self.expand = expand  # add synonyms from config.SYNONYM_GROUPS to each query
         records = _open_collection(chroma_dir).get(include=["documents", "metadatas"])
         documents, metadatas = records["documents"], records["metadatas"]
         if documents is None or metadatas is None:
@@ -103,7 +111,8 @@ class BM25Retriever:
 
     def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
         """Return the `k` chunks with the highest BM25 score for the query terms."""
-        scores = self.bm25.get_scores(tokenize(query))
+        terms = tokenize(query)
+        scores = self.bm25.get_scores(expand_terms(terms) if self.expand else terms)
         allowed = [i for i in range(len(scores)) if not companies or self.chunks[i].company in companies]
         best = sorted(allowed, key=lambda i: scores[i], reverse=True)[:k]
         return [Hit(self.chunks[i], float(scores[i])) for i in best]
@@ -124,9 +133,9 @@ def reciprocal_rank_fusion(rankings: list[list[Hit]], k: int = 60) -> list[Hit]:
 class HybridRetriever:
     """Vector + BM25 candidates combined with reciprocal rank fusion."""
 
-    def __init__(self, chroma_dir: Path = config.CHROMA_DIR, candidates: int = 30) -> None:
+    def __init__(self, chroma_dir: Path = config.CHROMA_DIR, candidates: int = 30, expand: bool = False) -> None:
         self.vector = VectorRetriever(chroma_dir)
-        self.bm25 = BM25Retriever(chroma_dir)
+        self.bm25 = BM25Retriever(chroma_dir, expand=expand)
         self.candidates = candidates
 
     def search(self, query: str, k: int = config.TOP_K, companies: set[str] | None = None) -> list[Hit]:
@@ -247,4 +256,6 @@ def build_retriever(mode: str = config.RETRIEVER_MODE, chroma_dir: Path = config
         return RerankedRetriever(HybridRetriever(chroma_dir))
     if mode == "hybrid_rerank_company":
         return CompanyScopedRetriever(RerankedRetriever(HybridRetriever(chroma_dir)))
+    if mode == "hybrid_rerank_expanded":  # BM25 also searches for synonyms of the question's words
+        return RerankedRetriever(HybridRetriever(chroma_dir, expand=True))
     raise ValueError(f"unknown retriever mode {mode!r}; choose from {RETRIEVER_MODES}")

@@ -17,5 +17,6 @@ the README since v0.1; the date in each record is when the decision was made.
 | [0009](0009-10k-print-editions.md) | 10-K print editions for two reports | Accepted |
 | [0010](0010-uv-and-a-lockfile.md) | uv and a lockfile for dependencies | Accepted |
 | [0011](0011-src-layout.md) | `src/` package layout | Accepted |
+| [0012](0012-query-expansion-stays-optional.md) | Query expansion stays an optional mode | Accepted |
 
 To add a record, copy the structure of an existing one, take the next number, and link it here.

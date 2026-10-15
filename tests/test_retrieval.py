@@ -104,6 +104,7 @@ def test_reranker_scores_each_chunk_by_its_best_window(monkeypatch: pytest.Monke
         ("hybrid_rerank_whole", RerankedRetriever),
         ("hybrid_rerank", RerankedRetriever),
         ("hybrid_rerank_company", CompanyScopedRetriever),
+        ("hybrid_rerank_expanded", RerankedRetriever),
     ],
 )
 def test_build_retriever_returns_each_mode(sample_index: Path, mode: str, expected: type) -> None:
@@ -130,3 +131,23 @@ def test_stale_index_is_rejected(sample_index: Path, monkeypatch: pytest.MonkeyP
     monkeypatch.setattr(config, "CHUNK_WORDS", config.CHUNK_WORDS + 100)
     with pytest.raises(RuntimeError, match="out of date.*chunk_words"):
         VectorRetriever(sample_index)
+
+
+def test_expand_terms_adds_synonyms_only_for_listed_words() -> None:
+    from copilot.retrieval import expand_terms
+
+    expanded = expand_terms(["how", "many", "people", "employ"])
+    assert expanded[:4] == ["how", "many", "people", "employ"]  # the original terms come first
+    assert "teammates" in expanded and "employees" in expanded
+    assert len(expanded) == len(set(expanded))  # nothing is added twice
+    assert expand_terms(["gross", "margin"]) == ["gross", "margin"]
+
+
+def test_expanded_bm25_finds_a_synonym(sample_index: Path) -> None:
+    from copilot.retrieval import BM25Retriever
+
+    # No sample chunk contains "workforce"; the Columbia one says "employed ... employees".
+    plain = BM25Retriever(sample_index).search("workforce", k=1)
+    expanded = BM25Retriever(sample_index, expand=True).search("workforce", k=1)
+    assert plain[0].score == 0
+    assert expanded[0].chunk.company == "Columbia Sportswear" and expanded[0].score > 0
