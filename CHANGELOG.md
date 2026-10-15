@@ -25,6 +25,10 @@ such as `v1.4` and are kept as published.
 - `evals/rank_by_density.py` compares reranked and hybrid ranks by how number-dense the
   evidence is. On the development set reranking moves number-dense evidence up on 7 of 9
   questions, so the harder-set hint that it demotes tables does not hold.
+- Deployment to Google Cloud Run: a `Deploy` workflow builds the tested Dockerfile, pushes
+  it to Artifact Registry and deploys it on release tags, signing in through Workload
+  Identity Federation (no stored keys). `scripts/gcp_setup.sh` does the one-time setup in
+  Cloud Shell, and `docs/deployment.md` covers costs, settings and rollback (ADR 0013).
 
 ### Fixed
 

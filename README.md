@@ -68,7 +68,7 @@ questions. [Evaluation results](#evaluation-results) has the details and confide
 | Observability | One JSON log line per question: model, tool calls, LLM calls, tokens, time, estimated cost and any fallback reason. `/query` returns the same usage. The paid evaluation runners count tokens, retry a failed question once and save progress as they go |
 | Reproducibility | `uv.lock` pins every dependency, including transitive ones, for local runs, CI and Docker. Every report is checked against a SHA-256 checksum, and comes from a byte-identical copy in the [reports-v1 release](https://github.com/Ohm-Kel/consulting-research-copilot/releases/tag/reports-v1) if its original host refuses the download. The index stores the settings it was built with and refuses to load if the configuration has changed |
 | Security | API keys only through `.env`, which is never committed. GitHub secret scanning with push protection. Dependency alerts reviewed: the open chromadb and ragas advisories need components this project does not use (notes in [`pyproject.toml`](pyproject.toml)) |
-| Docker | One image containing the reports, the models and a pre-built index |
+| Docker and deployment | One image containing the reports, the models and a pre-built index. A release tag deploys that image to Google Cloud Run, signing in without stored keys ([docs/deployment.md](docs/deployment.md)) |
 | CI | GitHub Actions: lint, format and type checks (Ruff, mypy) → tests with a coverage gate → build index → **retrieval regression gate** (Hit@5 ≥ 0.84) → held-out retrieval report → **guardrail gate** → Docker build and smoke test, on every push and pull request |
 
 ## Architecture
@@ -125,6 +125,7 @@ Each decision is recorded with its context, the options measured and its trade-o
 - [10-K print editions for two reports](docs/adr/0009-10k-print-editions.md)
 - [uv and a lockfile](docs/adr/0010-uv-and-a-lockfile.md) · [`src/` layout](docs/adr/0011-src-layout.md)
 - [Query expansion stays optional](docs/adr/0012-query-expansion-stays-optional.md)
+- [Host the demo on Google Cloud Run](docs/adr/0013-host-on-cloud-run.md)
 
 ## Tech stack
 
@@ -140,7 +141,7 @@ Each decision is recorded with its context, the options measured and its trade-o
 | Evaluation | Own evidence-level retrieval metric with bootstrap intervals; RAGAS for answer quality |
 | API | FastAPI and uvicorn |
 | Tooling | uv, Ruff, mypy, pytest with pytest-cov, pre-commit |
-| Delivery | Docker, GitHub Actions |
+| Delivery | Docker, GitHub Actions, Google Cloud Run |
 
 ## Getting started
 
@@ -206,6 +207,13 @@ uv run pre-commit run --all-files    # Ruff lint and format, mypy
 With `make` (Linux, macOS, WSL) the same steps are shortcuts: `make install`, `make data`,
 `make index`, `make test`, `make lint`, `make eval`, `make eval-llm`, `make serve` and
 `make docker-build`. Run `make` on its own to list them.
+
+### Deploying
+
+Every release tag deploys the Docker image to Google Cloud Run, where it scales to zero when
+idle and a demo's traffic fits in the free tier. The one-time Google Cloud setup is a script
+you run in Cloud Shell; [docs/deployment.md](docs/deployment.md) walks through it, along with
+costs, settings and rollback.
 
 ## Usage examples
 
@@ -486,7 +494,8 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 1. **Table-aware extraction** so figures in financial tables stay attached to their row and
    column labels.
 2. **A cross-company comparison set** that scores questions needing evidence from two reports.
-3. **A hosted demo** built from the same Dockerfile, with the daily `/query` limit switched on.
+3. **Go live on Cloud Run.** The deploy workflow and setup script are ready; the first deploy
+   needs a Google Cloud project ([docs/deployment.md](docs/deployment.md)).
 4. **More questions** to narrow the intervals, and to explain the lower Hit@1 on the harder set.
 
 ### Release history
