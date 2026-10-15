@@ -2,6 +2,7 @@
 
 python evals/run_retrieval_eval.py                  # dev set, all modes, writes evals/results/retrieval.json
 python evals/run_retrieval_eval.py --set heldout    # held-out set, writes evals/results/retrieval_heldout.json
+python evals/run_retrieval_eval.py --set hard       # harder held-out set, writes evals/results/retrieval_hard.json
 python evals/run_retrieval_eval.py --modes hybrid_rerank --min-hit 0.8   # CI regression gate
 """
 

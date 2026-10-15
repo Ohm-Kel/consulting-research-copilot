@@ -1,0 +1,260 @@
+[
+  {
+    "mode": "vector",
+    "hit@1": 0.5,
+    "hit@5": 0.8,
+    "mrr": 0.632,
+    "precision@5": 0.18,
+    "hit@5_ci95": [
+      0.6,
+      0.95
+    ],
+    "sec_per_query": 0.263,
+    "misses": [
+      "lulu-x1",
+      "lulu-x2",
+      "deck-x1",
+      "deck-x2"
+    ],
+    "ranks": {
+      "nike-x1": 1,
+      "nike-x2": 1,
+      "nike-x3": 1,
+      "nike-x4": 1,
+      "lulu-x1": 8,
+      "lulu-x2": null,
+      "lulu-x3": 5,
+      "lulu-x4": 3,
+      "ua-x1": 1,
+      "ua-x2": 2,
+      "ua-x3": 2,
+      "ua-x4": 1,
+      "colm-x1": 3,
+      "colm-x2": 2,
+      "colm-x3": 1,
+      "colm-x4": 1,
+      "deck-x1": null,
+      "deck-x2": 7,
+      "deck-x3": 1,
+      "deck-x4": 1
+    }
+  },
+  {
+    "mode": "bm25",
+    "hit@1": 0.3,
+    "hit@5": 0.7,
+    "mrr": 0.465,
+    "precision@5": 0.15,
+    "hit@5_ci95": [
+      0.5,
+      0.9
+    ],
+    "sec_per_query": 0.007,
+    "misses": [
+      "lulu-x1",
+      "lulu-x4",
+      "ua-x2",
+      "ua-x4",
+      "deck-x2",
+      "deck-x3"
+    ],
+    "ranks": {
+      "nike-x1": 1,
+      "nike-x2": 1,
+      "nike-x3": 5,
+      "nike-x4": 1,
+      "lulu-x1": 6,
+      "lulu-x2": 3,
+      "lulu-x3": 2,
+      "lulu-x4": 6,
+      "ua-x1": 4,
+      "ua-x2": 7,
+      "ua-x3": 1,
+      "ua-x4": null,
+      "colm-x1": 2,
+      "colm-x2": 5,
+      "colm-x3": 1,
+      "colm-x4": 1,
+      "deck-x1": 3,
+      "deck-x2": null,
+      "deck-x3": null,
+      "deck-x4": 2
+    },
+    "hit@5_gain_vs_vector": [
+      -0.1,
+      -0.35,
+      0.15
+    ]
+  },
+  {
+    "mode": "hybrid",
+    "hit@1": 0.55,
+    "hit@5": 0.9,
+    "mrr": 0.72,
+    "precision@5": 0.19,
+    "hit@5_ci95": [
+      0.75,
+      1.0
+    ],
+    "sec_per_query": 0.05,
+    "misses": [
+      "ua-x4",
+      "deck-x2"
+    ],
+    "ranks": {
+      "nike-x1": 1,
+      "nike-x2": 1,
+      "nike-x3": 1,
+      "nike-x4": 1,
+      "lulu-x1": 2,
+      "lulu-x2": 4,
+      "lulu-x3": 1,
+      "lulu-x4": 2,
+      "ua-x1": 2,
+      "ua-x2": 2,
+      "ua-x3": 1,
+      "ua-x4": 7,
+      "colm-x1": 2,
+      "colm-x2": 2,
+      "colm-x3": 1,
+      "colm-x4": 1,
+      "deck-x1": 1,
+      "deck-x2": null,
+      "deck-x3": 1,
+      "deck-x4": 1
+    },
+    "hit@5_gain_vs_vector": [
+      0.1,
+      -0.1,
+      0.3
+    ]
+  },
+  {
+    "mode": "hybrid_rerank_whole",
+    "hit@1": 0.4,
+    "hit@5": 0.95,
+    "mrr": 0.62,
+    "precision@5": 0.2,
+    "hit@5_ci95": [
+      0.85,
+      1.0
+    ],
+    "sec_per_query": 5.022,
+    "misses": [
+      "deck-x2"
+    ],
+    "ranks": {
+      "nike-x1": 1,
+      "nike-x2": 3,
+      "nike-x3": 2,
+      "nike-x4": 1,
+      "lulu-x1": 4,
+      "lulu-x2": 1,
+      "lulu-x3": 2,
+      "lulu-x4": 2,
+      "ua-x1": 4,
+      "ua-x2": 1,
+      "ua-x3": 1,
+      "ua-x4": 5,
+      "colm-x1": 2,
+      "colm-x2": 1,
+      "colm-x3": 1,
+      "colm-x4": 1,
+      "deck-x1": 2,
+      "deck-x2": 9,
+      "deck-x3": 4,
+      "deck-x4": 2
+    },
+    "hit@5_gain_vs_vector": [
+      0.15,
+      0.0,
+      0.3
+    ]
+  },
+  {
+    "mode": "hybrid_rerank",
+    "hit@1": 0.35,
+    "hit@5": 0.9,
+    "mrr": 0.603,
+    "precision@5": 0.2,
+    "hit@5_ci95": [
+      0.75,
+      1.0
+    ],
+    "sec_per_query": 8.986,
+    "misses": [
+      "ua-x4",
+      "deck-x2"
+    ],
+    "ranks": {
+      "nike-x1": 2,
+      "nike-x2": 3,
+      "nike-x3": 2,
+      "nike-x4": 1,
+      "lulu-x1": 3,
+      "lulu-x2": 2,
+      "lulu-x3": 1,
+      "lulu-x4": 2,
+      "ua-x1": 1,
+      "ua-x2": 3,
+      "ua-x3": 1,
+      "ua-x4": 6,
+      "colm-x1": 2,
+      "colm-x2": 1,
+      "colm-x3": 1,
+      "colm-x4": 1,
+      "deck-x1": 2,
+      "deck-x2": 7,
+      "deck-x3": 4,
+      "deck-x4": 2
+    },
+    "hit@5_gain_vs_vector": [
+      0.1,
+      -0.1,
+      0.3
+    ]
+  },
+  {
+    "mode": "hybrid_rerank_company",
+    "hit@1": 0.35,
+    "hit@5": 0.9,
+    "mrr": 0.598,
+    "precision@5": 0.19,
+    "hit@5_ci95": [
+      0.75,
+      1.0
+    ],
+    "sec_per_query": 8.954,
+    "misses": [
+      "ua-x4",
+      "deck-x2"
+    ],
+    "ranks": {
+      "nike-x1": 2,
+      "nike-x2": 3,
+      "nike-x3": 2,
+      "nike-x4": 1,
+      "lulu-x1": 3,
+      "lulu-x2": 2,
+      "lulu-x3": 1,
+      "lulu-x4": 2,
+      "ua-x1": 1,
+      "ua-x2": 4,
+      "ua-x3": 1,
+      "ua-x4": 7,
+      "colm-x1": 2,
+      "colm-x2": 1,
+      "colm-x3": 1,
+      "colm-x4": 1,
+      "deck-x1": 2,
+      "deck-x2": 7,
+      "deck-x3": 4,
+      "deck-x4": 2
+    },
+    "hit@5_gain_vs_vector": [
+      0.1,
+      -0.1,
+      0.3
+    ]
+  }
+]

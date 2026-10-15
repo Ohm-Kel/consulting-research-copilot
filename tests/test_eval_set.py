@@ -9,7 +9,7 @@ import pytest
 from copilot.evaluation import QUESTION_SETS, load_questions
 
 
-@pytest.mark.parametrize(("name", "size"), [("dev", 25), ("heldout", 20)])
+@pytest.mark.parametrize(("name", "size"), [("dev", 25), ("heldout", 20), ("hard", 20)])
 def test_eval_set_is_well_formed(name: str, size: int) -> None:
     questions = load_questions(QUESTION_SETS[name])
     assert len(questions) == size
@@ -18,10 +18,13 @@ def test_eval_set_is_well_formed(name: str, size: int) -> None:
     assert {q.type for q in questions} == {"lookup", "explanation", "calculation"}
 
 
-def test_heldout_questions_are_new() -> None:
-    dev, heldout = (load_questions(QUESTION_SETS[name]) for name in ("dev", "heldout"))
-    assert not {q.id for q in dev} & {q.id for q in heldout}
-    assert not {q.question for q in dev} & {q.question for q in heldout}
+@pytest.mark.parametrize(("first", "second"), [("dev", "heldout"), ("dev", "hard"), ("heldout", "hard")])
+def test_question_sets_do_not_overlap(first: str, second: str) -> None:
+    a, b = (load_questions(QUESTION_SETS[name]) for name in (first, second))
+    assert not {q.id for q in a} & {q.id for q in b}
+    assert not {q.question for q in a} & {q.question for q in b}
+    # A shared figure is fine (a denominator such as total revenue); a shared fact set means the same evidence.
+    assert not {frozenset(s) for q in a for s in q.facts} & {frozenset(s) for q in b for s in q.facts}
 
 
 @pytest.mark.parametrize("name", QUESTION_SETS)

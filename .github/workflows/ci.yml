@@ -72,6 +72,9 @@ jobs:
       - name: Held-out retrieval report (reported, not gated, so it is never tuned on)
         run: python evals/run_retrieval_eval.py --set heldout --modes vector hybrid_rerank
 
+      - name: Hard held-out retrieval report (reported, not gated)
+        run: python evals/run_retrieval_eval.py --set hard --modes vector hybrid_rerank
+
       - name: Guardrail regression gate (no API key needed)
         run: python evals/run_guardrail_eval.py --strict
 
