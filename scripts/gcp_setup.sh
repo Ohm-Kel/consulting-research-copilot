@@ -19,11 +19,11 @@ POOL="github"
 PROVIDER="consulting-copilot"
 
 gcloud config set project "$PROJECT_ID" --quiet
-PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
 
-echo "1/7 Enabling the APIs (Cloud Run, Artifact Registry, Secret Manager, IAM credentials, STS)"
+echo "1/7 Enabling the APIs (Cloud Run, Artifact Registry, Secret Manager, IAM, Resource Manager, STS)"
 gcloud services enable run.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com \
-  iamcredentials.googleapis.com sts.googleapis.com
+  iam.googleapis.com iamcredentials.googleapis.com cloudresourcemanager.googleapis.com sts.googleapis.com
+PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
 
 echo "2/7 Docker repository '${AR_REPO}' in ${REGION}, keeping the 3 newest images"
 if ! gcloud artifacts repositories describe "$AR_REPO" --location="$REGION" >/dev/null 2>&1; then
