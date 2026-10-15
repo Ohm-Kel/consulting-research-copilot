@@ -13,6 +13,8 @@ such as `v1.4` and are kept as published.
 - Pre-commit hooks for Ruff (lint and format) and mypy, plus checks for YAML, TOML, merge
   conflicts, private keys and large files.
 - `CONTRIBUTING.md` and this changelog.
+- Architecture decision records in `docs/adr/` for eleven design decisions, from page-level
+  chunking to the `src/` layout.
 
 ### Changed
 
