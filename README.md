@@ -460,6 +460,7 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 | v1.2 | MIT licence, packaging, linting, docstrings, clearer CLI errors |
 | v1.3 | Fiscal-year labels, stricter citation guardrail, timeouts, checksummed data, CI hardening |
 | v1.4 | Held-out question set, confidence intervals, windowed reranker scoring, independent RAGAS judge, API auth and rate limits, usage tracking, type checking |
+| v1.5.0 | Engineering standards: uv lockfile, `src/` layout, coverage gate, pre-commit hooks, Docker smoke test on every PR, ADRs, contributing guide and changelog |
 
 Details for every release are in [CHANGELOG.md](CHANGELOG.md).
 
