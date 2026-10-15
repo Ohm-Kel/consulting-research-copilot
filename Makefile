@@ -16,8 +16,8 @@ data: ## Download the five annual reports into data/
 index: ## Build the Chroma index from the reports
 	$(PYTHON) -m copilot.cli ingest
 
-test: ## Run the test suite (no API key needed)
-	$(PYTHON) -m pytest -q
+test: ## Run the test suite with coverage (no API key needed)
+	$(PYTHON) -m pytest -q --cov
 
 lint: ## Check formatting, lint rules and types
 	$(PYTHON) -m ruff check .

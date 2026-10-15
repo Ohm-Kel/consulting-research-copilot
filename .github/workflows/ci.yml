@@ -58,8 +58,11 @@ jobs:
       - name: Download reports
         run: python scripts/download_data.py
 
-      - name: Unit tests (LLM is mocked)
-        run: python -m pytest -q
+      - name: Unit tests with coverage gate (LLM is mocked)
+        # The floor (fail_under) and the measured package are set in pyproject.toml.
+        run: |
+          python -m pytest -q --cov
+          python -m coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build index
         run: python -m copilot.cli ingest
@@ -89,10 +92,9 @@ jobs:
           name: eval-results
           path: evals/results/
 
+  # Runs on every branch and PR, in parallel with the tests, so a broken image is caught before merge.
   docker:
     runs-on: ubuntu-latest
-    needs: test-and-eval
-    if: github.ref == 'refs/heads/main'
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
