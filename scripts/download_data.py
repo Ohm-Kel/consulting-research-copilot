@@ -1,20 +1,31 @@
 """Download the five athletic apparel & footwear annual reports into data/.
 
 Every file is checked against a SHA-256 checksum, so the evaluation always runs
-on exactly the documents it was built from.
+on exactly the documents it was built from. If an original host refuses the
+download, the script tries a mirror copy; the checksum proves it is the same file.
 
 Run: python scripts/download_data.py
 """
 
 import hashlib
+import os
 import sys
 from pathlib import Path
+from urllib.error import URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 # SEC asks automated clients to identify themselves in the User-Agent.
 USER_AGENT = "consulting-research-copilot admin@example.com"
+
+# Byte-identical copies of the five reports, tried when an original host refuses the download
+# (stocklight.com began returning 403 to CI runners in October 2026). Set the variable to an
+# empty string to use the original hosts only.
+MIRROR = os.getenv(
+    "COPILOT_REPORTS_MIRROR", "https://github.com/Ohm-Kel/consulting-research-copilot/releases/download/reports-v1"
+)
 
 # file name -> (URL, SHA-256 of the file the evaluation set was built from)
 REPORTS: dict[str, tuple[str, str]] = {
@@ -47,6 +58,10 @@ class ChecksumError(RuntimeError):
     """A report does not match the checksum the evaluation set was built from."""
 
 
+class DownloadError(RuntimeError):
+    """No source delivered a report with the expected checksum."""
+
+
 def sha256(path: Path) -> str:
     """Hex SHA-256 digest of a file."""
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -63,21 +78,38 @@ def verify(path: Path, expected: str) -> None:
         )
 
 
+def sources(filename: str, url: str) -> list[str]:
+    """The original URL first, then the mirror copy if a mirror is configured."""
+    return [url, f"{MIRROR.rstrip('/')}/{filename}"] if MIRROR else [url]
+
+
+def fetch(url: str) -> bytes:
+    """Download `url` and return its bytes."""
+    with urlopen(Request(url, headers={"User-Agent": USER_AGENT}), timeout=120) as response:
+        data: bytes = response.read()
+        return data
+
+
 def download(filename: str, url: str, expected: str, data_dir: Path = DATA_DIR) -> None:
-    """Download one report unless it is already present, then verify its checksum."""
+    """Download one report unless it is already present, trying each source until one passes the checksum."""
     target = data_dir / filename
     if target.exists():
         verify(target, expected)
         print(f"ok     {filename} (already downloaded, checksum verified)")
         return
-    with urlopen(Request(url, headers={"User-Agent": USER_AGENT}), timeout=120) as response:
-        target.write_bytes(response.read())
-    try:
-        verify(target, expected)
-    except ChecksumError:
-        target.unlink()  # never leave an unexpected file behind
-        raise
-    print(f"saved  {filename} ({target.stat().st_size / 1e6:.1f} MB, checksum verified)")
+    problems: list[str] = []
+    for source in sources(filename, url):
+        try:
+            target.write_bytes(fetch(source))
+            verify(target, expected)
+        except (URLError, TimeoutError, ChecksumError) as exc:  # HTTPError is a URLError
+            target.unlink(missing_ok=True)  # never leave a partial or unexpected file behind
+            problems.append(f"{urlparse(source).netloc}: {exc}")
+            continue
+        size = target.stat().st_size / 1e6
+        print(f"saved  {filename} from {urlparse(source).netloc} ({size:.1f} MB, checksum verified)")
+        return
+    raise DownloadError(f"could not get {filename}: " + "; ".join(problems))
 
 
 if __name__ == "__main__":
@@ -85,5 +117,5 @@ if __name__ == "__main__":
     try:
         for name, (link, checksum) in REPORTS.items():
             download(name, link, checksum)
-    except ChecksumError as exc:
+    except (ChecksumError, DownloadError) as exc:
         sys.exit(f"error  {exc}")
