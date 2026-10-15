@@ -38,3 +38,38 @@ def test_local_reports_match_their_checksums(data_available: bool) -> None:
     script = load_script()
     for name, (_, checksum) in script.REPORTS.items():
         script.verify(config.DATA_DIR / name, checksum)
+
+
+def test_download_falls_back_to_the_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from urllib.error import HTTPError
+
+    script = load_script()
+    content = b"the exact report"
+    tried: list[str] = []
+
+    def fake_fetch(url: str) -> bytes:
+        tried.append(url)
+        if "original.example" in url:
+            raise HTTPError(url, 403, "Forbidden", hdrs=None, fp=None)
+        return content
+
+    monkeypatch.setattr(script, "fetch", fake_fetch)
+    monkeypatch.setattr(script, "MIRROR", "https://mirror.example/reports")
+    script.download("report.pdf", "https://original.example/r.pdf", hashlib.sha256(content).hexdigest(), tmp_path)
+    assert tried == ["https://original.example/r.pdf", "https://mirror.example/reports/report.pdf"]
+    assert (tmp_path / "report.pdf").read_bytes() == content
+
+
+def test_download_rejects_a_copy_with_the_wrong_checksum(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    script = load_script()
+    monkeypatch.setattr(script, "fetch", lambda url: b"a different file")
+    monkeypatch.setattr(script, "MIRROR", "https://mirror.example/reports")
+    with pytest.raises(script.DownloadError, match="original.example.*mirror.example"):
+        script.download("report.pdf", "https://original.example/r.pdf", hashlib.sha256(b"real").hexdigest(), tmp_path)
+    assert not (tmp_path / "report.pdf").exists()  # nothing unverified is left behind
+
+
+def test_no_mirror_means_original_host_only() -> None:
+    script = load_script()
+    script.MIRROR = ""
+    assert script.sources("report.pdf", "https://original.example/r.pdf") == ["https://original.example/r.pdf"]
