@@ -1,12 +1,14 @@
 """FastAPI service.
 
 uvicorn copilot.api:app --port 8000
+GET  /                             -> demo page for trying both endpoints in a browser
 POST /query   {"question": "..."}  -> agent answer with citations (needs OPENAI_API_KEY)
 POST /search  {"question": "..."}  -> retrieved passages only (no key needed)
 GET  /health
 
 If COPILOT_API_KEYS is set, /query and /search require a matching X-API-Key header.
-Both are rate limited per client (API key, or IP address when keys are not used).
+Both are rate limited per client (API key, or IP address when keys are not used), and
+COPILOT_QUERY_DAILY_LIMIT caps the total /query requests per UTC day.
 """
 
 import hmac
@@ -18,12 +20,14 @@ import time
 from collections import defaultdict, deque
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
+from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
+from importlib.resources import files
 
 import openai
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 from copilot import __version__, config
@@ -101,8 +105,39 @@ class RateLimiter:
             self._requests.clear()
 
 
+class DailyLimit:
+    """Allows at most `per_day` requests per UTC day in total, across all clients (0: no limit).
+
+    /query calls the paid LLM, so a public deployment uses this to cap its daily spend.
+    The count is kept in memory, so it restarts with the server process."""
+
+    def __init__(self, per_day: int) -> None:
+        self.per_day = per_day
+        self._day: date | None = None
+        self._count = 0
+        self._lock = threading.Lock()
+
+    def seconds_until_allowed(self, now: datetime | None = None) -> float:
+        """Record a request and return 0 if it is allowed, else the seconds until the next UTC day."""
+        now = now or datetime.now(UTC)
+        with self._lock:
+            if self._day != now.date():
+                self._day, self._count = now.date(), 0
+            if self.per_day and self._count >= self.per_day:
+                midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time(), tzinfo=UTC)
+                return (midnight - now).total_seconds()
+            self._count += 1
+            return 0.0
+
+    def reset(self) -> None:
+        """Forget today's count."""
+        with self._lock:
+            self._day, self._count = None, 0
+
+
 query_limiter = RateLimiter(config.QUERY_RATE_LIMIT)
 search_limiter = RateLimiter(config.SEARCH_RATE_LIMIT)
+query_daily_limit = DailyLimit(config.QUERY_DAILY_LIMIT)
 
 
 def client_identity(request: Request, x_api_key: str | None = Header(default=None)) -> str:
@@ -125,6 +160,23 @@ def rate_limit(limiter: RateLimiter) -> Callable[[str], None]:
             raise HTTPException(429, "Rate limit exceeded.", headers={"Retry-After": str(math.ceil(wait))})
 
     return check
+
+
+def within_daily_limit() -> None:
+    """Dependency that rejects /query with 429 once today's question limit is used up."""
+    wait = query_daily_limit.seconds_until_allowed()
+    if wait > 0:
+        raise HTTPException(
+            429,
+            f"Daily question limit reached ({query_daily_limit.per_day} per day). /search still works.",
+            headers={"Retry-After": str(math.ceil(wait))},
+        )
+
+
+@lru_cache(maxsize=1)
+def demo_page() -> str:
+    """The demo page's HTML, read once from the package."""
+    return files("copilot").joinpath("static", "index.html").read_text(encoding="utf-8")
 
 
 @lru_cache(maxsize=1)
@@ -169,19 +221,30 @@ async def llm_error(_: Request, exc: openai.APIError) -> JSONResponse:
     return JSONResponse(status_code=502, content={"detail": f"OpenAI API error: {type(exc).__name__}"})
 
 
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def index() -> str:
+    """Serve the demo page."""
+    return demo_page()
+
+
 @app.get("/health")
-def health() -> dict[str, str | bool]:
-    """Report service status, retriever mode, model and whether the LLM is configured."""
+def health() -> dict[str, str | bool | int]:
+    """Report service status, retriever mode, model, whether the LLM is configured and the daily limit."""
     return {
         "status": "ok",
         "version": __version__,
         "retriever": config.RETRIEVER_MODE,
         "model": config.LLM_MODEL,
         "llm_available": bool(os.getenv("OPENAI_API_KEY")),
+        "query_daily_limit": query_daily_limit.per_day,
     }
 
 
-@app.post("/query", response_model=QueryResponse, dependencies=[Depends(rate_limit(query_limiter))])
+@app.post(
+    "/query",
+    response_model=QueryResponse,
+    dependencies=[Depends(rate_limit(query_limiter)), Depends(within_daily_limit)],
+)
 def query(request: QueryRequest, agent: ResearchAgent = Depends(get_agent)) -> QueryResponse:
     """Answer a question with the agent, including citations and fallback status."""
     result = agent.run(request.question)

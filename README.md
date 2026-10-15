@@ -22,7 +22,8 @@ costs (~80 bps) and lower warehousing and logistics costs (~20 bps). [1]
 Sources: [1] Nike_FY2025_10K.pdf, p. 38  [2] Nike_FY2025_10K.pdf, p. 35
 ```
 
-*Real output from `gpt-5.6-terra`, checked against the 10-K. More in [docs/examples.md](docs/examples.md).*
+*Real output from `gpt-5.6-terra`, checked against the 10-K. More in [docs/examples.md](docs/examples.md).
+Run it locally and open http://localhost:8000/ to try both search and the agent in a browser.*
 
 ## Problem and solution
 
@@ -53,14 +54,15 @@ questions. [Evaluation results](#evaluation-results) has the details and confide
   when the model judges the evidence insufficient, or when an answer cites nothing relevant.
 - **Evidence-level evaluation.** A development set and two never-tuned held-out sets, scored on
   whether the retrieved text contains the answer, with bootstrap confidence intervals.
-- **Service.** FastAPI with API-key auth, rate limits and usage tracking, a Docker image with the
-  index built in, and CI that fails the build if retrieval quality drops.
+- **Service.** FastAPI with a demo page, API-key auth, per-client rate limits, a daily cap on paid
+  agent questions and usage tracking, a Docker image with the index built in, and CI that fails
+  the build if retrieval quality drops.
 
 ### Engineering details
 
 | Area | What is in place |
 |---|---|
-| API | FastAPI: `POST /query` (agent), `POST /search` (retrieval only, no LLM), `GET /health`. Optional API-key auth (`X-API-Key`), per-client rate limits (429 with `Retry-After`), LLM errors returned as 502 |
+| API | FastAPI: `GET /` (demo page), `POST /query` (agent), `POST /search` (retrieval only, no LLM), `GET /health`. Optional API-key auth (`X-API-Key`), per-client rate limits and an optional daily cap on `/query` (429 with `Retry-After`), LLM errors returned as 502 |
 | Tests | 127 pytest tests with 94% line coverage; CI fails below 93%. The LLM is replaced by a scripted fake, so the suite runs without an API key |
 | Safety | Calculator built on Python's AST (no `eval`), with a size cap and checks for overflow and complex results. A 90-second timeout on every OpenAI call and a 3-minute budget per question |
 | Observability | One JSON log line per question: model, tool calls, LLM calls, tokens, time, estimated cost and any fallback reason. `/query` returns the same usage. The paid evaluation runners count tokens, retry a failed question once and save progress as they go |
@@ -171,6 +173,7 @@ Copy `.env.example` to `.env` (`copy` in PowerShell, `cp` elsewhere). Only the a
 | `OPENAI_MODEL` / `OPENAI_EVAL_MODEL` | App and final-evaluation models | `gpt-5.6-luna` / `gpt-5.6-terra` |
 | `COPILOT_API_KEYS` | Comma-separated keys that `/query` and `/search` require in `X-API-Key` | open (local use) |
 | `COPILOT_QUERY_RATE_LIMIT` / `COPILOT_SEARCH_RATE_LIMIT` | Requests per minute per client | 10 / 60 |
+| `COPILOT_QUERY_DAILY_LIMIT` | Total `/query` requests per UTC day, to cap LLM spend on a public deployment (50 a day is about $0.07) | no limit |
 | `COPILOT_PRICE_INPUT_PER_MTOK` / `COPILOT_PRICE_OUTPUT_PER_MTOK` | Token prices for cost estimates | unset |
 
 Every other setting, with its default and the measurement behind it, is in
@@ -178,7 +181,8 @@ Every other setting, with its default and the measurement behind it, is in
 
 ### Running locally
 
-Start the API (interactive docs at http://localhost:8000/docs):
+Start the API, then open http://localhost:8000/ for the demo page or http://localhost:8000/docs for
+the interactive API docs:
 
 ```powershell
 uv run uvicorn copilot.api:app --port 8000
