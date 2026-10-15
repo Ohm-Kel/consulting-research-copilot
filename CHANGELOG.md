@@ -26,6 +26,12 @@ such as `v1.4` and are kept as published.
   evidence is. On the development set reranking moves number-dense evidence up on 7 of 9
   questions, so the harder-set hint that it demotes tables does not hold.
 
+### Fixed
+
+- Report downloads fall back to byte-identical copies in the `reports-v1` release when an
+  original host refuses. stocklight.com began returning 403 to GitHub's CI runners, which
+  broke every Docker build. The SHA-256 check still decides which file is accepted.
+
 ## [1.5.0] - 2026-10-13
 
 ### Added
