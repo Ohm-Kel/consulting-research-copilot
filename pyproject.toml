@@ -19,7 +19,7 @@ dependencies = [
     # Embeddings, reranking and PDF parsing
     "sentence-transformers==6.1.0",
     "torch==2.14.0",  # CPU-only build on Linux, see [tool.uv.sources]
-    "pypdf==6.19.0",
+    "pypdf==6.21.2",
     "fonttools==4.66.0",  # lets pypdf decode the embedded fonts in some annual reports
     "numpy==2.5.3",
     "python-dotenv==1.2.3",
@@ -59,8 +59,11 @@ dev = [
     "ruff==0.16.9",
     "mypy==2.3.1",
     "pre-commit==4.6.2",
-    # LLM-judged evaluation. CVE-2026-6587 affects ragas's multi-modal faithfulness metric,
-    # which this project does not use; no patched release exists yet.
+    # LLM-judged evaluation. Open advisories in ragas and the packages it pulls in, none of which
+    # apply here: CVE-2026-6587 (ragas's multi-modal faithfulness metric, unused), CVE-2025-69872
+    # (diskcache, used only when ragas caching is turned on, which it never is) and CVE-2026-41488
+    # (langchain-openai's token counting for image inputs, which are never sent; its fix needs
+    # openai 2.x). No patched ragas or diskcache release exists yet.
     "ragas==0.4.3",
     "langchain-community==0.3.31",  # ragas 0.4.3 imports a module that langchain-community removed in 0.4
 ]

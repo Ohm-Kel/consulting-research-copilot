@@ -27,6 +27,19 @@ such as `v1.4` and are kept as published.
   checks. A pull-request template asks for what changed, why, testing, sample output and the
   linked issue, and `CONTRIBUTING.md` covers the held-out sets and the release steps.
 
+### Security
+
+- Upgraded every dependency with a fixed release for an open advisory, each to the first
+  fixed version: pypdf 6.19.0 → 6.21.2, Pillow 12.3.0 → 13.0.0, certifi 2026.7.22 →
+  2026.10.18, aiohttp 3.14.3 → 3.14.4, filelock 4.0.2 → 4.2.1, oauthlib 3.3.1 → 4.0.0,
+  OpenTelemetry 1.44.0 → 1.45.1, setuptools 84.0.0 → 84.1.0 and virtualenv 21.13.0 → 21.14.9.
+  pypdf 6.21.2 joins split lines on 4 of the 498 report pages; every evidence page and every
+  retrieval result is unchanged.
+- The four advisories still open have no fix that applies here and are explained in
+  `pyproject.toml`: chromadb (needs its HTTP server, never started), ragas (an unused metric),
+  diskcache (ragas caching, never enabled) and langchain-openai (image inputs, never sent; the
+  fix needs openai 2.x).
+
 ## [1.6.0] - 2026-10-27
 
 ### Added
