@@ -34,7 +34,7 @@ such as `v1.4` and are kept as published.
 - Upgraded every dependency with a fixed release for an open advisory, each to the first
   fixed version: pypdf 6.19.0 → 6.21.2, Pillow 12.3.0 → 13.0.0, certifi 2026.7.22 →
   2026.10.18, aiohttp 3.14.3 → 3.14.4, filelock 4.0.2 → 4.2.1, oauthlib 3.3.1 → 4.0.0,
-  OpenTelemetry 1.44.0 → 1.45.1, setuptools 84.0.0 → 84.1.0 and virtualenv 21.13.0 → 21.14.9.
+  OpenTelemetry 1.44.0 → 1.45.1, setuptools 84.0.0 → 84.1.0 and virtualenv 21.13.0 → 21.14.13.
   pypdf 6.21.2 joins split lines on 4 of the 498 report pages; every evidence page and every
   retrieval result is unchanged.
 - The four advisories still open have no fix that applies here and are explained in
