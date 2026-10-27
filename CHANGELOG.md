@@ -7,6 +7,8 @@ such as `v1.4` and are kept as published.
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-27
+
 ### Added
 
 - A harder held-out set of 20 questions (`evals/hard_questions.json`): table figures, two-fact
@@ -34,7 +36,7 @@ such as `v1.4` and are kept as published.
   original host refuses. stocklight.com began returning 403 to GitHub's CI runners, which
   broke every Docker build. The SHA-256 check still decides which file is accepted.
 
-## [1.5.0] - 2026-10-13
+## [1.5.0] - 2026-10-15
 
 ### Added
 
@@ -164,7 +166,8 @@ such as `v1.4` and are kept as published.
 - RAG pipeline over five annual reports with page-level citations and a CLI.
 - Foundation scripts in `stage0/`.
 
-[Unreleased]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.4...v1.5.0
 [1.4]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.3...v1.4
 [1.3]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.2...v1.3
