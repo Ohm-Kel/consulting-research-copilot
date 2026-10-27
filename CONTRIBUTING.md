@@ -85,9 +85,12 @@ embeddings, reranking or PDF parsing.
 
 ## Releases
 
-1. In a `chore/release-vX.Y.Z` pull request, move the `Unreleased` entries in `CHANGELOG.md`
+1. Check the open [Dependabot alerts](https://github.com/Ohm-Kel/consulting-research-copilot/security/dependabot).
+   Upgrade every package that has a fixed release in a `fix/` pull request, and record in
+   `pyproject.toml` why each remaining advisory does not apply.
+2. In a `chore/release-vX.Y.Z` pull request, move the `Unreleased` entries in `CHANGELOG.md`
    under the new version and date, and bump `__version__` in `src/copilot/__init__.py`.
-2. After it merges, wait for CI on `main` to pass, then tag the merge commit with the semantic
+3. After it merges, wait for CI on `main` to pass, then tag the merge commit with the semantic
    version and publish the release with that changelog section as its notes:
 
    ```powershell
