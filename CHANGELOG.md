@@ -7,6 +7,8 @@ such as `v1.4` and are kept as published.
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-10-27
+
 ### Added
 
 - A cross-company comparison set (`evals/compare_questions.json`): 7 questions that each need
@@ -199,7 +201,8 @@ such as `v1.4` and are kept as published.
 - RAG pipeline over five annual reports with page-level citations and a CLI.
 - Foundation scripts in `stage0/`.
 
-[Unreleased]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.4...v1.5.0
 [1.4]: https://github.com/Ohm-Kel/consulting-research-copilot/compare/v1.3...v1.4
