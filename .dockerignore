@@ -8,5 +8,5 @@ data/
 chroma_db/
 tests/
 evals/
-stage0/
+notebooks/
 docs/
