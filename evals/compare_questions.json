@@ -1,0 +1,289 @@
+[
+  {
+    "id": "cmp-01",
+    "question": "Which company had more employees at the end of its latest fiscal year, Nike or Lululemon, and how many did each have?",
+    "expected_answer": "Nike, with about 77,800 employees as of May 31, 2025, roughly twice Lululemon's approximately 39,000 people as of February 2, 2025.",
+    "figures": [
+      77800,
+      39000
+    ],
+    "evidence": [
+      {
+        "company": "Nike",
+        "source": "Nike_FY2025_10K.pdf",
+        "facts": [
+          [
+            "77,800 employees"
+          ]
+        ],
+        "pages": [
+          9
+        ]
+      },
+      {
+        "company": "Lululemon",
+        "source": "Lululemon_FY2024_10K.pdf",
+        "facts": [
+          [
+            "approximately 39,000 people"
+          ]
+        ],
+        "pages": [
+          12
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cmp-02",
+    "question": "Which had the higher effective tax rate in its latest fiscal year, Nike or Columbia Sportswear?",
+    "expected_answer": "Columbia Sportswear: 25.1% in 2024, against Nike's 17.1% in fiscal 2025.",
+    "figures": [
+      25.1,
+      17.1
+    ],
+    "evidence": [
+      {
+        "company": "Nike",
+        "source": "Nike_FY2025_10K.pdf",
+        "facts": [
+          [
+            "17.1%",
+            "14.9%",
+            "earnings mix"
+          ],
+          [
+            "effective tax rate 17.1% 14.9%"
+          ]
+        ],
+        "pages": [
+          35,
+          39,
+          75
+        ]
+      },
+      {
+        "company": "Columbia Sportswear",
+        "source": "Columbia_FY2024_10K.pdf",
+        "facts": [
+          [
+            "effective income tax rate 25.1% 22.9%"
+          ],
+          [
+            "actual provision for income taxes 25.1% 22.9%"
+          ]
+        ],
+        "pages": [
+          30,
+          59
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cmp-03",
+    "question": "Which had the higher gross margin in 2024, Lululemon or Columbia Sportswear, and by how much?",
+    "expected_answer": "Lululemon: 59.2% against Columbia Sportswear's 50.2%, about 9 percentage points higher.",
+    "figures": [
+      59.2,
+      50.2
+    ],
+    "evidence": [
+      {
+        "company": "Lululemon",
+        "source": "Lululemon_FY2024_10K.pdf",
+        "facts": [
+          [
+            "gross margin increased 90 basis points to 59.2%"
+          ],
+          [
+            "gross margin 59.2% 58.3% 90 basis points"
+          ]
+        ],
+        "pages": [
+          31,
+          33
+        ]
+      },
+      {
+        "company": "Columbia Sportswear",
+        "source": "Columbia_FY2024_10K.pdf",
+        "facts": [
+          [
+            "gross margin 50.2% 49.6% 60 bps"
+          ]
+        ],
+        "pages": [
+          29
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cmp-04",
+    "question": "How did inventories change in fiscal 2025 at Under Armour and at Deckers?",
+    "expected_answer": "Under Armour's inventories fell about 1.3% (to $945,836 thousand from $958,495 thousand); Deckers' rose about 4.4% (to $495,226 thousand from $474,311 thousand).",
+    "figures": [
+      1.3,
+      4.4
+    ],
+    "evidence": [
+      {
+        "company": "Under Armour",
+        "source": "UnderArmour_FY2025_10K.pdf",
+        "facts": [
+          [
+            "inventories 945,836 958,495"
+          ]
+        ],
+        "pages": [
+          51
+        ]
+      },
+      {
+        "company": "Deckers Brands",
+        "source": "Deckers_FY2025_AR.pdf",
+        "facts": [
+          [
+            "inventories 495,226 474,311"
+          ]
+        ],
+        "pages": [
+          66
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cmp-05",
+    "question": "How did wholesale revenue change in fiscal 2025 at Under Armour compared with Deckers?",
+    "expected_answer": "Under Armour's wholesale revenue decreased 8.1%, while Deckers' wholesale channel net sales increased 17.4%.",
+    "figures": [
+      8.1,
+      17.4
+    ],
+    "evidence": [
+      {
+        "company": "Under Armour",
+        "source": "UnderArmour_FY2025_10K.pdf",
+        "facts": [
+          [
+            "wholesale revenue decreased 8.1%"
+          ],
+          [
+            "wholesale $2,978,869 $3,243,187"
+          ]
+        ],
+        "pages": [
+          33,
+          36,
+          77
+        ]
+      },
+      {
+        "company": "Deckers Brands",
+        "source": "Deckers_FY2025_AR.pdf",
+        "facts": [
+          [
+            "wholesale channel net sales increased 17.4%"
+          ],
+          [
+            "total wholesale $2,855,865 $2,432,307"
+          ]
+        ],
+        "pages": [
+          38,
+          42
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cmp-06",
+    "question": "Whose diluted earnings per share grew faster in its latest fiscal year, Lululemon or Deckers?",
+    "expected_answer": "Deckers: diluted EPS rose 30.2% to $6.33, against about 20.0% for Lululemon ($12.20 to $14.64).",
+    "figures": [
+      30.2,
+      20.0
+    ],
+    "evidence": [
+      {
+        "company": "Lululemon",
+        "source": "Lululemon_FY2024_10K.pdf",
+        "facts": [
+          [
+            "diluted earnings per share were $14.64 for 2024 compared to $12.20"
+          ],
+          [
+            "diluted earnings per share $14.64 $12.20"
+          ]
+        ],
+        "pages": [
+          32,
+          49,
+          75
+        ]
+      },
+      {
+        "company": "Deckers Brands",
+        "source": "Deckers_FY2025_AR.pdf",
+        "facts": [
+          [
+            "diluted earnings per share increased 30.2% to $6.33"
+          ],
+          [
+            "diluted $6.33 $4.86"
+          ]
+        ],
+        "pages": [
+          38,
+          42,
+          67
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cmp-07",
+    "question": "What share of revenue came from footwear in fiscal 2025 at Under Armour and at the NIKE Brand?",
+    "expected_answer": "About 23.4% at Under Armour ($1,206,202 thousand of $5,164,310 thousand) against about 66.0% of NIKE Brand revenues ($29,510 million of $44,714 million).",
+    "figures": [
+      23.4,
+      66.0
+    ],
+    "evidence": [
+      {
+        "company": "Under Armour",
+        "source": "UnderArmour_FY2025_10K.pdf",
+        "facts": [
+          [
+            "footwear 1,206,202",
+            "total net revenues $5,164,310"
+          ]
+        ],
+        "pages": [
+          35,
+          77
+        ]
+      },
+      {
+        "company": "Nike",
+        "source": "Nike_FY2025_10K.pdf",
+        "facts": [
+          [
+            "footwear $29,510",
+            "total nike brand revenues $44,714"
+          ],
+          [
+            "$29,510",
+            "44,714"
+          ]
+        ],
+        "pages": [
+          36,
+          85
+        ]
+      }
+    ]
+  }
+]

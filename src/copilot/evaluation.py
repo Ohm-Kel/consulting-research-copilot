@@ -16,6 +16,10 @@ v1.6 change was measured) targets the known weak spots: figures that sit in tabl
 answers that need two facts, and wording that differs from the report's. Like
 "heldout", it is never tuned on. With sets this small, results carry bootstrap
 confidence intervals.
+
+A separate comparison set (evals/compare_questions.json) asks questions that need
+evidence from two reports, such as which of two companies had the higher margin.
+Each report is one *part* of the question, scored like a single-report question.
 """
 
 import json
@@ -32,6 +36,7 @@ QUESTIONS_PATH = config.ROOT / "evals" / "questions.json"
 HELDOUT_PATH = config.ROOT / "evals" / "heldout_questions.json"
 HARD_PATH = config.ROOT / "evals" / "hard_questions.json"
 QUESTION_SETS = {"dev": QUESTIONS_PATH, "heldout": HELDOUT_PATH, "hard": HARD_PATH}
+COMPARE_PATH = config.ROOT / "evals" / "compare_questions.json"
 
 
 @dataclass(frozen=True)
@@ -118,3 +123,55 @@ def bootstrap_ci(
     means = sorted(sum(rng.choices(values, k=n)) / n for _ in range(samples))
     tail = (1 - level) / 2
     return means[int(tail * samples)], means[int((1 - tail) * samples) - 1]
+
+
+@dataclass(frozen=True)
+class ComparisonQuestion:
+    """A question that needs evidence from several reports: one part per report."""
+
+    id: str
+    question: str
+    expected_answer: str
+    figures: tuple[float, ...]  # numbers a correct answer states, such as both margins
+    parts: tuple[EvalQuestion, ...]  # per report: its source, fact sets and supporting pages
+
+
+def load_comparisons(path: Path = COMPARE_PATH) -> list[ComparisonQuestion]:
+    """Load the comparison set from JSON; each evidence entry becomes one part."""
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    return [
+        ComparisonQuestion(
+            id=item["id"],
+            question=item["question"],
+            expected_answer=item["expected_answer"],
+            figures=tuple(item["figures"]),
+            parts=tuple(
+                EvalQuestion(
+                    id=f"{item['id']}/{part['company']}",
+                    company=part["company"],
+                    type="comparison",
+                    question=item["question"],
+                    expected_answer=item["expected_answer"],
+                    source=part["source"],
+                    facts=tuple(tuple(s) for s in part["facts"]),
+                    pages=tuple(part["pages"]),
+                )
+                for part in item["evidence"]
+            ),
+        )
+        for item in raw
+    ]
+
+
+def covers_all_parts(hits: list[Hit], question: ComparisonQuestion, k: int) -> bool:
+    """True if the top `k` hits hold evidence for every report the question needs."""
+    return all(first_relevant_rank(hits[:k], part) is not None for part in question.parts)
+
+
+def states_figures(answer: str, figures: Sequence[float]) -> bool:
+    """True if `answer` states every expected figure.
+
+    Signs are ignored ("fell 1.3%" states 1.3), and a figure matches within 0.2 or 0.2% of
+    its value, whichever is larger, so rounded percentages and exact counts both pass."""
+    numbers = [float(x) for x in re.findall(r"\d+(?:\.\d+)?", answer.replace(",", ""))]
+    return all(any(abs(n - abs(f)) <= max(0.2, 0.002 * abs(f)) for n in numbers) for f in figures)

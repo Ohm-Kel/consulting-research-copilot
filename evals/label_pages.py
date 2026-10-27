@@ -1,7 +1,7 @@
 """Derive each question's supporting pages from its fact sets and check that
 every question is answerable from at least one chunk of the index.
 
-    python evals/label_pages.py          # rewrite `pages` in every question set
+    python evals/label_pages.py          # rewrite `pages` in every question set and the comparison set
     python evals/label_pages.py --check  # exit 1 if `pages` is stale or a question has no evidence chunk
 """
 
@@ -11,13 +11,29 @@ import sys
 from pathlib import Path
 
 from copilot import config
-from copilot.evaluation import QUESTION_SETS, load_questions, supports
+from copilot.evaluation import (
+    COMPARE_PATH,
+    QUESTION_SETS,
+    EvalQuestion,
+    load_comparisons,
+    load_questions,
+    supports,
+)
 from copilot.ingest import chunk_document, read_pdf_pages
 
 
 def derive(path: Path) -> tuple[dict[str, list[int]], dict[str, int]]:
     """Map question id -> supporting pages, and question id -> number of evidence chunks."""
-    questions = load_questions(path)
+    return derive_for(load_questions(path))
+
+
+def derive_comparisons(path: Path = COMPARE_PATH) -> tuple[dict[str, list[int]], dict[str, int]]:
+    """The same as `derive`, for each report (part) of each comparison question, keyed 'id/company'."""
+    return derive_for([part for q in load_comparisons(path) for part in q.parts])
+
+
+def derive_for(questions: list[EvalQuestion]) -> tuple[dict[str, list[int]], dict[str, int]]:
+    """Supporting pages and evidence-chunk counts for any list of single-report questions."""
     pages: dict[str, list[int]] = {}
     chunk_counts: dict[str, int] = {}
     for source in sorted({q.source for q in questions}):
@@ -49,6 +65,19 @@ def main() -> None:
                 problems.append(f"{item['id']}: stored pages {item['pages']} != derived {pages[item['id']]}")
             item["pages"] = pages[item["id"]]
         updated[path] = raw
+
+    print(f"comparison set ({COMPARE_PATH.name})")
+    part_pages, part_counts = derive_comparisons()
+    problems += [f"{pid}: no chunk contains a full fact set" for pid, n in part_counts.items() if n == 0]
+    raw_compare = json.loads(COMPARE_PATH.read_text(encoding="utf-8"))
+    for item in raw_compare:
+        for part in item["evidence"]:
+            pid = f"{item['id']}/{part['company']}"
+            print(f"  {pid:28} pages {part_pages[pid]}  evidence chunks {part_counts[pid]}")
+            if args.check and part["pages"] != part_pages[pid]:
+                problems.append(f"{pid}: stored pages {part['pages']} != derived {part_pages[pid]}")
+            part["pages"] = part_pages[pid]
+    updated[COMPARE_PATH] = raw_compare
 
     if problems:
         sys.exit("\n".join(problems))

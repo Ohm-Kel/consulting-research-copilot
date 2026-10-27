@@ -33,6 +33,7 @@ eval: ## Run the free retrieval and guardrail evaluations
 	$(PYTHON) evals/run_retrieval_eval.py
 	$(PYTHON) evals/run_retrieval_eval.py --set heldout
 	$(PYTHON) evals/run_retrieval_eval.py --set hard
+	$(PYTHON) evals/run_comparison_eval.py
 	$(PYTHON) evals/run_guardrail_eval.py
 
 eval-llm: ## Run the agent and RAGAS evaluations (uses the OpenAI API)
