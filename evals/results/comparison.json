@@ -20,7 +20,7 @@
       "cmp-06/Deckers Brands",
       "cmp-07/Under Armour"
     ],
-    "sec_per_query": 0.602
+    "sec_per_query": 0.706
   },
   {
     "mode": "hybrid",
@@ -44,7 +44,7 @@
       "cmp-06/Deckers Brands",
       "cmp-07/Under Armour"
     ],
-    "sec_per_query": 0.036
+    "sec_per_query": 0.057
   },
   {
     "mode": "hybrid_rerank",
@@ -64,6 +64,6 @@
       "cmp-04/Under Armour",
       "cmp-04/Deckers Brands"
     ],
-    "sec_per_query": 5.951
+    "sec_per_query": 9.74
   }
 ]

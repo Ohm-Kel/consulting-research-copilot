@@ -9,7 +9,7 @@
       0.4,
       0.8
     ],
-    "sec_per_query": 0.133,
+    "sec_per_query": 0.181,
     "misses": [
       "nike-01",
       "nike-03",
@@ -60,7 +60,7 @@
       0.36,
       0.76
     ],
-    "sec_per_query": 0.007,
+    "sec_per_query": 0.003,
     "misses": [
       "nike-05",
       "lulu-01",
@@ -117,7 +117,7 @@
       0.44,
       0.8
     ],
-    "sec_per_query": 0.054,
+    "sec_per_query": 0.038,
     "misses": [
       "nike-03",
       "nike-05",
@@ -172,7 +172,7 @@
       0.48,
       0.84
     ],
-    "sec_per_query": 3.906,
+    "sec_per_query": 3.797,
     "misses": [
       "nike-03",
       "lulu-03",
@@ -226,7 +226,7 @@
       0.76,
       1.0
     ],
-    "sec_per_query": 7.101,
+    "sec_per_query": 6.433,
     "misses": [
       "lulu-03",
       "ua-04",
@@ -275,7 +275,7 @@
       0.76,
       1.0
     ],
-    "sec_per_query": 10.933,
+    "sec_per_query": 6.499,
     "misses": [
       "lulu-03",
       "ua-04",
@@ -312,6 +312,54 @@
       0.28,
       0.04,
       0.52
+    ]
+  },
+  {
+    "mode": "hybrid_rerank_expanded",
+    "hit@1": 0.52,
+    "hit@5": 0.92,
+    "mrr": 0.679,
+    "precision@5": 0.28,
+    "hit@5_ci95": [
+      0.8,
+      1.0
+    ],
+    "sec_per_query": 6.824,
+    "misses": [
+      "lulu-03",
+      "colm-01"
+    ],
+    "ranks": {
+      "nike-01": 1,
+      "nike-02": 1,
+      "nike-03": 3,
+      "nike-04": 1,
+      "nike-05": 3,
+      "lulu-01": 4,
+      "lulu-02": 1,
+      "lulu-03": 7,
+      "lulu-04": 2,
+      "lulu-05": 1,
+      "ua-01": 4,
+      "ua-02": 1,
+      "ua-03": 2,
+      "ua-04": 1,
+      "ua-05": 1,
+      "colm-01": null,
+      "colm-02": 2,
+      "colm-03": 1,
+      "colm-04": 3,
+      "colm-05": 1,
+      "deck-01": 3,
+      "deck-02": 2,
+      "deck-03": 1,
+      "deck-04": 1,
+      "deck-05": 1
+    },
+    "hit@5_gain_vs_vector": [
+      0.32,
+      0.08,
+      0.56
     ]
   }
 ]

@@ -9,7 +9,7 @@
       0.85,
       1.0
     ],
-    "sec_per_query": 0.102,
+    "sec_per_query": 0.237,
     "misses": [
       "lulu-h1"
     ],
@@ -46,7 +46,7 @@
       0.4,
       0.8
     ],
-    "sec_per_query": 0.005,
+    "sec_per_query": 0.006,
     "misses": [
       "nike-h1",
       "nike-h3",
@@ -95,7 +95,7 @@
       1.0,
       1.0
     ],
-    "sec_per_query": 0.04,
+    "sec_per_query": 0.042,
     "misses": [],
     "ranks": {
       "nike-h1": 1,
@@ -135,7 +135,7 @@
       0.75,
       1.0
     ],
-    "sec_per_query": 4.842,
+    "sec_per_query": 4.204,
     "misses": [
       "lulu-h2",
       "colm-h2"
@@ -178,7 +178,7 @@
       0.75,
       1.0
     ],
-    "sec_per_query": 11.122,
+    "sec_per_query": 6.555,
     "misses": [
       "lulu-h2",
       "colm-h2"
@@ -221,7 +221,7 @@
       0.75,
       1.0
     ],
-    "sec_per_query": 11.605,
+    "sec_per_query": 6.751,
     "misses": [
       "lulu-h2",
       "colm-h2"
@@ -236,6 +236,49 @@
       "lulu-h3": 1,
       "lulu-h4": 1,
       "ua-h1": 3,
+      "ua-h2": 1,
+      "ua-h3": 3,
+      "ua-h4": 1,
+      "colm-h1": 1,
+      "colm-h2": 6,
+      "colm-h3": 1,
+      "colm-h4": 1,
+      "deck-h1": 1,
+      "deck-h2": 1,
+      "deck-h3": 1,
+      "deck-h4": 2
+    },
+    "hit@5_gain_vs_vector": [
+      -0.05,
+      -0.2,
+      0.1
+    ]
+  },
+  {
+    "mode": "hybrid_rerank_expanded",
+    "hit@1": 0.75,
+    "hit@5": 0.9,
+    "mrr": 0.822,
+    "precision@5": 0.39,
+    "hit@5_ci95": [
+      0.75,
+      1.0
+    ],
+    "sec_per_query": 6.648,
+    "misses": [
+      "lulu-h2",
+      "colm-h2"
+    ],
+    "ranks": {
+      "nike-h1": 1,
+      "nike-h2": 3,
+      "nike-h3": 1,
+      "nike-h4": 1,
+      "lulu-h1": 1,
+      "lulu-h2": 10,
+      "lulu-h3": 1,
+      "lulu-h4": 1,
+      "ua-h1": 1,
       "ua-h2": 1,
       "ua-h3": 3,
       "ua-h4": 1,
