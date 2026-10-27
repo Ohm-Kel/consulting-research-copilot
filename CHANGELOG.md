@@ -25,6 +25,8 @@ such as `v1.4` and are kept as published.
 - `evals/rank_by_density.py` compares reranked and hybrid ranks by how number-dense the
   evidence is. On the development set reranking moves number-dense evidence up on 7 of 9
   questions, so the harder-set hint that it demotes tables does not hold.
+- A recorded demo in the README (`docs/images/demo.gif`): the demo page answering a question
+  about Nike's gross margin with page citations. There is no hosted copy (ADR 0013).
 
 ### Fixed
 
