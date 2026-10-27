@@ -16,6 +16,17 @@ such as `v1.4` and are kept as published.
   a supporting page from each report. `evals/run_comparison_eval.py --rescore` re-scores saved
   answers after a key correction without calling the API.
 
+### Changed
+
+- The README is a third of its former length: each section summarises and links to the detail.
+  The full evaluation write-up is now `docs/evaluation.md`, and the engineering table is
+  `docs/engineering.md`.
+- The stage 0 learning scripts moved from `stage0/` to `notebooks/stage0/`, where exploration
+  work belongs.
+- `main` is protected: changes need a pull request with passing `test-and-eval` and `docker`
+  checks. A pull-request template asks for what changed, why, testing, sample output and the
+  linked issue, and `CONTRIBUTING.md` covers the held-out sets and the release steps.
+
 ## [1.6.0] - 2026-10-27
 
 ### Added
