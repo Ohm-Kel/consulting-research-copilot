@@ -7,6 +7,15 @@ such as `v1.4` and are kept as published.
 
 ## [Unreleased]
 
+### Added
+
+- A cross-company comparison set (`evals/compare_questions.json`): 7 questions that each need
+  evidence from two reports, scored per report. One search on the full question reaches both
+  reports in its top 10 for 5 of 7 questions with the default pipeline (vector search: 2 of 7).
+  The agent, which searches once per company, answered all 7 with both companies' figures and
+  a supporting page from each report. `evals/run_comparison_eval.py --rescore` re-scores saved
+  answers after a key correction without calling the API.
+
 ## [1.6.0] - 2026-10-27
 
 ### Added

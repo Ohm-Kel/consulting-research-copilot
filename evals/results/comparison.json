@@ -1,0 +1,69 @@
+[
+  {
+    "mode": "vector",
+    "all_reports@5": 0.0,
+    "all_reports@5_ci95": [
+      0.0,
+      0.0
+    ],
+    "all_reports@10": 0.286,
+    "all_reports@10_ci95": [
+      0.0,
+      0.57
+    ],
+    "reports_found@10": 0.571,
+    "missing@10": [
+      "cmp-01/Nike",
+      "cmp-03/Columbia Sportswear",
+      "cmp-04/Under Armour",
+      "cmp-04/Deckers Brands",
+      "cmp-06/Deckers Brands",
+      "cmp-07/Under Armour"
+    ],
+    "sec_per_query": 0.602
+  },
+  {
+    "mode": "hybrid",
+    "all_reports@5": 0.286,
+    "all_reports@5_ci95": [
+      0.0,
+      0.57
+    ],
+    "all_reports@10": 0.286,
+    "all_reports@10_ci95": [
+      0.0,
+      0.57
+    ],
+    "reports_found@10": 0.5,
+    "missing@10": [
+      "cmp-01/Nike",
+      "cmp-01/Lululemon",
+      "cmp-04/Under Armour",
+      "cmp-04/Deckers Brands",
+      "cmp-05/Deckers Brands",
+      "cmp-06/Deckers Brands",
+      "cmp-07/Under Armour"
+    ],
+    "sec_per_query": 0.036
+  },
+  {
+    "mode": "hybrid_rerank",
+    "all_reports@5": 0.429,
+    "all_reports@5_ci95": [
+      0.14,
+      0.71
+    ],
+    "all_reports@10": 0.714,
+    "all_reports@10_ci95": [
+      0.43,
+      1.0
+    ],
+    "reports_found@10": 0.786,
+    "missing@10": [
+      "cmp-01/Lululemon",
+      "cmp-04/Under Armour",
+      "cmp-04/Deckers Brands"
+    ],
+    "sec_per_query": 5.951
+  }
+]
