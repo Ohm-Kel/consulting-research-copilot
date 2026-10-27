@@ -10,6 +10,14 @@ re-runs on every change.
 
 ## Demo
 
+![The demo page answers how Nike's gross margin changed in fiscal 2025, with the drivers in basis points and citations to pages 38 and 35 of the 10-K](docs/images/demo.gif)
+
+*The demo page (`/`) running locally with `gpt-5.6-luna`: one question, answered in 14 seconds
+with page citations. There is no hosted copy ([ADR 0013](docs/adr/0013-no-hosted-demo.md));
+[Getting started](#getting-started) sets it up in five commands.*
+
+The same question in text, answered by `gpt-5.6-terra`:
+
 ```
 Q: How did Nike's gross margin change in fiscal 2025, and what did management say caused it?
 
@@ -22,8 +30,7 @@ costs (~80 bps) and lower warehousing and logistics costs (~20 bps). [1]
 Sources: [1] Nike_FY2025_10K.pdf, p. 38  [2] Nike_FY2025_10K.pdf, p. 35
 ```
 
-*Real output from `gpt-5.6-terra`, checked against the 10-K. More in [docs/examples.md](docs/examples.md).
-Run it locally and open http://localhost:8000/ to try both search and the agent in a browser.*
+*Checked against the 10-K. More real answers in [docs/examples.md](docs/examples.md).*
 
 ## Problem and solution
 
@@ -125,6 +132,7 @@ Each decision is recorded with its context, the options measured and its trade-o
 - [10-K print editions for two reports](docs/adr/0009-10k-print-editions.md)
 - [uv and a lockfile](docs/adr/0010-uv-and-a-lockfile.md) · [`src/` layout](docs/adr/0011-src-layout.md)
 - [Query expansion stays optional](docs/adr/0012-query-expansion-stays-optional.md)
+- [A recorded demo instead of a hosted one](docs/adr/0013-no-hosted-demo.md)
 
 ## Tech stack
 
@@ -480,14 +488,16 @@ Makefile          shortcuts for setup, tests, linting, evaluation and Docker
 - **Slower search.** Windowed reranking roughly doubles reranking time on CPU.
 - **Cross-company comparison** works through the agent (see [docs/examples.md](docs/examples.md))
   but is not yet part of the evaluation.
+- **No hosted demo.** Every host that fits the app needs a paid plan or a payment card, so the
+  demo is a recording ([ADR 0013](docs/adr/0013-no-hosted-demo.md)). A ready Cloud Run setup,
+  never run against a real project, is kept on the `feat/cloud-run-deploy` branch.
 
 ### Next steps
 
 1. **Table-aware extraction** so figures in financial tables stay attached to their row and
    column labels.
 2. **A cross-company comparison set** that scores questions needing evidence from two reports.
-3. **A hosted demo** built from the same Dockerfile, with the daily `/query` limit switched on.
-4. **More questions** to narrow the intervals, and to explain the lower Hit@1 on the harder set.
+3. **More questions** to narrow the intervals, and to explain the lower Hit@1 on the harder set.
 
 ### Release history
 
